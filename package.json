@@ -10,3 +10,6 @@
   },
   "homepage": "https://ondreev.github.io/FDT"
 }
+"devDependencies": {
+  "vite": "^5.2.0"
+}
