@@ -4,7 +4,7 @@ export default function CategoryTabs({ categories, selected, onSelect }) {
       {categories.map(cat => (
         <button
           key={cat.name}
-          className={\`py-1 px-3 rounded-full \${selected === cat.name ? 'bg-orange-400 text-white' : 'bg-gray-200'}\`}
+          className={`py-1 px-3 rounded-full ${selected === cat.name ? 'bg-orange-400 text-white' : 'bg-gray-200'}`}
           onClick={() => onSelect(cat.name)}
         >
           {cat.name}
