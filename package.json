@@ -4,12 +4,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "preview": "vite preview"
   },
-  "homepage": "https://ondreev.github.io/FDT"
-}
-"devDependencies": {
-  "vite": "^5.2.0"
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
 }
