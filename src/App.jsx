@@ -28,7 +28,7 @@ export default function App() {
   }
 
   const fetchCategories = async () => {
-    const res = await fetch('https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?action=getCategories')
+    const res = await fetch('https://script.google.com/macros/s/AKfycbytzzCx8haDwrBxhB_5CmtoBa_a_Pw6bY4-zTlxU98Xxu0DLZHmQ6GsDSUIuFqk-thD8Q/exec?action=getCategories')
     const data = await res.json()
     setCategories(data)
     if (data.length > 0) setSelectedCategory(data[0].name)
