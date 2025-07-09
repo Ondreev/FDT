@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import './App.css';
+import './style.css';
 
 export default function App() {
   const [settings, setSettings] = useState({});
