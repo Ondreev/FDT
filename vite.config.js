@@ -11,5 +11,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/FDT/', // <-- важно: название репозитория!
+  base: '/FDT/', // <-- название репозитория, и только один экспорт!
 })
