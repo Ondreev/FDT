@@ -16,19 +16,19 @@ export default function App() {
   }, [])
 
   const fetchSettings = async () => {
-    const res = await fetch('https://script.google.com/macros/s/AKfycbx0CjZURtrgYFtTWExQRfOl-FEPhwuuYcex7tkq47WTlft5AefdTuEn2h595pc_9FaMBQ/exec?action=getSettings')
+    const res = await fetch('https://script.google.com/macros/s/AKfycby073FVIxsh4rQ_3OVHaGeZtE7mev33gJNAYKUVrG6-shTjhepo0Zg-xeXxEuPJu5m3QA/exec?action=getSettings')
     const data = await res.json()
     setSettings(data)
   }
 
   const fetchProducts = async () => {
-    const res = await fetch('https://script.google.com/macros/s/AKfycbx0CjZURtrgYFtTWExQRfOl-FEPhwuuYcex7tkq47WTlft5AefdTuEn2h595pc_9FaMBQ/exec?action=getProducts')
+    const res = await fetch('https://script.google.com/macros/s/AKfycby073FVIxsh4rQ_3OVHaGeZtE7mev33gJNAYKUVrG6-shTjhepo0Zg-xeXxEuPJu5m3QA/exec?action=getProducts')
     const data = await res.json()
     setProducts(data.filter(p => p.active))
   }
 
   const fetchCategories = async () => {
-    const res = await fetch('https://script.google.com/macros/s/AKfycbx0CjZURtrgYFtTWExQRfOl-FEPhwuuYcex7tkq47WTlft5AefdTuEn2h595pc_9FaMBQ/exec?action=getCategories')
+    const res = await fetch('https://script.google.com/macros/s/AKfycby073FVIxsh4rQ_3OVHaGeZtE7mev33gJNAYKUVrG6-shTjhepo0Zg-xeXxEuPJu5m3QA/exec?action=getCategories')
     const data = await res.json()
     setCategories(data)
     if (data.length > 0) setSelectedCategory(data[0].name)
