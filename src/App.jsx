@@ -9,6 +9,16 @@ export default function App() {
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
 
+  // В useEffect в App.jsx
+useEffect(() => {
+  if (settings.font) {
+    const link = document.createElement('link');
+    link.href = `https://fonts.googleapis.com/css2?family=${settings.font.replace(/\s+/g, '+')}&display=swap`;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  }
+}, [settings.font]);
+  
   useEffect(() => {
     fetchData('getSettings', setSettings);
     fetchData('getProducts', setProducts);
