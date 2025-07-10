@@ -47,15 +47,15 @@ export default function App() {
           <img
             src={settings.logoUrl}
             alt="Logo"
-            style={{ height: '120px', borderRadius: '8px' }}
+            style={{ height: '60px', borderRadius: '8px' }}
           />
         )}
         <h1
           style={{
             fontWeight: '900',
-            fontSize: '4.5rem',
-            fontFamily: settings.font || 'Fredoka',
-            color: '#3d1f0e',
+            fontSize: '2.5rem',
+            fontFamily: 'Fredoka',
+            color: '#2c1e0f',
             margin: 0,
           }}
         >
@@ -67,8 +67,8 @@ export default function App() {
         <div
           style={{
             display: 'flex',
-            gap: '1rem',
-            marginBottom: '2rem',
+            gap: '0.5rem',
+            marginBottom: '1.5rem',
             flexWrap: 'wrap',
           }}
         >
@@ -77,15 +77,13 @@ export default function App() {
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               style={{
-                padding: '0.8rem 2rem',
-                background: activeCategory === cat.id ? '#fff' : '#fcecd8',
-                color: activeCategory === cat.id ? '#3c210b' : '#7c5030',
-                borderRadius: '16px',
-                fontSize: '1.5rem',
-                fontFamily: settings.font || 'Fredoka',
-                fontWeight: 700,
-                border: activeCategory === cat.id ? '4px solid #dca87a' : 'none',
-                boxShadow: activeCategory === cat.id ? '0 3px 10px rgba(0,0,0,0.08)' : 'none',
+                padding: '0.5rem 1.5rem',
+                background: activeCategory === cat.id ? settings.primaryColor || '#ff7f32' : '#fff5e6',
+                color: activeCategory === cat.id ? '#fff' : '#5c4022',
+                border: 'none',
+                borderRadius: '14px',
+                fontWeight: 'bold',
+                fontSize: '1rem',
                 cursor: 'pointer',
               }}
             >
@@ -98,18 +96,18 @@ export default function App() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '1.2rem',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+          gap: '1rem',
         }}
       >
         {filteredProducts.map((product) => (
           <div
             key={product.id}
             style={{
-              background: '#fff3e6',
-              borderRadius: '24px',
-              padding: '1.2rem',
-              boxShadow: '0 6px 14px rgba(0,0,0,0.06)',
+              background: '#fff7ed',
+              borderRadius: '20px',
+              padding: '1rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -118,40 +116,39 @@ export default function App() {
             <img
               src={product.imageUrl}
               alt={product.name}
-              style={{ width: '100%', maxWidth: '170px', borderRadius: '14px', marginBottom: '0.5rem' }}
+              style={{ width: '100%', maxWidth: '160px', borderRadius: '12px', marginBottom: '0.5rem' }}
             />
             <h2
               style={{
-                fontSize: '2rem',
-                fontWeight: 800,
-                color: '#3d1f0e',
-                fontFamily: settings.font || 'Fredoka',
-                margin: '0.5rem 0 0.3rem 0',
+                fontSize: '1.4rem',
+                fontWeight: 'bold',
+                color: '#4b2e12',
+                margin: '0.5rem 0 0.25rem 0',
               }}
             >
               {product.name}
             </h2>
-            <p style={{ fontSize: '1.2rem', margin: 0, color: '#7d5136', fontFamily: settings.font || 'Fredoka' }}>{product.description}</p>
-            <p style={{ fontSize: '1rem', color: '#b5834f', margin: '0.25rem 0', fontFamily: settings.font || 'Fredoka' }}>{product.weight}</p>
-            <p style={{ fontWeight: 'bold', fontSize: '1.6rem', margin: '0.25rem 0', color: '#3d1f0e', fontFamily: settings.font || 'Fredoka' }}>
+            <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d' }}>{product.description}</p>
+            <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
+            <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0.25rem 0', color: '#2c1e0f' }}>
               {product.price} {settings.currency || '₽'}
             </p>
             <div
               style={{
                 display: 'flex',
-                gap: '0.2rem',
+                gap: '0.25rem',
                 alignItems: 'center',
-                marginTop: '0.6rem',
+                marginTop: '0.5rem',
               }}
             >
               <button
                 style={{
                   backgroundColor: settings.primaryColor || '#ff7f32',
                   color: '#fff',
-                  fontSize: '1.5rem',
-                  padding: '0.3rem 0.8rem',
+                  fontSize: '1.25rem',
+                  padding: '0.2rem 0.7rem',
                   border: 'none',
-                  borderRadius: '16px 0 0 16px',
+                  borderRadius: '12px 0 0 12px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                 }}
@@ -160,13 +157,11 @@ export default function App() {
               </button>
               <div
                 style={{
-                  background: '#ffe9c9',
-                  padding: '0.35rem 1.2rem',
+                  background: '#fff1dd',
+                  padding: '0.2rem 1rem',
                   border: 'none',
                   fontWeight: 'bold',
-                  borderRadius: '6px',
-                  fontSize: '1.2rem',
-                  fontFamily: settings.font || 'Fredoka',
+                  borderRadius: '4px',
                 }}
               >
                 1
@@ -175,10 +170,10 @@ export default function App() {
                 style={{
                   backgroundColor: settings.primaryColor || '#ff7f32',
                   color: '#fff',
-                  fontSize: '1.5rem',
-                  padding: '0.3rem 0.8rem',
+                  fontSize: '1.25rem',
+                  padding: '0.2rem 0.7rem',
                   border: 'none',
-                  borderRadius: '0 16px 16px 0',
+                  borderRadius: '0 12px 12px 0',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                 }}
