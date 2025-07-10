@@ -27,51 +27,92 @@ export default function App() {
       style={{
         fontFamily: settings.font || 'Fredoka',
         backgroundColor: settings.backgroundColor || '#fdf0e2',
+        padding: '1rem',
       }}
     >
-      <header className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 1rem' }}>
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          marginBottom: '1rem',
+        }}
+      >
         {settings.logoUrl && (
-          <img src={settings.logoUrl} alt="Logo" style={{ height: '36px' }} />
+          <img src={settings.logoUrl} alt="Logo" style={{ height: '40px', borderRadius: '8px' }} />
         )}
-        <h1 style={{ fontWeight: 'bold', fontSize: '1.5rem', margin: 0 }}>{settings.projectTitle || 'Заголовок сайта'}</h1>
+        <h1
+          style={{
+            fontWeight: '900',
+            fontSize: '1.75rem',
+            fontFamily: 'Fredoka',
+            color: '#2c1e0f',
+            margin: 0,
+          }}
+        >
+          {settings.projectTitle || 'Заголовок'}
+        </h1>
       </header>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', padding: '1rem' }}>
+      {categories.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+          {categories.map((cat) => (
+            <div
+              key={cat.id}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#fff5e6',
+                borderRadius: '12px',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+              }}
+            >
+              {cat.name}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+          gap: '1rem',
+        }}
+      >
         {products.map((product) => (
           <div
             key={product.id}
             style={{
-              width: 'calc(50% - 1rem)',
               background: '#fff',
-              borderRadius: '1rem',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              borderRadius: '20px',
               padding: '1rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              fontSize: '0.95rem',
             }}
           >
             <img
               src={product.imageUrl}
               alt={product.name}
-              style={{ width: '100%', maxWidth: '180px', objectFit: 'contain' }}
+              style={{ width: '100%', maxWidth: '160px', borderRadius: '12px', marginBottom: '0.5rem' }}
             />
-            <h2 style={{ marginTop: '0.75rem', fontWeight: 'bold', fontSize: '1.2rem', textAlign: 'center' }}>{product.name}</h2>
-            <p style={{ margin: 0, textAlign: 'center', color: '#444' }}>{product.description}</p>
-            <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#666' }}>{product.weight}</p>
-            <p style={{ margin: '0.25rem 0', fontWeight: 'bold', fontSize: '1rem' }}>{product.price} {settings.currency || '₽'}</p>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', margin: '0.5rem 0 0.25rem 0' }}>{product.name}</h2>
+            <p style={{ fontSize: '0.9rem', margin: 0 }}>{product.description}</p>
+            <p style={{ fontSize: '0.9rem', color: '#777', margin: '0.25rem 0' }}>{product.weight}</p>
+            <p style={{ fontWeight: 'bold', fontSize: '1rem', margin: '0.25rem 0' }}>{product.price} {settings.currency || '₽'}</p>
             <button
               style={{
-                backgroundColor: settings.primaryColor || '#ff7f32',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.5rem 1rem',
-                color: '#fff',
-                fontSize: '1.25rem',
                 marginTop: '0.5rem',
-                cursor: 'pointer',
+                backgroundColor: settings.primaryColor || '#ff7f32',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '0.5rem 1rem',
+                fontSize: '1.25rem',
                 width: '100%',
+                cursor: 'pointer',
               }}
             >
               +
