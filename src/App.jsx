@@ -47,14 +47,14 @@ export default function App() {
           <img
             src={settings.logoUrl}
             alt="Logo"
-            style={{ height: '90px', borderRadius: '8px' }}
+            style={{ height: '120px', borderRadius: '8px' }}
           />
         )}
         <h1
           style={{
             fontWeight: '900',
-            fontSize: '3rem',
-            fontFamily: 'Fredoka',
+            fontSize: '4.5rem',
+            fontFamily: settings.font || 'Fredoka',
             color: '#3d1f0e',
             margin: 0,
           }}
@@ -81,9 +81,9 @@ export default function App() {
                 background: activeCategory === cat.id ? '#fff' : '#fcecd8',
                 color: activeCategory === cat.id ? '#3c210b' : '#7c5030',
                 borderRadius: '16px',
-                fontSize: '1.3rem',
-                fontFamily: 'Fredoka',
-                fontWeight: 600,
+                fontSize: '1.5rem',
+                fontFamily: settings.font || 'Fredoka',
+                fontWeight: 700,
                 border: activeCategory === cat.id ? '4px solid #dca87a' : 'none',
                 boxShadow: activeCategory === cat.id ? '0 3px 10px rgba(0,0,0,0.08)' : 'none',
                 cursor: 'pointer',
@@ -98,7 +98,7 @@ export default function App() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
           gap: '1.2rem',
         }}
       >
@@ -106,7 +106,7 @@ export default function App() {
           <div
             key={product.id}
             style={{
-              background: '#fff8ed',
+              background: '#fff3e6',
               borderRadius: '24px',
               padding: '1.2rem',
               boxShadow: '0 6px 14px rgba(0,0,0,0.06)',
@@ -122,18 +122,18 @@ export default function App() {
             />
             <h2
               style={{
-                fontSize: '1.7rem',
-                fontWeight: 700,
+                fontSize: '2rem',
+                fontWeight: 800,
                 color: '#3d1f0e',
-                fontFamily: 'Fredoka',
+                fontFamily: settings.font || 'Fredoka',
                 margin: '0.5rem 0 0.3rem 0',
               }}
             >
               {product.name}
             </h2>
-            <p style={{ fontSize: '1.1rem', margin: 0, color: '#7d5136', fontFamily: 'Fredoka' }}>{product.description}</p>
-            <p style={{ fontSize: '1rem', color: '#b5834f', margin: '0.25rem 0', fontFamily: 'Fredoka' }}>{product.weight}</p>
-            <p style={{ fontWeight: 'bold', fontSize: '1.4rem', margin: '0.25rem 0', color: '#3d1f0e', fontFamily: 'Fredoka' }}>
+            <p style={{ fontSize: '1.2rem', margin: 0, color: '#7d5136', fontFamily: settings.font || 'Fredoka' }}>{product.description}</p>
+            <p style={{ fontSize: '1rem', color: '#b5834f', margin: '0.25rem 0', fontFamily: settings.font || 'Fredoka' }}>{product.weight}</p>
+            <p style={{ fontWeight: 'bold', fontSize: '1.6rem', margin: '0.25rem 0', color: '#3d1f0e', fontFamily: settings.font || 'Fredoka' }}>
               {product.price} {settings.currency || '₽'}
             </p>
             <div
@@ -166,7 +166,7 @@ export default function App() {
                   fontWeight: 'bold',
                   borderRadius: '6px',
                   fontSize: '1.2rem',
-                  fontFamily: 'Fredoka',
+                  fontFamily: settings.font || 'Fredoka',
                 }}
               >
                 1
