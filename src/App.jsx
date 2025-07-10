@@ -3,7 +3,7 @@ import Header from './components/Header'
 import CategoryTabs from './components/CategoryTabs'
 import ProductList from './components/ProductList'
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby073FVIxsh4rQ_3OVHaGeZtE7mev33gJNAYKUVrG6-shTjhepo0Zg-xeXxEuPJu5m3QA/exec'
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec'
 
 export default function App() {
   const [settings, setSettings] = useState({})
