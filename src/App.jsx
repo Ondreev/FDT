@@ -9,21 +9,23 @@ export default function App() {
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
 
-  // В useEffect в App.jsx
-useEffect(() => {
-  if (settings.font) {
-    const link = document.createElement('link');
-    link.href = `https://fonts.googleapis.com/css2?family=${settings.font.replace(/\s+/g, '+')}&display=swap`;
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-  }
-}, [settings.font]);
-  
   useEffect(() => {
     fetchData('getSettings', setSettings);
     fetchData('getProducts', setProducts);
     fetchData('getCategories', setCategories);
   }, []);
+
+  useEffect(() => {
+    if (settings.font) {
+      const link = document.createElement('link');
+      link.href = `https://fonts.googleapis.com/css2?family=${settings.font.replace(/\s+/g, '+')}&display=swap`;
+      link.rel = 'stylesheet';
+      link.id = 'dynamic-font';
+      const existing = document.getElementById('dynamic-font');
+      if (existing) document.head.removeChild(existing);
+      document.head.appendChild(link);
+    }
+  }, [settings.font]);
 
   const fetchData = (action, setter) => {
     fetch(`${API_URL}?action=${action}`)
@@ -57,15 +59,15 @@ useEffect(() => {
           <img
             src={settings.logoUrl}
             alt="Logo"
-            style={{ height: '60px', borderRadius: '8px' }}
+            style={{ height: '120px', borderRadius: '8px' }}
           />
         )}
         <h1
           style={{
             fontWeight: '900',
-            fontSize: '2.5rem',
-            fontFamily: 'Fredoka',
-            color: '#2c1e0f',
+            fontSize: '4.5rem',
+            fontFamily: settings.font || 'Fredoka',
+            color: '#3d1f0e',
             margin: 0,
           }}
         >
@@ -77,8 +79,8 @@ useEffect(() => {
         <div
           style={{
             display: 'flex',
-            gap: '0.5rem',
-            marginBottom: '1.5rem',
+            gap: '1rem',
+            marginBottom: '2rem',
             flexWrap: 'wrap',
           }}
         >
@@ -87,13 +89,15 @@ useEffect(() => {
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               style={{
-                padding: '0.5rem 1.5rem',
-                background: activeCategory === cat.id ? settings.primaryColor || '#ff7f32' : '#fff5e6',
-                color: activeCategory === cat.id ? '#fff' : '#5c4022',
-                border: 'none',
-                borderRadius: '14px',
-                fontWeight: 'bold',
-                fontSize: '1rem',
+                padding: '0.8rem 2rem',
+                background: activeCategory === cat.id ? '#fff' : '#fcecd8',
+                color: activeCategory === cat.id ? '#3c210b' : '#7c5030',
+                borderRadius: '16px',
+                fontSize: '1.5rem',
+                fontFamily: settings.font || 'Fredoka',
+                fontWeight: 700,
+                border: activeCategory === cat.id ? '4px solid #dca87a' : 'none',
+                boxShadow: activeCategory === cat.id ? '0 3px 10px rgba(0,0,0,0.08)' : 'none',
                 cursor: 'pointer',
               }}
             >
@@ -106,59 +110,79 @@ useEffect(() => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '1.2rem',
         }}
       >
         {filteredProducts.map((product) => (
           <div
             key={product.id}
             style={{
-              background: '#fff7ed',
-              borderRadius: '20px',
-              padding: '1rem',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+              background: '#fff3e6',
+              borderRadius: '24px',
+              padding: '1.2rem',
+              boxShadow: '0 6px 14px rgba(0,0,0,0.06)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              position: 'relative',
             }}
           >
+            {product.id.includes('H') && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  backgroundColor: '#e03636',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  padding: '0.3rem 0.7rem',
+                  borderRadius: '999px',
+                  fontSize: '0.9rem',
+                  fontFamily: settings.font || 'Fredoka',
+                }}
+              >
+                ОСТРОЕ
+              </div>
+            )}
             <img
               src={product.imageUrl}
               alt={product.name}
-              style={{ width: '100%', maxWidth: '160px', borderRadius: '12px', marginBottom: '0.5rem' }}
+              style={{ width: '100%', maxWidth: '170px', borderRadius: '14px', marginBottom: '0.5rem' }}
             />
             <h2
               style={{
-                fontSize: '1.4rem',
-                fontWeight: 'bold',
-                color: '#4b2e12',
-                margin: '0.5rem 0 0.25rem 0',
+                fontSize: '2rem',
+                fontWeight: 800,
+                color: '#3d1f0e',
+                fontFamily: settings.font || 'Fredoka',
+                margin: '0.5rem 0 0.3rem 0',
               }}
             >
               {product.name}
             </h2>
-            <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d' }}>{product.description}</p>
-            <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
-            <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0.25rem 0', color: '#2c1e0f' }}>
+            <p style={{ fontSize: '1.2rem', margin: 0, color: '#7d5136', fontFamily: settings.font || 'Fredoka' }}>{product.description}</p>
+            <p style={{ fontSize: '1rem', color: '#b5834f', margin: '0.25rem 0', fontFamily: settings.font || 'Fredoka' }}>{product.weight}</p>
+            <p style={{ fontWeight: 'bold', fontSize: '1.6rem', margin: '0.25rem 0', color: '#3d1f0e', fontFamily: settings.font || 'Fredoka' }}>
               {product.price} {settings.currency || '₽'}
             </p>
             <div
               style={{
                 display: 'flex',
-                gap: '0.25rem',
+                gap: '0.2rem',
                 alignItems: 'center',
-                marginTop: '0.5rem',
+                marginTop: '0.6rem',
               }}
             >
               <button
                 style={{
                   backgroundColor: settings.primaryColor || '#ff7f32',
                   color: '#fff',
-                  fontSize: '1.25rem',
-                  padding: '0.2rem 0.7rem',
+                  fontSize: '1.5rem',
+                  padding: '0.3rem 0.8rem',
                   border: 'none',
-                  borderRadius: '12px 0 0 12px',
+                  borderRadius: '16px 0 0 16px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                 }}
@@ -167,11 +191,13 @@ useEffect(() => {
               </button>
               <div
                 style={{
-                  background: '#fff1dd',
-                  padding: '0.2rem 1rem',
+                  background: '#ffe9c9',
+                  padding: '0.35rem 1.2rem',
                   border: 'none',
                   fontWeight: 'bold',
-                  borderRadius: '4px',
+                  borderRadius: '6px',
+                  fontSize: '1.2rem',
+                  fontFamily: settings.font || 'Fredoka',
                 }}
               >
                 1
@@ -180,10 +206,10 @@ useEffect(() => {
                 style={{
                   backgroundColor: settings.primaryColor || '#ff7f32',
                   color: '#fff',
-                  fontSize: '1.25rem',
-                  padding: '0.2rem 0.7rem',
+                  fontSize: '1.5rem',
+                  padding: '0.3rem 0.8rem',
                   border: 'none',
-                  borderRadius: '0 12px 12px 0',
+                  borderRadius: '0 16px 16px 0',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                 }}
