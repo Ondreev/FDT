@@ -123,20 +123,21 @@ useEffect(() => {
               alignItems: 'center',
             }}
           >
-        {product.id.includes('H') && (
+       {String(product.id).includes('H') && (
   <div
-  key={product.id}
-  style={{
-    position: 'relative', // ← ВАЖНО! вот это добавь
-    background: '#fff7ed',
-    borderRadius: '20px',
-    padding: '1rem',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  }}
->
+    style={{
+      position: 'absolute',
+      top: '1rem',
+      right: '1rem',
+      backgroundColor: '#e03636',
+      color: '#fff',
+      fontWeight: 'bold',
+      padding: '0.3rem 0.7rem',
+      borderRadius: '999px',
+      fontSize: '0.9rem',
+      fontFamily: settings.font || 'Fredoka',
+    }}
+  >
     ОСТРОЕ
   </div>
 )}
