@@ -107,6 +107,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
 // Компонент корзины
 const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings }) => {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   if (!isOpen) return null;
 
   return (
@@ -143,71 +144,36 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
           </button>
         </div>
 
-        {cart.length > 0 && (
-          <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
-              Итого: {total} {settings.currency || '₽'}
-            </div>
-            <button
-              style={{
-                padding: '0.75rem 2rem',
-                background: settings.primaryColor || '#ff7f32',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-              }}
-            >
-              Оформить заказ
-            </button>
-          </div>
-        )}
-
         {cart.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
             Корзина пуста
           </div>
         ) : (
-          cart.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-                padding: '1rem 0',
-                borderBottom: '1px solid #eee',
-              }}
-            >
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <>
+            {cart.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '1rem',
+                  padding: '1rem 0',
+                  borderBottom: '1px solid #eee',
+                }}
+              >
                 <img
                   src={item.imageUrl}
                   alt={item.name}
                   style={{ width: '90px', height: '90px', borderRadius: '12px', objectFit: 'cover' }}
                 />
                 <div style={{ flex: 1 }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.5rem',
-                    flexWrap: 'wrap'
-                  }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#2c1e0f' }}>
-                      {item.name}
-                    </div>
-                    <div style={{ fontSize: '1rem', color: '#666' }}>
-                      {item.price} {settings.currency || '₽'}
-                    </div>
+                  <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.3rem', color: '#2c1e0f' }}>
+                    {item.name}
                   </div>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    marginTop: '0.5rem'
-                  }}>
+                  <div style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#666' }}>
+                    {item.price} {settings.currency || '₽'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       style={{
@@ -222,9 +188,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
                     >
                       −
                     </button>
-                    <span style={{ fontWeight: 'bold', fontSize: '1.1rem', minWidth: '24px', textAlign: 'center' }}>
-                      {item.quantity}
-                    </span>
+                    <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       style={{
@@ -238,7 +202,52 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
                         cursor: 'pointer',
                       }}
                     >
-                      
+                      +
+                    </button>
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      style={{
+                        marginLeft: 'auto',
+                        background: 'none',
+                        border: 'none',
+                        color: '#e03636',
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+                Итого: {total} {settings.currency || '₽'}
+              </div>
+              <button
+                style={{
+                  padding: '0.75rem 2rem',
+                  background: settings.primaryColor || '#ff7f32',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                }}
+              >
+                Оформить заказ
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [settings, setSettings] = useState({});
   const [products, setProducts] = useState([]);
