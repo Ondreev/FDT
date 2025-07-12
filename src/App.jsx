@@ -328,34 +328,6 @@ export default function App() {
 
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Функция для обработки свайпа
-  const handleTouchStart = (e) => {
-    const startX = e.touches[0].clientX;
-    e.target.setAttribute('data-start-x', startX);
-  };
-
-  const handleTouchMove = (e) => {
-    const startX = parseFloat(e.target.getAttribute('data-start-x'));
-    const currentX = e.touches[0].clientX;
-    const diff = startX - currentX;
-    
-    if (Math.abs(diff) > 50) {
-      const currentIndex = categories.findIndex(cat => cat.id === activeCategory);
-      const allCategories = [{ id: null, name: 'Все' }, ...categories];
-      const currentAllIndex = activeCategory === null ? 0 : currentIndex + 1;
-      
-      if (diff > 0 && currentAllIndex < allCategories.length - 1) {
-        // Свайп влево - следующая категория
-        setActiveCategory(allCategories[currentAllIndex + 1].id);
-      } else if (diff < 0 && currentAllIndex > 0) {
-        // Свайп вправо - предыдущая категория
-        setActiveCategory(allCategories[currentAllIndex - 1].id);
-      }
-      
-      e.target.removeAttribute('data-start-x');
-    }
-  };
-
   return (
     <>
       <style>
@@ -479,8 +451,6 @@ export default function App() {
               WebkitOverflowScrolling: 'touch',
               paddingBottom: '5px',
             }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
           >
             <button
               onClick={() => setActiveCategory(null)}
@@ -575,104 +545,84 @@ export default function App() {
               >
                 {product.name}
               </h2>
-              <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign:// Компонент "Заказывают сейчас"
-const OrderingNowBanner = ({ products, settings, addToCart }) => {
-  const [currentProduct, setCurrentProduct] = useState(null);
-  const [visible, setVisible] = useState(false);
+              <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
+              <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
+              <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0.25rem 0', color: '#2c1e0f' }}>
+                {product.price} {settings.currency || '₽'}
+              </p>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.25rem',
+                  alignItems: 'center',
+                  marginTop: '0.5rem',
+                }}
+              >
+                <button
+                  onClick={() => {
+                    const existing = cart.find(item => item.id === product.id);
+                    if (existing && existing.quantity > 1) {
+                      updateQuantity(product.id, existing.quantity - 1);
+                    } else {
+                      removeFromCart(product.id);
+                    }
+                  }}
+                  style={{
+                    backgroundColor: settings.primaryColor || '#ff7f32',
+                    color: '#fff',
+                    fontSize: '1.25rem',
+                    padding: '0.2rem 0.7rem',
+                    border: 'none',
+                    borderRadius: '12px 0 0 12px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  −
+                </button>
+                <div
+                  style={{
+                    background: '#fff1dd',
+                    padding: '0.2rem 1rem',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    minWidth: '40px',
+                    textAlign: 'center',
+                  }}
+                >
+                  {cart.find(item => item.id === product.id)?.quantity || 0}
+                </div>
+                <button
+                  onClick={() => addToCart(product)}
+                  style={{
+                    backgroundColor: settings.primaryColor || '#ff7f32',
+                    color: '#fff',
+                    fontSize: '1.25rem',
+                    padding: '0.2rem 0.7rem',
+                    border: 'none',
+                    borderRadius: '0 12px 12px 0',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
 
-  useEffect(() => {
-    if (products.length === 0) return;
-
-    const showBanner = () => {
-      const randomProduct = products[Math.floor(Math.random() * products.length)];
-      setCurrentProduct(randomProduct);
-      setVisible(true);
-      
-      // Скрыть через 8 секунд
-      setTimeout(() => {
-        setVisible(false);
-      }, 8000);
-    };
-
-    // Показать первый раз через 5 секунд
-    const initialTimer = setTimeout(showBanner, 5000);
-    
-    // Потом показывать каждые 15-20 секунд
-    const interval = setInterval(showBanner, Math.random() * 5000 + 15000);
-
-    return () => {
-      clearTimeout(initialTimer);
-      clearInterval(interval);
-    };
-  }, [products]);
-
-  if (!visible || !currentProduct) return null;
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        zIndex: 1000,
-        background: '#fff7ed',
-        color: '#2c1e0f',
-        padding: '0.8rem',
-        borderRadius: '12px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        maxWidth: '200px',
-        animation: 'slideIn 0.5s ease-out',
-        border: '1px solid #f0e6d2',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.5rem' }}>
-        <span style={{ fontSize: '12px' }}>⭐</span>
-        <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Заказывают сейчас</span>
-        <button
-          onClick={() => setVisible(false)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#999',
-            marginLeft: 'auto',
-            cursor: 'pointer',
-            padding: '0.1rem',
-            fontSize: '12px',
-          }}
-        >
-          ✕
-        </button>
-      </div>
-      
-      <div style={{ textAlign: 'center' }}>
-        <img
-          src={currentProduct.imageUrl}
-          alt={currentProduct.name}
-          style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', marginBottom: '0.5rem' }}
+        <OrderingNowBanner products={products} settings={settings} addToCart={addToCart} />
+        <Cart 
+          isOpen={isCartOpen} 
+          onClose={() => setIsCartOpen(false)} 
+          cart={cart} 
+          updateQuantity={updateQuantity} 
+          removeFromCart={removeFromCart} 
+          settings={settings} 
         />
-        <div style={{ fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '0.3rem' }}>{currentProduct.name}</div>
-        <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>{currentProduct.price} {settings.currency || '₽'}</div>
-        
-        <button
-          onClick={() => {
-            addToCart(currentProduct);
-            setVisible(false);
-          }}
-          style={{
-            width: '100%',
-            padding: '0.4rem',
-            background: settings.primaryColor || '#ff7f32',
-            border: 'none',
-            borderRadius: '8px',
-            color: 'white',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            fontSize: '0.8rem',
-          }}
-        >
-          Хочешь? 😋
-        </button>
       </div>
-    </div>
+    </>
   );
-};
+}
