@@ -42,66 +42,64 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
         top: '20px',
         right: '20px',
         zIndex: 1000,
-        background: 'linear-gradient(135deg, #4a90e2, #357abd)',
-        color: 'white',
-        padding: '1rem',
-        borderRadius: '16px',
-        boxShadow: '0 8px 24px rgba(74, 144, 226, 0.3)',
-        maxWidth: '280px',
+        background: '#fff7ed',
+        color: '#2c1e0f',
+        padding: '1.5rem',
+        borderRadius: '20px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+        maxWidth: '320px',
         animation: 'slideIn 0.5s ease-out',
+        border: '2px solid #f0e6d2',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <span style={{ fontSize: '16px' }}>⭐</span>
-        <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Заказывают сейчас</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+        <span style={{ fontSize: '18px' }}>⭐</span>
+        <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Заказывают сейчас</span>
         <button
           onClick={() => setVisible(false)}
           style={{
             background: 'none',
             border: 'none',
-            color: 'white',
+            color: '#999',
             marginLeft: 'auto',
             cursor: 'pointer',
             padding: '0.25rem',
-            fontSize: '16px',
+            fontSize: '18px',
           }}
         >
           ✕
         </button>
       </div>
       
-      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
         <img
           src={currentProduct.imageUrl}
           alt={currentProduct.name}
-          style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover' }}
+          style={{ width: '120px', height: '120px', borderRadius: '12px', objectFit: 'cover', marginBottom: '1rem' }}
         />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{currentProduct.name}</div>
-          <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>{currentProduct.price} {settings.currency || '₽'}</div>
-        </div>
+        <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{currentProduct.name}</div>
+        <div style={{ fontSize: '1rem', color: '#666', marginBottom: '1rem' }}>{currentProduct.price} {settings.currency || '₽'}</div>
+        
+        <button
+          onClick={() => {
+            addToCart(currentProduct);
+            setVisible(false);
+          }}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            background: settings.primaryColor || '#ff7f32',
+            border: 'none',
+            borderRadius: '12px',
+            color: 'white',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            fontSize: '1rem',
+          }}
+        >
+          Хочешь? 😋
+        </button>
       </div>
-      
-      <button
-        onClick={() => {
-          addToCart(currentProduct);
-          setVisible(false);
-        }}
-        style={{
-          width: '100%',
-          marginTop: '0.75rem',
-          padding: '0.5rem',
-          background: 'rgba(255, 255, 255, 0.2)',
-          border: 'none',
-          borderRadius: '8px',
-          color: 'white',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          fontSize: '0.9rem',
-        }}
-      >
-        Хочешь? 😋
-      </button>
     </div>
   );
 };
@@ -118,12 +116,13 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
         position: 'fixed',
         top: 0,
         right: 0,
-        width: '400px',
+        width: '100%',
+        maxWidth: '400px',
         height: '100vh',
         background: 'white',
         boxShadow: '-4px 0 20px rgba(0,0,0,0.1)',
         zIndex: 1001,
-        padding: '2rem',
+        padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
         animation: 'slideInRight 0.3s ease-out',
@@ -183,76 +182,77 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
             <div
               key={item.id}
               style={{
-                display: 'flex',
-                gap: '1rem',
-                padding: '1.5rem 0',
+                padding: '1rem 0',
                 borderBottom: '1px solid #f0f0f0',
-                alignItems: 'flex-start',
               }}
             >
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover' }}
-              />
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#2c1e0f' }}>{item.name}</h4>
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#999',
-                      cursor: 'pointer',
-                      padding: '0.25rem',
-                      fontSize: '16px',
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#666', fontSize: '1rem' }}>{item.price} {settings.currency || '₽'}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      style={{
-                        background: '#f0f0f0',
-                        border: 'none',
-                        borderRadius: '6px',
-                        width: '32px',
-                        height: '32px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '16px',
-                      }}
-                    >
-                      −
-                    </button>
-                    <span style={{ fontWeight: 'bold', minWidth: '24px', textAlign: 'center', fontSize: '1rem' }}>{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      style={{
-                        background: settings.primaryColor || '#ff7f32',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        width: '32px',
-                        height: '32px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '16px',
-                      }}
-                    >
-                      +
-                    </button>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                <img
+                  src={item.imageUrl}
+                  alt={item.name}
+                  style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 'bold', color: '#2c1e0f' }}>{item.name}</h4>
+                  <div style={{ color: '#666', fontSize: '1rem', marginTop: '0.5rem' }}>
+                    {item.price} {settings.currency || '₽'}
                   </div>
                 </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    style={{
+                      background: '#f0f0f0',
+                      border: 'none',
+                      borderRadius: '6px',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: '18px',
+                    }}
+                  >
+                    −
+                  </button>
+                  <span style={{ fontWeight: 'bold', minWidth: '32px', textAlign: 'center', fontSize: '1.1rem' }}>{item.quantity}</span>
+                  <button
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    style={{
+                      background: settings.primaryColor || '#ff7f32',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: '18px',
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+                
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#e03636',
+                    cursor: 'pointer',
+                    padding: '0.5rem',
+                    fontSize: '18px',
+                  }}
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           ))
@@ -445,29 +445,11 @@ export default function App() {
               display: 'flex',
               gap: '0.5rem',
               marginBottom: '1.5rem',
-              flexWrap: 'wrap',
+              flexWrap: 'nowrap',
               overflowX: 'auto',
               scrollBehavior: 'smooth',
               WebkitOverflowScrolling: 'touch',
               paddingBottom: '5px',
-            }}
-            onTouchStart={(e) => {
-              const startX = e.touches[0].clientX;
-              const scrollLeft = e.currentTarget.scrollLeft;
-              
-              const handleTouchMove = (e) => {
-                const currentX = e.touches[0].clientX;
-                const diffX = startX - currentX;
-                e.currentTarget.scrollLeft = scrollLeft + diffX;
-              };
-              
-              const handleTouchEnd = () => {
-                document.removeEventListener('touchmove', handleTouchMove);
-                document.removeEventListener('touchend', handleTouchEnd);
-              };
-              
-              document.addEventListener('touchmove', handleTouchMove);
-              document.addEventListener('touchend', handleTouchEnd);
             }}
           >
             <button
@@ -481,6 +463,7 @@ export default function App() {
                 fontWeight: 'bold',
                 fontSize: '1rem',
                 cursor: 'pointer',
+                flexShrink: 0,
               }}
             >
               Все
@@ -498,6 +481,7 @@ export default function App() {
                   fontWeight: 'bold',
                   fontSize: '1rem',
                   cursor: 'pointer',
+                  flexShrink: 0,
                 }}
               >
                 {cat.name}
