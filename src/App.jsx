@@ -123,14 +123,14 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
         background: 'white',
         boxShadow: '-4px 0 20px rgba(0,0,0,0.1)',
         zIndex: 1001,
-        padding: '1.5rem',
+        padding: '2rem',
         display: 'flex',
         flexDirection: 'column',
         animation: 'slideInRight 0.3s ease-out',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
         <button
           onClick={onClose}
           style={{
@@ -147,93 +147,11 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {cart.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
-            Корзина пуста
-          </div>
-        ) : (
-          cart.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                display: 'flex',
-                gap: '1rem',
-                padding: '1rem',
-                borderBottom: '1px solid #f0f0f0',
-                alignItems: 'center',
-              }}
-            >
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
-              />
-              <div style={{ flex: 1 }}>
-                <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', fontWeight: 'bold' }}>{item.name}</h4>
-                <p style={{ margin: '0 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>{item.price} {settings.currency || '₽'}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    style={{
-                      background: '#f0f0f0',
-                      border: 'none',
-                      borderRadius: '6px',
-                      width: '28px',
-                      height: '28px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                    }}
-                  >
-                    −
-                  </button>
-                  <span style={{ fontWeight: 'bold', minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    style={{
-                      background: settings.primaryColor || '#ff7f32',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      width: '28px',
-                      height: '28px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <button
-                onClick={() => removeFromCart(item.id)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#999',
-                  cursor: 'pointer',
-                  padding: '0.5rem',
-                  fontSize: '16px',
-                }}
-              >
-                ✕
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-
       {cart.length > 0 && (
-        <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Итого:</span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: settings.primaryColor || '#ff7f32' }}>
+        <div style={{ borderBottom: '2px solid #f0f0f0', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#2c1e0f' }}>Итого:</span>
+            <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: settings.primaryColor || '#ff7f32' }}>
               {total} {settings.currency || '₽'}
             </span>
           </div>
@@ -254,6 +172,92 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
           </button>
         </div>
       )}
+
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {cart.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
+            Корзина пуста
+          </div>
+        ) : (
+          cart.map((item) => (
+            <div
+              key={item.id}
+              style={{
+                display: 'flex',
+                gap: '1rem',
+                padding: '1.5rem 0',
+                borderBottom: '1px solid #f0f0f0',
+                alignItems: 'flex-start',
+              }}
+            >
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover' }}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#2c1e0f' }}>{item.name}</h4>
+                  <button
+                    onClick={() => removeFromCart(item.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#999',
+                      cursor: 'pointer',
+                      padding: '0.25rem',
+                      fontSize: '16px',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666', fontSize: '1rem' }}>{item.price} {settings.currency || '₽'}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      style={{
+                        background: '#f0f0f0',
+                        border: 'none',
+                        borderRadius: '6px',
+                        width: '32px',
+                        height: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                      }}
+                    >
+                      −
+                    </button>
+                    <span style={{ fontWeight: 'bold', minWidth: '24px', textAlign: 'center', fontSize: '1rem' }}>{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      style={{
+                        background: settings.primaryColor || '#ff7f32',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        width: '32px',
+                        height: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };
@@ -392,18 +396,22 @@ export default function App() {
           <button
             onClick={() => setIsCartOpen(true)}
             style={{
-              position: 'relative',
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              zIndex: 1000,
               background: settings.primaryColor || '#ff7f32',
               color: 'white',
               border: 'none',
               borderRadius: '50%',
-              width: '50px',
-              height: '50px',
-              fontSize: '1.2rem',
+              width: '60px',
+              height: '60px',
+              fontSize: '1.4rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             }}
           >
             🛒
@@ -438,6 +446,28 @@ export default function App() {
               gap: '0.5rem',
               marginBottom: '1.5rem',
               flexWrap: 'wrap',
+              overflowX: 'auto',
+              scrollBehavior: 'smooth',
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: '5px',
+            }}
+            onTouchStart={(e) => {
+              const startX = e.touches[0].clientX;
+              const scrollLeft = e.currentTarget.scrollLeft;
+              
+              const handleTouchMove = (e) => {
+                const currentX = e.touches[0].clientX;
+                const diffX = startX - currentX;
+                e.currentTarget.scrollLeft = scrollLeft + diffX;
+              };
+              
+              const handleTouchEnd = () => {
+                document.removeEventListener('touchmove', handleTouchMove);
+                document.removeEventListener('touchend', handleTouchEnd);
+              };
+              
+              document.addEventListener('touchmove', handleTouchMove);
+              document.addEventListener('touchend', handleTouchEnd);
             }}
           >
             <button
