@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { ShoppingCart, X, Plus, Minus, Star } from 'lucide-react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
 
@@ -53,7 +52,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <Star size={16} fill="currentColor" />
+        <span style={{ fontSize: '16px' }}>⭐</span>
         <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Заказывают сейчас</span>
         <button
           onClick={() => setVisible(false)}
@@ -64,9 +63,10 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
             marginLeft: 'auto',
             cursor: 'pointer',
             padding: '0.25rem',
+            fontSize: '16px',
           }}
         >
-          <X size={16} />
+          ✕
         </button>
       </div>
       
@@ -140,9 +140,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
             padding: '0.5rem',
             borderRadius: '8px',
             color: '#666',
+            fontSize: '20px',
           }}
         >
-          <X size={24} />
+          ✕
         </button>
       </div>
 
@@ -184,9 +185,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
+                      fontSize: '16px',
                     }}
                   >
-                    <Minus size={14} />
+                    −
                   </button>
                   <span style={{ fontWeight: 'bold', minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
                   <button
@@ -202,9 +204,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
+                      fontSize: '16px',
                     }}
                   >
-                    <Plus size={14} />
+                    +
                   </button>
                 </div>
               </div>
@@ -216,9 +219,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
                   color: '#999',
                   cursor: 'pointer',
                   padding: '0.5rem',
+                  fontSize: '16px',
                 }}
               >
-                <X size={18} />
+                ✕
               </button>
             </div>
           ))
@@ -402,7 +406,7 @@ export default function App() {
               gap: '0.5rem',
             }}
           >
-            <ShoppingCart size={20} />
+            <span style={{ fontSize: '20px' }}>🛒</span>
             Корзина
             {cartItemsCount > 0 && (
               <span
