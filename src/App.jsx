@@ -116,55 +116,72 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
         top: 0,
         left: 0,
         width: '100%',
+        maxWidth: '400px',
         height: '100vh',
-        background: 'white',
+        background: settings.backgroundColor || '#fdf0e2',
         zIndex: 1001,
         padding: '1rem',
-        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        animation: 'slideInLeft 0.3s ease-out',
+        boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
         boxSizing: 'border-box',
       }}
     >
-      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
+      <style>
+        {`
+          @keyframes slideInLeft {
+            from {
+              transform: translateX(-100%);
+            }
+            to {
+              transform: translateX(0);
+            }
+          }
+        `}
+      </style>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
+        <button
+          onClick={onClose}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.5rem',
+            borderRadius: '8px',
+            color: '#666',
+            fontSize: '20px',
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {cart.length > 0 && (
+        <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
+            Итого: {total} {settings.currency || '₽'}
+          </div>
           <button
-            onClick={onClose}
             style={{
-              background: 'none',
+              padding: '0.75rem 2rem',
+              background: settings.primaryColor || '#ff7f32',
+              color: 'white',
               border: 'none',
+              borderRadius: '12px',
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
               cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '8px',
-              color: '#666',
-              fontSize: '20px',
             }}
           >
-            ✕
+            Оформить заказ
           </button>
         </div>
+      )}
 
-        {cart.length > 0 && (
-          <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
-              Итого: {total} {settings.currency || '₽'}
-            </div>
-            <button
-              style={{
-                padding: '0.75rem 2rem',
-                background: settings.primaryColor || '#ff7f32',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-              }}
-            >
-              Оформить заказ
-            </button>
-          </div>
-        )}
-
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {cart.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
             Корзина пуста
@@ -175,36 +192,27 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
               key={item.id}
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-                padding: '1rem 0',
+                gap: '1rem',
+                alignItems: 'center',
+                marginBottom: '1rem',
+                paddingBottom: '1rem',
                 borderBottom: '1px solid #eee',
               }}
             >
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <img
-                  src={item.imageUrl}
-                  alt={item.name}
-                  style={{ width: '90px', height: '90px', borderRadius: '12px', objectFit: 'cover' }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem',
-                    color: '#2c1e0f',
-                    marginBottom: '0.3rem',
-                  }}>
-                    {item.name}
-                  </div>
-                  <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.5rem' }}>
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover' }}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#2c1e0f', marginBottom: '0.2rem' }}>
+                  {item.name}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: '1rem', color: '#666' }}>
                     {item.price} {settings.currency || '₽'}
                   </div>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    flexWrap: 'nowrap',
-                  }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       style={{
@@ -245,7 +253,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
                         color: '#e03636',
                         fontSize: '20px',
                         cursor: 'pointer',
-                        marginLeft: 'auto',
                       }}
                     >
                       🗑️
