@@ -42,11 +42,11 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
         top: '20px',
         right: '20px',
         zIndex: 1000,
-        background: 'linear-gradient(135deg, #ff7f32, #ff5722)',
+        background: 'linear-gradient(135deg, #4a90e2, #357abd)',
         color: 'white',
         padding: '1rem',
         borderRadius: '16px',
-        boxShadow: '0 8px 24px rgba(255, 127, 50, 0.3)',
+        boxShadow: '0 8px 24px rgba(74, 144, 226, 0.3)',
         maxWidth: '280px',
         animation: 'slideIn 0.5s ease-out',
       }}
@@ -396,18 +396,17 @@ export default function App() {
               background: settings.primaryColor || '#ff7f32',
               color: 'white',
               border: 'none',
-              borderRadius: '12px',
-              padding: '0.75rem 1.5rem',
-              fontSize: '1rem',
-              fontWeight: 'bold',
+              borderRadius: '50%',
+              width: '50px',
+              height: '50px',
+              fontSize: '1.2rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
+              justifyContent: 'center',
             }}
           >
-            <span style={{ fontSize: '20px' }}>🛒</span>
-            Корзина
+            🛒
             {cartItemsCount > 0 && (
               <span
                 style={{
@@ -537,23 +536,65 @@ export default function App() {
               <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0.25rem 0', color: '#2c1e0f' }}>
                 {product.price} {settings.currency || '₽'}
               </p>
-              <button
-                onClick={() => addToCart(product)}
+              <div
                 style={{
-                  width: '100%',
+                  display: 'flex',
+                  gap: '0.25rem',
+                  alignItems: 'center',
                   marginTop: '0.5rem',
-                  padding: '0.75rem',
-                  background: settings.primaryColor || '#ff7f32',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
                 }}
               >
-                В корзину
-              </button>
+                <button
+                  onClick={() => {
+                    const existing = cart.find(item => item.id === product.id);
+                    if (existing && existing.quantity > 1) {
+                      updateQuantity(product.id, existing.quantity - 1);
+                    } else {
+                      removeFromCart(product.id);
+                    }
+                  }}
+                  style={{
+                    backgroundColor: settings.primaryColor || '#ff7f32',
+                    color: '#fff',
+                    fontSize: '1.25rem',
+                    padding: '0.2rem 0.7rem',
+                    border: 'none',
+                    borderRadius: '12px 0 0 12px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  −
+                </button>
+                <div
+                  style={{
+                    background: '#fff1dd',
+                    padding: '0.2rem 1rem',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    minWidth: '40px',
+                    textAlign: 'center',
+                  }}
+                >
+                  {cart.find(item => item.id === product.id)?.quantity || 0}
+                </div>
+                <button
+                  onClick={() => addToCart(product)}
+                  style={{
+                    backgroundColor: settings.primaryColor || '#ff7f32',
+                    color: '#fff',
+                    fontSize: '1.25rem',
+                    padding: '0.2rem 0.7rem',
+                    border: 'none',
+                    borderRadius: '0 12px 12px 0',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  +
+                </button>
+              </div>
             </div>
           ))}
         </div>
