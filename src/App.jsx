@@ -115,147 +115,133 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
       style={{
         position: 'fixed',
         top: 0,
-        right: 0,
+        left: 0,
         width: '100%',
-        maxWidth: '400px',
         height: '100vh',
         background: 'white',
-        boxShadow: '-4px 0 20px rgba(0,0,0,0.1)',
         zIndex: 1001,
-        padding: '1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        animation: 'slideInRight 0.3s ease-out',
+        padding: '1rem',
+        overflowY: 'auto',
+        boxSizing: 'border-box',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0.5rem',
-            borderRadius: '8px',
-            color: '#666',
-            fontSize: '20px',
-          }}
-        >
-          ✕
-        </button>
-      </div>
-
-      {cart.length > 0 && (
-        <div style={{ borderBottom: '2px solid #f0f0f0', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#2c1e0f' }}>Итого:</span>
-            <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: settings.primaryColor || '#ff7f32' }}>
-              {total} {settings.currency || '₽'}
-            </span>
-          </div>
+      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
           <button
+            onClick={onClose}
             style={{
-              width: '100%',
-              padding: '1rem',
-              background: settings.primaryColor || '#ff7f32',
-              color: 'white',
+              background: 'none',
               border: 'none',
-              borderRadius: '12px',
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
               cursor: 'pointer',
+              padding: '0.5rem',
+              borderRadius: '8px',
+              color: '#666',
+              fontSize: '20px',
             }}
           >
-            Оформить заказ
+            ✕
           </button>
         </div>
-      )}
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
         {cart.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
             Корзина пуста
           </div>
         ) : (
-          cart.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                padding: '1rem 0',
-                borderBottom: '1px solid #f0f0f0',
-              }}
-            >
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
+          <>
+            {cart.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '1rem',
+                  padding: '1rem 0',
+                  borderBottom: '1px solid #eee',
+                }}
+              >
                 <img
                   src={item.imageUrl}
                   alt={item.name}
-                  style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }}
+                  style={{ width: '90px', height: '90px', borderRadius: '12px', objectFit: 'cover' }}
                 />
                 <div style={{ flex: 1 }}>
-                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 'bold', color: '#2c1e0f' }}>{item.name}</h4>
-                  <div style={{ color: '#666', fontSize: '1rem', marginTop: '0.5rem' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.3rem', color: '#2c1e0f' }}>
+                    {item.name}
+                  </div>
+                  <div style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#666' }}>
                     {item.price} {settings.currency || '₽'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      style={{
+                        background: '#f0f0f0',
+                        border: 'none',
+                        borderRadius: '6px',
+                        width: '32px',
+                        height: '32px',
+                        fontSize: '18px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      −
+                    </button>
+                    <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      style={{
+                        background: settings.primaryColor || '#ff7f32',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        width: '32px',
+                        height: '32px',
+                        fontSize: '18px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      style={{
+                        marginLeft: 'auto',
+                        background: 'none',
+                        border: 'none',
+                        color: '#e03636',
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    style={{
-                      background: '#f0f0f0',
-                      border: 'none',
-                      borderRadius: '6px',
-                      width: '36px',
-                      height: '36px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '18px',
-                    }}
-                  >
-                    −
-                  </button>
-                  <span style={{ fontWeight: 'bold', minWidth: '32px', textAlign: 'center', fontSize: '1.1rem' }}>{item.quantity}</span>
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    style={{
-                      background: settings.primaryColor || '#ff7f32',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      width: '36px',
-                      height: '36px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '18px',
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-                
-                <button
-                  onClick={() => removeFromCart(item.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#e03636',
-                    cursor: 'pointer',
-                    padding: '0.5rem',
-                    fontSize: '18px',
-                  }}
-                >
-                  🗑️
-                </button>
+            ))}
+
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+                Итого: {total} {settings.currency || '₽'}
               </div>
+              <button
+                style={{
+                  padding: '0.75rem 2rem',
+                  background: settings.primaryColor || '#ff7f32',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                }}
+              >
+                Оформить заказ
+              </button>
             </div>
-          ))
+          </>
         )}
       </div>
     </div>
