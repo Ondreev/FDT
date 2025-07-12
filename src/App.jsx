@@ -9,6 +9,9 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [currentlyOrdering, setCurrentlyOrdering] = useState([]);
+  const [showOrderingPanel, setShowOrderingPanel] = useState(false);
+  const [cart, setCart] = useState([]);
 
   // Подключение шрифтов
   useEffect(() => {
@@ -31,8 +34,14 @@ export default function App() {
   useEffect(() => {
     if (categories.length > 0 && !activeCategory) {
       setActiveCategory(categories[0].id);
+    } else if (products.length > 0 && categories.length === 0) {
+      // Если нет категорий, но есть продукты - создаем категории автоматически
+      const uniqueCategories = [...new Set(products.map(p => p.category))];
+      const autoCategories = uniqueCategories.map(cat => ({ id: cat, name: cat.toUpperCase() }));
+      setCategories(autoCategories);
+      setActiveCategory(autoCategories[0]?.id);
     }
-  }, [categories, activeCategory]);
+  }, [categories, activeCategory, products]);
 
   const fetchData = (action, setter) => {
     fetch(`${API_URL}?action=${action}`)
