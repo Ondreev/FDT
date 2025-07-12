@@ -14,17 +14,11 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
       const randomProduct = products[Math.floor(Math.random() * products.length)];
       setCurrentProduct(randomProduct);
       setVisible(true);
-      
-      // Скрыть через 8 секунд
-      setTimeout(() => {
-        setVisible(false);
-      }, 8000);
+
+      setTimeout(() => setVisible(false), 8000);
     };
 
-    // Показать первый раз через 5 секунд
     const initialTimer = setTimeout(showBanner, 5000);
-    
-    // Потом показывать каждые 15-20 секунд
     const interval = setInterval(showBanner, Math.random() * 5000 + 15000);
 
     return () => {
@@ -42,64 +36,88 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
         top: '20px',
         right: '20px',
         zIndex: 1000,
-        background: '#fff7ed',
+        background: settings.backgroundColor || '#fdf0e2',
         color: '#2c1e0f',
-        padding: '1.5rem',
+        padding: '1rem',
         borderRadius: '20px',
         boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-        maxWidth: '320px',
-        animation: 'slideIn 0.5s ease-out',
+        maxWidth: '420px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        animation: 'slideIn 0.4s ease-out',
         border: '2px solid #f0e6d2',
+        boxSizing: 'border-box',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <span style={{ fontSize: '18px' }}>⭐</span>
-        <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Заказывают сейчас</span>
+      <style>
+        {`
+          @keyframes slideIn {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span>⭐</span> Сейчас заказывают
+        </div>
         <button
           onClick={() => setVisible(false)}
           style={{
             background: 'none',
             border: 'none',
             color: '#999',
-            marginLeft: 'auto',
             cursor: 'pointer',
-            padding: '0.25rem',
             fontSize: '18px',
           }}
         >
           ✕
         </button>
       </div>
-      
-      <div style={{ textAlign: 'center' }}>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <img
           src={currentProduct.imageUrl}
           alt={currentProduct.name}
-          style={{ width: '120px', height: '120px', borderRadius: '12px', objectFit: 'cover', marginBottom: '1rem' }}
+          style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover' }}
         />
-        <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{currentProduct.name}</div>
-        <div style={{ fontSize: '1rem', color: '#666', marginBottom: '1rem' }}>{currentProduct.price} {settings.currency || '₽'}</div>
-        
-        <button
-          onClick={() => {
-            addToCart(currentProduct);
-            setVisible(false);
-          }}
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            background: settings.primaryColor || '#ff7f32',
-            border: 'none',
-            borderRadius: '12px',
-            color: 'white',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            fontSize: '1rem',
-          }}
-        >
-          Хочешь? 😋
-        </button>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.25rem' }}>
+            {currentProduct.name}
+          </div>
+          <div style={{ fontSize: '1rem', color: '#666' }}>
+            {currentProduct.price} {settings.currency || '₽'}
+          </div>
+        </div>
       </div>
+
+      <button
+        onClick={() => {
+          addToCart(currentProduct);
+          setVisible(false);
+        }}
+        style={{
+          width: '100%',
+          padding: '0.75rem',
+          background: settings.primaryColor || '#ff7f32',
+          border: 'none',
+          borderRadius: '12px',
+          color: 'white',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          fontSize: '1rem',
+        }}
+      >
+        Хочешь? 😋
+      </button>
     </div>
   );
 };
