@@ -931,12 +931,15 @@ export default function App() {
             }
           }
 
-          @media (max-width: 400px) {
-            .product-grid {
-              grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-            }
-          }
-        `}
+          .product-grid {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+@media (max-width: 400px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+  }
+}
       </style>
       
       <div
@@ -1081,13 +1084,7 @@ export default function App() {
           </div>
         )}
 
-        <div
-  className="product-grid"
-  style={{
-    display: 'grid',
-    gap: '1rem',
-  }}
->
+        <div className="product-grid" style={{ display: 'grid', gap: '1rem' }}>
           {filteredProducts.map((product) => (
             <div
               key={product.id}
