@@ -2,286 +2,21 @@ import { useEffect, useState } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
 
-const DeliveryProgressBar = ({ subtotal, settings }) => {
-  const DELIVERY_THRESHOLD = 2000;
-  const DELIVERY_COST = 200;
-  
-  if (subtotal >= DELIVERY_THRESHOLD) {
-    return null;
-  }
-
-  const remaining = DELIVERY_THRESHOLD - subtotal;
-  const progress = Math.min((subtotal / DELIVERY_THRESHOLD) * 100, 100);
-
-  return (
-    <div style={{
-      background: 'linear-gradient(135deg, #e8f5e8, #c8e6c9)',
-      padding: '0.75rem',
-      borderRadius: '10px',
-      marginBottom: '1rem',
-      border: '2px dashed #4caf50',
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '0.5rem',
-        color: '#2e7d32'
-      }}>
-        <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
-          🚚 До бесплатной доставки
-        </div>
-        <div style={{ fontWeight: 'bold', color: '#d32f2f' }}>
-          ещё {remaining} {settings.currency || '₽'}
-        </div>
-      </div>
-      
-      <div style={{
-        background: '#fff',
-        borderRadius: '999px',
-        height: '6px',
-        overflow: 'hidden',
-        marginBottom: '0.3rem',
-        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-      }}>
-        <div style={{
-          background: 'linear-gradient(90deg, #4caf50, #66bb6a)',
-          height: '100%',
-          width: `${Math.max(progress, 3)}%`,
-          borderRadius: '999px',
-          transition: 'width 0.3s ease',
-        }} />
-      </div>
-      
-      <div style={{ 
-        fontSize: '0.75rem', 
-        color: '#2e7d32',
-        textAlign: 'center',
-        fontWeight: '500'
-      }}>
-        Сейчас доставка {DELIVERY_COST} {settings.currency || '₽'}
-      </div>
-    </div>
-  );
-};
-
-const FreeDeliveryTimer = ({ subtotal, settings, onActivate, cart }) => {
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const [hasTriggered, setHasTriggered] = useState(false);
-
-  const DELIVERY_THRESHOLD = 2000;
-  const isFreeDeliveryActive = cart.some(item => item.id === 'free_delivery');
-
-  useEffect(() => {
-    if (subtotal >= DELIVERY_THRESHOLD && !hasTriggered && !isFreeDeliveryActive) {
-      setTimeLeft(120);
-      setIsActive(true);
-      setHasTriggered(true);
-    }
-  }, [subtotal, hasTriggered, isFreeDeliveryActive]);
-
-  useEffect(() => {
-    let interval = null;
-    if (isActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft(timeLeft => {
-          if (timeLeft <= 1) {
-            setIsActive(false);
-            return 0;
-          }
-          return timeLeft - 1;
-        });
-      }, 1000);
-    } else if (timeLeft === 0) {
-      setIsActive(false);
-    }
-    return () => clearInterval(interval);
-  }, [isActive, timeLeft]);
-
-  if (!isActive || timeLeft <= 0 || isFreeDeliveryActive) return null;
-
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-
-  return (
-    <div style={{
-      background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
-      color: 'white',
-      padding: '0.75rem',
-      borderRadius: '10px',
-      marginBottom: '1rem',
-      border: '2px solid #81c784',
-      boxShadow: '0 3px 12px rgba(25, 118, 210, 0.3)',
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '0.5rem'
-      }}>
-        <div style={{ 
-          fontSize: '0.9rem', 
-          fontWeight: 'bold',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-        }}>
-          🚚 БЕСПЛАТНАЯ ДОСТАВКА
-        </div>
-        <div style={{
-          fontSize: '1.2rem',
-          fontWeight: 'bold',
-          fontFamily: 'monospace',
-          color: timeLeft <= 30 ? '#ffff00' : '#ffffff',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-        }}>
-          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-        </div>
-      </div>
-
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '0.5rem',
-        marginBottom: '0.5rem',
-      }}>
-        <div style={{
-          background: 'rgba(255,255,255,0.2)',
-          padding: '0.3rem 0.6rem',
-          borderRadius: '6px',
-          fontSize: '0.8rem',
-          fontWeight: 'bold'
-        }}>
-          Экономия: 200 {settings.currency || '₽'}
-        </div>
-        <div style={{ 
-          fontSize: '0.8rem',
-          opacity: 0.9,
-          flex: 1
-        }}>
-          При заказе от 2000₽
-        </div>
-      </div>
-
-      <button
-        onClick={() => {
-          onActivate();
-          setIsActive(false);
-        }}
-        style={{
-          width: '100%',
-          padding: '0.5rem',
-          background: 'linear-gradient(135deg, #4caf50, #66bb6a)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          fontSize: '0.9rem',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-          boxShadow: '0 2px 6px rgba(76, 175, 80, 0.4)',
-          transition: 'all 0.2s ease',
-        }}
-      >
-        🚀 АКТИВИРОВАТЬ!
-      </button>
-    </div>
-  );
-};
-
-const MainMenuBanners = ({ subtotal, products, settings, cart }) => {
-  const specialProduct = products.find(p => String(p.id).includes('R2000'));
-  const isFlashInCart = cart.some(item => item.id === `${specialProduct?.id}_flash`);
-  const shouldShowFlash = subtotal >= 2000 && specialProduct && !isFlashInCart;
-
-  const isFreeDeliveryActive = cart.some(item => item.id === 'free_delivery');
-  const shouldShowDelivery = subtotal >= 2000 && !isFreeDeliveryActive;
-
-  if (!shouldShowFlash && !shouldShowDelivery) return null;
-
-  return (
-    <div style={{
-      position: 'sticky',
-      top: '80px',
-      zIndex: 950,
-      background: settings.backgroundColor || '#fdf0e2',
-      padding: '0.5rem 0',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.5rem',
-    }}>
-      {shouldShowFlash && (
-        <div style={{
-          background: 'linear-gradient(135deg, #ff0844, #ff6b6b)',
-          color: 'white',
-          padding: '0.5rem 0.75rem',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.8rem',
-          boxShadow: '0 2px 8px rgba(255, 8, 68, 0.3)',
-        }}>
-          <img
-            src={specialProduct.imageUrl}
-            alt={specialProduct.name}
-            style={{ width: '30px', height: '30px', borderRadius: '4px', objectFit: 'cover' }}
-          />
-          <div style={{ flex: 1 }}>
-            <span style={{ fontWeight: 'bold' }}>{specialProduct.name}</span>
-            <span style={{ marginLeft: '0.5rem', background: '#ffff00', color: '#ff0844', padding: '0.1rem 0.3rem', borderRadius: '4px', fontSize: '0.7rem' }}>-99%</span>
-          </div>
-          <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>В корзине ⚡</div>
-        </div>
-      )}
-
-      {shouldShowDelivery && (
-        <div style={{
-          background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
-          color: 'white',
-          padding: '0.5rem 0.75rem',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.8rem',
-          boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
-        }}>
-          <div style={{ 
-            background: 'rgba(255,255,255,0.2)', 
-            borderRadius: '50%', 
-            width: '30px', 
-            height: '30px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            fontSize: '1rem'
-          }}>
-            🚚
-          </div>
-          <div style={{ flex: 1 }}>
-            <span style={{ fontWeight: 'bold' }}>Бесплатная доставка</span>
-            <span style={{ marginLeft: '0.5rem', background: '#4caf50', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '4px', fontSize: '0.7rem' }}>-200₽</span>
-          </div>
-          <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>В корзине 🚀</div>
-        </div>
-      )}
-    </div>
-  );
-};
-
+// Компонент прогрессбара скидки - ВСЕГДА показывает следующую цель
 const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
   if (!discounts || discounts.length === 0) return null;
 
+  // Находим ближайшую БОЛЬШУЮ скидку (мотивируем увеличивать чек)
   const nextDiscount = discounts
     .filter(d => d.minTotal > subtotal)
     .sort((a, b) => a.minTotal - b.minTotal)[0];
 
+  // Находим текущую скидку
   const currentDiscount = discounts
     .filter(d => d.minTotal <= subtotal)
     .sort((a, b) => b.minTotal - a.minTotal)[0];
 
+  // Если достигли максимальной скидки - показываем достижение, но не прогрессбар
   if (!nextDiscount && currentDiscount) {
     return (
       <div style={{
@@ -303,6 +38,7 @@ const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
     );
   }
 
+  // Если есть следующая цель - показываем прогрессбар к ней
   if (nextDiscount) {
     const remaining = nextDiscount.minTotal - subtotal;
     const startPoint = currentDiscount ? currentDiscount.minTotal : 0;
@@ -311,13 +47,14 @@ const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
     return (
       <div style={{
         background: currentDiscount 
-          ? 'linear-gradient(135deg, #d1ecf1, #bee5eb)'
-          : 'linear-gradient(135deg, #fff3cd, #ffeaa7)',
+          ? 'linear-gradient(135deg, #d1ecf1, #bee5eb)' // Если уже есть скидка - голубоватый фон
+          : 'linear-gradient(135deg, #fff3cd, #ffeaa7)', // Если скидки нет - жёлтый фон
         padding: '1rem',
         borderRadius: '12px',
         marginBottom: '1rem',
         border: `2px dashed ${currentDiscount ? '#17a2b8' : '#f39c12'}`,
       }}>
+        {/* Показываем текущую скидку, если есть */}
         {currentDiscount && (
           <div style={{
             textAlign: 'center',
@@ -361,11 +98,12 @@ const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
               ? 'linear-gradient(90deg, #17a2b8, #20c997)' 
               : 'linear-gradient(90deg, #ff7f32, #ff6b47)',
             height: '100%',
-            width: `${Math.max(progress, 5)}%`,
+            width: `${Math.max(progress, 5)}%`, // Минимум 5% для видимости
             borderRadius: '999px',
             transition: 'width 0.3s ease',
             position: 'relative',
           }}>
+            {/* Блестящий эффект */}
             <div style={{
               position: 'absolute',
               top: 0,
@@ -385,7 +123,7 @@ const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
           fontWeight: '500'
         }}>
           {currentDiscount 
-            ? 'Увеличьте заказ и получите ещё больше скидки! 🚀'
+            ? `Увеличьте заказ и получите ещё больше скидки! 🚀`
             : 'Добавьте ещё товаров и получите скидку! 💰'
           }
         </div>
@@ -396,17 +134,22 @@ const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
   return null;
 };
 
+// Компонент таймера со скидкой 99% - КОМПАКТНАЯ ВЕРСИЯ
 const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
 
+  // Находим товар с R2000 в ID
   const specialProduct = products.find(p => String(p.id).includes('R2000'));
+  
+  // Проверяем, есть ли уже этот flash-товар в корзине
   const isInCart = cart.some(item => item.id === `${specialProduct?.id}_flash`);
 
   useEffect(() => {
+    // Активируем предложение при достижении 2000₽ (только один раз)
     if (subtotal >= 2000 && !hasTriggered && specialProduct && !isInCart) {
-      setTimeLeft(120);
+      setTimeLeft(120); // 2 минуты
       setIsActive(true);
       setHasTriggered(true);
     }
@@ -430,12 +173,13 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
     return () => clearInterval(interval);
   }, [isActive, timeLeft]);
 
+  // Не показываем, если нет специального товара или предложение неактивно
   if (!specialProduct || !isActive || timeLeft <= 0 || isInCart) return null;
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const originalPrice = specialProduct.price;
-  const discountedPrice = Math.round(originalPrice * 0.01);
+  const discountedPrice = Math.round(originalPrice * 0.01); // 99% скидка
 
   return (
     <div style={{
@@ -446,7 +190,25 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
       marginBottom: '1rem',
       border: '2px solid #ffd700',
       boxShadow: '0 4px 15px rgba(255, 8, 68, 0.3)',
+      animation: 'flashPulse 2s infinite',
+      position: 'relative',
+      overflow: 'hidden',
     }}>
+      <style>
+        {`
+          @keyframes flashPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.01); }
+          }
+          
+          @keyframes timerBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+          }
+        `}
+      </style>
+
+      {/* Компактный заголовок */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -464,6 +226,7 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
           fontSize: '1.5rem',
           fontWeight: 'bold',
           fontFamily: 'monospace',
+          animation: timeLeft <= 30 ? 'timerBlink 1s infinite' : 'none',
           color: timeLeft <= 30 ? '#ffff00' : '#ffffff',
           textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
         }}>
@@ -471,6 +234,7 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
         </div>
       </div>
 
+      {/* Компактный товар */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -533,26 +297,29 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
 
       <button
         onClick={() => {
+          // Проверяем, нет ли уже этого товара в корзине
           const existingFlashItem = cart.find(item => 
             item.id === `${specialProduct.id}_flash`
           );
           
           if (existingFlashItem) {
+            // Если уже есть - не добавляем и скрываем предложение
             setIsActive(false);
             return;
           }
 
+          // Добавляем товар со скидкой 99% (только 1 штука)
           const discountedProduct = {
             ...specialProduct,
             price: discountedPrice,
             originalPrice: originalPrice,
             isFlashOffer: true,
-            quantity: 1,
+            quantity: 1, // Фиксированное количество
             name: `${specialProduct.name} ⚡`,
-            id: `${specialProduct.id}_flash`
+            id: `${specialProduct.id}_flash` // Уникальный ID для flash-версии
           };
           addToCart(discountedProduct);
-          setIsActive(false);
+          setIsActive(false); // Скрываем предложение после добавления
         }}
         style={{
           width: '100%',
@@ -570,6 +337,14 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
           boxShadow: '0 2px 8px rgba(255, 215, 0, 0.4)',
           transition: 'all 0.2s ease',
         }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'scale(1.02)';
+          e.target.style.boxShadow = '0 4px 12px rgba(255, 215, 0, 0.6)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'scale(1)';
+          e.target.style.boxShadow = '0 2px 8px rgba(255, 215, 0, 0.4)';
+        }}
       >
         🔥 СХВАТИТЬ! 🔥
       </button>
@@ -577,6 +352,7 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
   );
 };
 
+// Компонент "Заказывают сейчас"
 const OrderingNowBanner = ({ products, settings, addToCart }) => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [visible, setVisible] = useState(false);
@@ -619,10 +395,26 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
+        animation: 'slideIn 0.4s ease-out',
         border: '2px solid #f0e6d2',
         boxSizing: 'border-box',
       }}
     >
+      <style>
+        {`
+          @keyframes slideIn {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span>⭐</span> Сейчас заказывают
@@ -680,12 +472,14 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
   );
 };
 
+// Обновленный компонент корзины с таймером flash-предложения
 const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart }) => {
   const [discounts, setDiscounts] = useState([]);
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
+      // Загружаем скидки
       fetch(`${API_URL}?action=getDiscounts`)
         .then(res => res.json())
         .then(data => {
@@ -697,6 +491,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         })
         .catch(err => console.error('Error fetching discounts:', err));
 
+      // Загружаем товары для flash-предложения
       fetch(`${API_URL}?action=getProducts`)
         .then(res => res.json())
         .then(data => setProducts(data))
@@ -704,55 +499,19 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    const hasProducts = cart.some(item => item.id !== 'delivery' && item.id !== 'free_delivery');
-    const hasDelivery = cart.some(item => item.id === 'delivery' || item.id === 'free_delivery');
-    
-    if (hasProducts && !hasDelivery) {
-      const deliveryItem = {
-        id: 'delivery',
-        name: 'Доставка',
-        price: 200,
-        quantity: 1,
-        isDelivery: true,
-        imageUrl: '🚚'
-      };
-      addToCart(deliveryItem);
-    } else if (!hasProducts && hasDelivery) {
-      removeFromCart('delivery');
-      removeFromCart('free_delivery');
-    }
-  }, [cart, addToCart, removeFromCart]);
-
-  const activateFreeDelivery = () => {
-    removeFromCart('delivery');
-    
-    const freeDeliveryItem = {
-      id: 'free_delivery',
-      name: 'Доставка (бесплатно)',
-      price: 0,
-      originalPrice: 200,
-      quantity: 1,
-      isDelivery: true,
-      isFreeDelivery: true,
-      imageUrl: '🚚'
-    };
-    addToCart(freeDeliveryItem);
+  const addToCartHandler = (product) => {
+    addToCart(product);
   };
 
-  const subtotal = cart
-    .filter(item => !item.isDelivery)
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
-  const deliveryItem = cart.find(item => item.isDelivery);
-  const deliveryCost = deliveryItem ? deliveryItem.price : 0;
-  
+  // Рассчитываем скидку
   const currentDiscount = discounts
     .filter(d => d.minTotal <= subtotal)
     .sort((a, b) => b.minTotal - a.minTotal)[0];
   
   const discountAmount = currentDiscount ? Math.round(subtotal * currentDiscount.discountPercent / 100) : 0;
-  const total = subtotal - discountAmount + deliveryCost;
+  const total = subtotal - discountAmount;
 
   if (!isOpen) return null;
 
@@ -770,13 +529,29 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         padding: '1rem',
         display: 'flex',
         flexDirection: 'column',
+        animation: 'slideInLeft 0.3s ease-out',
         boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
         boxSizing: 'border-box',
       }}
     >
+      <style>
+        {`
+          @keyframes slideInLeft {
+            from {
+              transform: translateX(-100%);
+            }
+            to {
+              transform: translateX(0);
+            }
+          }
+        `}
+      </style>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
         <button
+          onClick={onClose}
+          style={{
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -790,32 +565,18 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         </button>
       </div>
 
+      {/* Flash-предложение с таймером - ПЕРВЫМ */}
       {cart.length > 0 && (
         <FlashOfferTimer 
           subtotal={subtotal} 
           products={products}
           settings={settings} 
-          addToCart={addToCart}
+          addToCart={addToCartHandler}
           cart={cart}
         />
       )}
 
-      {cart.length > 0 && (
-        <FreeDeliveryTimer 
-          subtotal={subtotal}
-          settings={settings} 
-          onActivate={activateFreeDelivery}
-          cart={cart}
-        />
-      )}
-
-      {cart.length > 0 && (
-        <DeliveryProgressBar 
-          subtotal={subtotal} 
-          settings={settings} 
-        />
-      )}
-
+      {/* Прогрессбар скидки */}
       {cart.length > 0 && (
         <DiscountProgressBar 
           subtotal={subtotal} 
@@ -824,6 +585,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         />
       )}
 
+      {/* Итоговая информация - ЗАФИКСИРОВАННАЯ */}
       {cart.length > 0 && (
         <div style={{ 
           backgroundColor: 'rgba(255,255,255,0.9)',
@@ -840,10 +602,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         }}>
           <div style={{ marginBottom: '0.5rem' }}>
             <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
-              Товары: {subtotal} {settings.currency || '₽'}
-            </div>
-            <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
-              Доставка: {deliveryCost > 0 ? `${deliveryCost} ${settings.currency || '₽'}` : 'Бесплатно 🎉'}
+              Сумма: {subtotal} {settings.currency || '₽'}
             </div>
             {discountAmount > 0 && (
               <div style={{ fontSize: '1rem', color: '#28a745', marginBottom: '0.25rem' }}>
@@ -873,10 +632,11 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         </div>
       )}
 
+      {/* Список товаров - СКРОЛЛИРУЕМЫЙ */}
       <div style={{ 
         flex: 1, 
         overflowY: 'auto',
-        maxHeight: 'calc(100vh - 450px)',
+        maxHeight: 'calc(100vh - 400px)', // Ограничиваем высоту
         paddingRight: '0.5rem'
       }}>
         {cart.length === 0 ? (
@@ -894,41 +654,22 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                 marginBottom: '1rem',
                 paddingBottom: '1rem',
                 borderBottom: '1px solid #eee',
-                background: item.isFlashOffer ? 'linear-gradient(135deg, #fff5f5, #ffe6e6)' : 
-                           item.isFreeDelivery ? 'linear-gradient(135deg, #e8f5e8, #f1f8e9)' : 'transparent',
-                borderRadius: (item.isFlashOffer || item.isFreeDelivery) ? '8px' : '0',
-                padding: (item.isFlashOffer || item.isFreeDelivery) ? '0.5rem' : '0',
-                border: item.isFlashOffer ? '2px solid #ff0844' : 
-                       item.isFreeDelivery ? '2px solid #4caf50' : 'none',
+                background: item.isFlashOffer ? 'linear-gradient(135deg, #fff5f5, #ffe6e6)' : 'transparent',
+                borderRadius: item.isFlashOffer ? '8px' : '0',
+                padding: item.isFlashOffer ? '0.5rem' : '0',
+                border: item.isFlashOffer ? '2px solid #ff0844' : 'none',
               }}
             >
-              <div style={{
-                width: '70px',
-                height: '70px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: item.isDelivery ? '#f5f5f5' : 'transparent',
-                fontSize: item.isDelivery ? '2rem' : 'inherit'
-              }}>
-                {item.isDelivery ? (
-                  '🚚'
-                ) : (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    style={{ width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' }}
-                  />
-                )}
-              </div>
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                style={{ width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' }}
+              />
               <div style={{ flex: 1 }}>
                 <div style={{ 
                   fontWeight: 'bold', 
                   fontSize: '1rem', 
-                  color: item.isFlashOffer ? '#ff0844' : 
-                         item.isFreeDelivery ? '#4caf50' :
-                         item.isDelivery ? '#666' : '#2c1e0f', 
+                  color: item.isFlashOffer ? '#ff0844' : '#2c1e0f', 
                   marginBottom: '0.2rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -947,22 +688,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                       -99%
                     </span>
                   )}
-                  {item.isFreeDelivery && (
-                    <span style={{
-                      background: '#4caf50',
-                      color: 'white',
-                      fontSize: '0.7rem',
-                      padding: '0.2rem 0.4rem',
-                      borderRadius: '8px',
-                      fontWeight: 'bold'
-                    }}>
-                      БЕСПЛАТНО
-                    </span>
-                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                    {(item.isFlashOffer || item.isFreeDelivery) && item.originalPrice && (
+                    {item.isFlashOffer && item.originalPrice && (
                       <span style={{ 
                         textDecoration: 'line-through', 
                         marginRight: '0.5rem',
@@ -972,15 +701,15 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                       </span>
                     )}
                     <span style={{ 
-                      fontWeight: (item.isFlashOffer || item.isFreeDelivery) ? 'bold' : 'normal',
-                      color: item.isFlashOffer ? '#ff0844' : 
-                             item.isFreeDelivery ? '#4caf50' : '#666'
+                      fontWeight: item.isFlashOffer ? 'bold' : 'normal',
+                      color: item.isFlashOffer ? '#ff0844' : '#666'
                     }}>
-                      {item.price > 0 ? `${item.price} ${settings.currency || '₽'}` : 'Бесплатно'}
+                      {item.price} {settings.currency || '₽'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    {!item.isFlashOffer && !item.isDelivery ? (
+                    {!item.isFlashOffer ? (
+                      // Обычные товары - можно изменять количество
                       <>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -1016,44 +745,38 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                         </button>
                       </>
                     ) : (
+                      // Flash-товары - фиксированное количество
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.5rem',
-                        background: item.isFlashOffer ? '#fff0f0' : 
-                                   item.isFreeDelivery ? '#f0fff0' :
-                                   item.isDelivery ? '#f8f8f8' : '#fff0f0',
+                        background: '#fff0f0',
                         padding: '0.3rem 0.6rem',
                         borderRadius: '6px',
-                        border: `1px solid ${item.isFlashOffer ? '#ff0844' : 
-                                              item.isFreeDelivery ? '#4caf50' : '#ccc'}`,
+                        border: '1px solid #ff0844',
                       }}>
                         <span style={{ 
                           fontWeight: 'bold', 
                           fontSize: '0.9rem',
-                          color: item.isFlashOffer ? '#ff0844' : 
-                                 item.isFreeDelivery ? '#4caf50' :
-                                 item.isDelivery ? '#666' : '#ff0844'
+                          color: '#ff0844'
                         }}>
-                          {item.isDelivery ? 'Услуга' : '1 шт'}
+                          1 шт
                         </span>
                       </div>
                     )}
-                    {!item.isDelivery && (
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#e03636',
-                          fontSize: '18px',
-                          cursor: 'pointer',
-                          marginLeft: '0.3rem',
-                        }}
-                      >
-                        🗑️
-                      </button>
-                    )}
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#e03636',
+                        fontSize: '18px',
+                        cursor: 'pointer',
+                        marginLeft: '0.3rem',
+                      }}
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1073,6 +796,7 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
+  // Состояния для свайпа
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -1129,6 +853,7 @@ export default function App() {
     setCart(prev => prev.filter(item => item.id !== id));
   };
 
+  // Функции для свайпа
   const handleTouchStart = (e) => {
     if (categories.length === 0) return;
     setTouchStartX(e.touches[0].clientX);
@@ -1139,6 +864,7 @@ export default function App() {
   const handleTouchMove = (e) => {
     if (!isSwiping) return;
     
+    // Предотвращаем скролл если это горизонтальный свайп
     const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
     const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
     
@@ -1158,13 +884,16 @@ export default function App() {
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
 
+    // Проверяем что это горизонтальный свайп
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
       const allCategories = [null, ...categories.map(cat => cat.id)];
       const currentIndex = allCategories.indexOf(activeCategory);
 
       if (deltaX > 0 && currentIndex > 0) {
+        // Свайп вправо - предыдущая категория
         setActiveCategory(allCategories[currentIndex - 1]);
       } else if (deltaX < 0 && currentIndex < allCategories.length - 1) {
+        // Свайп влево - следующая категория
         setActiveCategory(allCategories[currentIndex + 1]);
       }
     }
@@ -1177,10 +906,6 @@ export default function App() {
     : products;
 
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  
-  const subtotalForBanners = cart
-    .filter(item => !item.isDelivery)
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
     <>
@@ -1194,6 +919,15 @@ export default function App() {
             to {
               transform: translateX(0);
               opacity: 1;
+            }
+          }
+
+          @keyframes slideInRight {
+            from {
+              transform: translateX(100%);
+            }
+            to {
+              transform: translateX(0);
             }
           }
 
@@ -1347,13 +1081,6 @@ export default function App() {
           </div>
         )}
 
-        <MainMenuBanners 
-          subtotal={subtotalForBanners}
-          products={products}
-          settings={settings}
-          cart={cart}
-        />
-
         <div
           className="product-grid"
           style={{
@@ -1413,6 +1140,7 @@ export default function App() {
               <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
               <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
               
+              {/* Нижняя часть карточки */}
               <div style={{ 
                 marginTop: 'auto',
                 display: 'flex', 
