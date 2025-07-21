@@ -2,6 +2,138 @@ import { useEffect, useState } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
 
+// Компонент прогрессбара скидки - ВСЕГДА показывает следующую цель
+const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
+  if (!discounts || discounts.length === 0) return null;
+
+  // Находим ближайшую БОЛЬШУЮ скидку (мотивируем увеличивать чек)
+  const nextDiscount = discounts
+    .filter(d => d.minTotal > subtotal)
+    .sort((a, b) => a.minTotal - b.minTotal)[0];
+
+  // Находим текущую скидку
+  const currentDiscount = discounts
+    .filter(d => d.minTotal <= subtotal)
+    .sort((a, b) => b.minTotal - a.minTotal)[0];
+
+  // Если достигли максимальной скидки - показываем достижение, но не прогрессбар
+  if (!nextDiscount && currentDiscount) {
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, #6f42c1, #e83e8c)',
+        color: 'white',
+        padding: '1rem',
+        borderRadius: '12px',
+        marginBottom: '1rem',
+        textAlign: 'center',
+        border: '2px solid #ffd700',
+      }}>
+        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+          👑 МАКСИМАЛЬНАЯ СКИДКА {currentDiscount.discountPercent}%!
+        </div>
+        <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+          Экономия: {Math.round(subtotal * currentDiscount.discountPercent / 100)} {settings.currency || '₽'}
+        </div>
+      </div>
+    );
+  }
+
+  // Если есть следующая цель - показываем прогрессбар к ней
+  if (nextDiscount) {
+    const remaining = nextDiscount.minTotal - subtotal;
+    const startPoint = currentDiscount ? currentDiscount.minTotal : 0;
+    const progress = Math.min(((subtotal - startPoint) / (nextDiscount.minTotal - startPoint)) * 100, 100);
+
+    return (
+      <div style={{
+        background: currentDiscount 
+          ? 'linear-gradient(135deg, #d1ecf1, #bee5eb)' // Если уже есть скидка - голубоватый фон
+          : 'linear-gradient(135deg, #fff3cd, #ffeaa7)', // Если скидки нет - жёлтый фон
+        padding: '1rem',
+        borderRadius: '12px',
+        marginBottom: '1rem',
+        border: `2px dashed ${currentDiscount ? '#17a2b8' : '#f39c12'}`,
+      }}>
+        {/* Показываем текущую скидку, если есть */}
+        {currentDiscount && (
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '0.75rem',
+            padding: '0.5rem',
+            background: 'rgba(23, 162, 184, 0.1)',
+            borderRadius: '8px',
+            color: '#0c5460',
+          }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
+              🎉 Сейчас скидка {currentDiscount.discountPercent}%
+            </div>
+          </div>
+        )}
+        
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '0.75rem',
+          color: currentDiscount ? '#0c5460' : '#856404'
+        }}>
+          <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>
+            До скидки {nextDiscount.discountPercent}%
+          </div>
+          <div style={{ fontWeight: 'bold', color: '#d63384' }}>
+            ещё {remaining} {settings.currency || '₽'}
+          </div>
+        </div>
+        
+        <div style={{
+          background: '#fff',
+          borderRadius: '999px',
+          height: '10px',
+          overflow: 'hidden',
+          marginBottom: '0.5rem',
+          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+        }}>
+          <div style={{
+            background: currentDiscount 
+              ? 'linear-gradient(90deg, #17a2b8, #20c997)' 
+              : 'linear-gradient(90deg, #ff7f32, #ff6b47)',
+            height: '100%',
+            width: `${Math.max(progress, 5)}%`, // Минимум 5% для видимости
+            borderRadius: '999px',
+            transition: 'width 0.3s ease',
+            position: 'relative',
+          }}>
+            {/* Блестящий эффект */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+              borderRadius: '999px',
+            }} />
+          </div>
+        </div>
+        
+        <div style={{ 
+          fontSize: '0.85rem', 
+          color: currentDiscount ? '#0c5460' : '#856404',
+          textAlign: 'center',
+          fontWeight: '500'
+        }}>
+          {currentDiscount 
+            ? `Увеличьте заказ и получите ещё больше скидки! 🚀`
+            : 'Добавьте ещё товаров и получите скидку! 💰'
+          }
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 // Компонент таймера со скидкой 99% - КОМПАКТНАЯ ВЕРСИЯ
 const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
   const [timeLeft, setTimeLeft] = useState(0);
@@ -219,136 +351,6 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
     </div>
   );
 };
-const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
-  if (!discounts || discounts.length === 0) return null;
-
-  // Находим ближайшую БОЛЬШУЮ скидку (мотивируем увеличивать чек)
-  const nextDiscount = discounts
-    .filter(d => d.minTotal > subtotal)
-    .sort((a, b) => a.minTotal - b.minTotal)[0];
-
-  // Находим текущую скидку
-  const currentDiscount = discounts
-    .filter(d => d.minTotal <= subtotal)
-    .sort((a, b) => b.minTotal - a.minTotal)[0];
-
-  // Если достигли максимальной скидки - показываем достижение, но не прогрессбар
-  if (!nextDiscount && currentDiscount) {
-    return (
-      <div style={{
-        background: 'linear-gradient(135deg, #6f42c1, #e83e8c)',
-        color: 'white',
-        padding: '1rem',
-        borderRadius: '12px',
-        marginBottom: '1rem',
-        textAlign: 'center',
-        border: '2px solid #ffd700',
-      }}>
-        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-          👑 МАКСИМАЛЬНАЯ СКИДКА {currentDiscount.discountPercent}%!
-        </div>
-        <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-          Экономия: {Math.round(subtotal * currentDiscount.discountPercent / 100)} {settings.currency || '₽'}
-        </div>
-      </div>
-    );
-  }
-
-  // Если есть следующая цель - показываем прогрессбар к ней
-  if (nextDiscount) {
-    const remaining = nextDiscount.minTotal - subtotal;
-    const startPoint = currentDiscount ? currentDiscount.minTotal : 0;
-    const progress = Math.min(((subtotal - startPoint) / (nextDiscount.minTotal - startPoint)) * 100, 100);
-
-    return (
-      <div style={{
-        background: currentDiscount 
-          ? 'linear-gradient(135deg, #d1ecf1, #bee5eb)' // Если уже есть скидка - голубоватый фон
-          : 'linear-gradient(135deg, #fff3cd, #ffeaa7)', // Если скидки нет - жёлтый фон
-        padding: '1rem',
-        borderRadius: '12px',
-        marginBottom: '1rem',
-        border: `2px dashed ${currentDiscount ? '#17a2b8' : '#f39c12'}`,
-      }}>
-        {/* Показываем текущую скидку, если есть */}
-        {currentDiscount && (
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '0.75rem',
-            padding: '0.5rem',
-            background: 'rgba(23, 162, 184, 0.1)',
-            borderRadius: '8px',
-            color: '#0c5460',
-          }}>
-            <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
-              🎉 Сейчас скидка {currentDiscount.discountPercent}%
-            </div>
-          </div>
-        )}
-        
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '0.75rem',
-          color: currentDiscount ? '#0c5460' : '#856404'
-        }}>
-          <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>
-            До скидки {nextDiscount.discountPercent}%
-          </div>
-          <div style={{ fontWeight: 'bold', color: '#d63384' }}>
-            ещё {remaining} {settings.currency || '₽'}
-          </div>
-        </div>
-        
-        <div style={{
-          background: '#fff',
-          borderRadius: '999px',
-          height: '10px',
-          overflow: 'hidden',
-          marginBottom: '0.5rem',
-          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-        }}>
-          <div style={{
-            background: currentDiscount 
-              ? 'linear-gradient(90deg, #17a2b8, #20c997)' 
-              : 'linear-gradient(90deg, #ff7f32, #ff6b47)',
-            height: '100%',
-            width: `${Math.max(progress, 5)}%`, // Минимум 5% для видимости
-            borderRadius: '999px',
-            transition: 'width 0.3s ease',
-            position: 'relative',
-          }}>
-            {/* Блестящий эффект */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-              borderRadius: '999px',
-            }} />
-          </div>
-        </div>
-        
-        <div style={{ 
-          fontSize: '0.85rem', 
-          color: currentDiscount ? '#0c5460' : '#856404',
-          textAlign: 'center',
-          fontWeight: '500'
-        }}>
-          {currentDiscount 
-            ? `Увеличьте заказ и получите ещё больше скидки! 🚀`
-            : 'Добавьте ещё товаров и получите скидку! 💰'
-          }
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-};
 
 // Компонент "Заказывают сейчас"
 const OrderingNowBanner = ({ products, settings, addToCart }) => {
@@ -563,13 +565,13 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         </button>
       </div>
 
-      {/* Flash-предложение с таймером */}
+      {/* Flash-предложение с таймером - ПЕРВЫМ */}
       {cart.length > 0 && (
         <FlashOfferTimer 
           subtotal={subtotal} 
           products={products}
           settings={settings} 
-          addToCart={addToCart}
+          addToCart={addToCartHandler}
           cart={cart}
         />
       )}
@@ -583,8 +585,21 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         />
       )}
 
+      {/* Итоговая информация - ЗАФИКСИРОВАННАЯ */}
       {cart.length > 0 && (
-        <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+        <div style={{ 
+          backgroundColor: 'rgba(255,255,255,0.9)',
+          backdropFilter: 'blur(10px)',
+          padding: '1rem',
+          borderRadius: '12px',
+          marginBottom: '1rem',
+          textAlign: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          border: '1px solid #e0e0e0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
           <div style={{ marginBottom: '0.5rem' }}>
             <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
               Сумма: {subtotal} {settings.currency || '₽'}
@@ -595,8 +610,28 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               </div>
             )}
           </div>
-          <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
+          <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem', color: '#2c1e0f' }}>
             Итого: {total} {settings.currency || '₽'}
+          </div>
+          <button
+            style={{
+              padding: '0.75rem 2rem',
+              background: settings.primaryColor || '#ff7f32',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              width: '100%',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          >
+            Оформить заказ
+          </button>
+        </div>
+      )}
+
       {/* Список товаров - СКРОЛЛИРУЕМЫЙ */}
       <div style={{ 
         flex: 1, 
@@ -628,12 +663,12 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               <img
                 src={item.imageUrl}
                 alt={item.name}
-                style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover' }}
+                style={{ width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' }}
               />
               <div style={{ flex: 1 }}>
                 <div style={{ 
                   fontWeight: 'bold', 
-                  fontSize: '1.1rem', 
+                  fontSize: '1rem', 
                   color: item.isFlashOffer ? '#ff0844' : '#2c1e0f', 
                   marginBottom: '0.2rem',
                   display: 'flex',
@@ -655,12 +690,12 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ fontSize: '1rem', color: '#666' }}>
+                  <div style={{ fontSize: '0.9rem', color: '#666' }}>
                     {item.isFlashOffer && item.originalPrice && (
                       <span style={{ 
                         textDecoration: 'line-through', 
                         marginRight: '0.5rem',
-                        fontSize: '0.9rem' 
+                        fontSize: '0.8rem' 
                       }}>
                         {item.originalPrice} {settings.currency || '₽'}
                       </span>
@@ -682,15 +717,15 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                             background: '#f0f0f0',
                             border: 'none',
                             borderRadius: '6px',
-                            width: '32px',
-                            height: '32px',
-                            fontSize: '18px',
+                            width: '28px',
+                            height: '28px',
+                            fontSize: '16px',
                             cursor: 'pointer',
                           }}
                         >
                           −
                         </button>
-                        <span style={{ fontWeight: 'bold', fontSize: '1.1rem', minWidth: '24px', textAlign: 'center' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '1rem', minWidth: '20px', textAlign: 'center' }}>
                           {item.quantity}
                         </span>
                         <button
@@ -700,9 +735,9 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
-                            width: '32px',
-                            height: '32px',
-                            fontSize: '18px',
+                            width: '28px',
+                            height: '28px',
+                            fontSize: '16px',
                             cursor: 'pointer',
                           }}
                         >
@@ -716,23 +751,16 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                         alignItems: 'center',
                         gap: '0.5rem',
                         background: '#fff0f0',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '8px',
-                        border: '2px solid #ff0844',
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '6px',
+                        border: '1px solid #ff0844',
                       }}>
                         <span style={{ 
                           fontWeight: 'bold', 
-                          fontSize: '1rem',
+                          fontSize: '0.9rem',
                           color: '#ff0844'
                         }}>
-                          Количество: 1
-                        </span>
-                        <span style={{
-                          fontSize: '0.8rem',
-                          color: '#ff0844',
-                          fontWeight: 'bold'
-                        }}>
-                          (не изменяется)
+                          1 шт
                         </span>
                       </div>
                     )}
@@ -740,463 +768,3 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                       onClick={() => removeFromCart(item.id)}
                       style={{
                         background: 'none',
-                        border: 'none',
-                        color: '#e03636',
-                        fontSize: '20px',
-                        cursor: 'pointer',
-                        marginLeft: '0.5rem',
-                      }}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default function App() {
-  const [settings, setSettings] = useState({});
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  
-  // Состояния для свайпа
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchStartY, setTouchStartY] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
-
-  useEffect(() => {
-    if (settings.font) {
-      const link = document.createElement('link');
-      link.href = `https://fonts.googleapis.com/css2?family=${settings.font.replace(/\s+/g, '+')}&display=swap`;
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-    }
-  }, [settings.font]);
-  
-  useEffect(() => {
-    fetchData('getSettings', setSettings);
-    fetchData('getProducts', setProducts);
-    fetchData('getCategories', setCategories);
-  }, []);
-
-  const fetchData = (action, setter) => {
-    fetch(`${API_URL}?action=${action}`)
-      .then((res) => res.json())
-      .then((data) => setter(data))
-      .catch((err) => console.error(`Error fetching ${action}:`, err));
-  };
-
-  const addToCart = (product) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
-  };
-
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeFromCart(id);
-      return;
-    }
-    setCart(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const removeFromCart = (id) => {
-    setCart(prev => prev.filter(item => item.id !== id));
-  };
-
-  // Функции для свайпа
-  const handleTouchStart = (e) => {
-    if (categories.length === 0) return;
-    setTouchStartX(e.touches[0].clientX);
-    setTouchStartY(e.touches[0].clientY);
-    setIsSwiping(true);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isSwiping) return;
-    
-    // Предотвращаем скролл если это горизонтальный свайп
-    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-    
-    if (deltaX > deltaY && deltaX > 10) {
-      e.preventDefault();
-    }
-  };
-
-  const handleTouchEnd = (e) => {
-    if (!isSwiping || categories.length === 0) {
-      setIsSwiping(false);
-      return;
-    }
-
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-
-    // Проверяем что это горизонтальный свайп
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      const allCategories = [null, ...categories.map(cat => cat.id)];
-      const currentIndex = allCategories.indexOf(activeCategory);
-
-      if (deltaX > 0 && currentIndex > 0) {
-        // Свайп вправо - предыдущая категория
-        setActiveCategory(allCategories[currentIndex - 1]);
-      } else if (deltaX < 0 && currentIndex < allCategories.length - 1) {
-        // Свайп влево - следующая категория
-        setActiveCategory(allCategories[currentIndex + 1]);
-      }
-    }
-
-    setIsSwiping(false);
-  };
-
-  const filteredProducts = activeCategory
-    ? products.filter((p) => p.category === activeCategory)
-    : products;
-
-  const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  return (
-    <>
-      <style>
-  {`
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    @keyframes slideInRight {
-      from {
-        transform: translateX(100%);
-      }
-      to {
-        transform: translateX(0);
-      }
-    }
-
-    @media (max-width: 400px) {
-      .product-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-      }
-    }
-  `}
-</style>
-      
-      <div
-        className="app"
-        style={{
-          fontFamily: settings.font || 'Fredoka',
-          backgroundColor: settings.backgroundColor || '#fdf0e2',
-          padding: '1rem',
-          minHeight: '100vh',
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <header
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            marginBottom: '1rem',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {settings.logoUrl && (
-              <img
-                src={settings.logoUrl}
-                alt="Logo"
-                style={{ height: '60px', borderRadius: '8px' }}
-              />
-            )}
-            <h1
-              style={{
-                fontWeight: '900',
-                fontSize: '2.5rem',
-                fontFamily: 'Fredoka',
-                color: '#2c1e0f',
-                margin: 0,
-              }}
-            >
-              {settings.projectTitle || 'Заголовок'}
-            </h1>
-          </div>
-          
-          <button
-            onClick={() => setIsCartOpen(true)}
-            style={{
-              position: 'fixed',
-              bottom: '20px',
-              right: '20px',
-              zIndex: 1000,
-              background: settings.primaryColor || '#ff7f32',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '60px',
-              height: '60px',
-              fontSize: '1.4rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            }}
-          >
-            🛒
-            {cartItemsCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
-                  background: '#e03636',
-                  color: 'white',
-                  borderRadius: '50%',
-                  width: '24px',
-                  height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                }}
-              >
-                {cartItemsCount}
-              </span>
-            )}
-          </button>
-        </header>
-
-        {categories.length > 0 && (
-          <div
-  style={{
-    position: 'sticky',
-    top: 0,
-    zIndex: 900,
-    background: settings.backgroundColor || '#fdf0e2',
-    display: 'flex',
-    gap: '0.5rem',
-    padding: '1rem 0',
-    flexWrap: 'nowrap',
-    overflowX: 'auto',
-    scrollBehavior: 'smooth',
-    WebkitOverflowScrolling: 'touch',
-  }}
->
-            <button
-              onClick={() => setActiveCategory(null)}
-              style={{
-                padding: '0.5rem 1.5rem',
-                background: activeCategory === null ? settings.primaryColor || '#ff7f32' : '#fff5e6',
-                color: activeCategory === null ? '#fff' : '#5c4022',
-                border: 'none',
-                borderRadius: '14px',
-                fontWeight: 'bold',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-            >
-              Все
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                style={{
-                  padding: '0.5rem 1.5rem',
-                  background: activeCategory === cat.id ? settings.primaryColor || '#ff7f32' : '#fff5e6',
-                  color: activeCategory === cat.id ? '#fff' : '#5c4022',
-                  border: 'none',
-                  borderRadius: '14px',
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                }}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div
-  className="product-grid"
-  style={{
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-    gap: '1rem',
-  }}
->
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              style={{
-                position: 'relative',
-                background: '#fff7ed',
-                borderRadius: '20px',
-                padding: '1rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              {String(product.id).includes('H') && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    backgroundColor: '#e03636',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.3rem 0.7rem',
-                    borderRadius: '999px',
-                    fontSize: '0.9rem',
-                    fontFamily: settings.font || 'Fredoka',
-                  }}
-                >
-                  ОСТРОЕ
-                </div>
-              )}
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                style={{ width: '100%', maxWidth: '160px', borderRadius: '12px', marginBottom: '0.5rem' }}
-              />
-              <h2
-                style={{
-                  fontSize: '1.4rem',
-                  fontWeight: 'bold',
-                  color: '#4b2e12',
-                  margin: '0.5rem 0 0.25rem 0',
-                  textAlign: 'center',
-                }}
-              >
-                {product.name}
-              </h2>
-              <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
-              <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
-              
-              {/* Нижняя часть карточки */}
-              <div style={{ 
-                marginTop: 'auto',
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center',
-                gap: '0.5rem',
-                width: '100%'
-              }}>
-                <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0', color: '#2c1e0f' }}>
-                  {product.price} {settings.currency || '₽'}
-                </p>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '0.25rem',
-                    alignItems: 'center',
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      const existing = cart.find(item => item.id === product.id);
-                      if (existing && existing.quantity > 1) {
-                        updateQuantity(product.id, existing.quantity - 1);
-                      } else {
-                        removeFromCart(product.id);
-                      }
-                    }}
-                    style={{
-                      backgroundColor: settings.primaryColor || '#ff7f32',
-                      color: '#fff',
-                      fontSize: '1.25rem',
-                      padding: '0.2rem 0.7rem',
-                      border: 'none',
-                      borderRadius: '12px 0 0 12px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    −
-                  </button>
-                  <div
-                    style={{
-                      background: '#fff1dd',
-                      padding: '0.2rem 1rem',
-                      border: 'none',
-                      fontWeight: 'bold',
-                      borderRadius: '4px',
-                      minWidth: '40px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {cart.find(item => item.id === product.id)?.quantity || 0}
-                  </div>
-                  <button
-                    onClick={() => addToCart(product)}
-                    style={{
-                      backgroundColor: settings.primaryColor || '#ff7f32',
-                      color: '#fff',
-                      fontSize: '1.25rem',
-                      padding: '0.2rem 0.7rem',
-                      border: 'none',
-                      borderRadius: '0 12px 12px 0',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <OrderingNowBanner products={products} settings={settings} addToCart={addToCart} />
-        <Cart 
-          isOpen={isCartOpen} 
-          onClose={() => setIsCartOpen(false)} 
-          cart={cart} 
-          updateQuantity={updateQuantity} 
-          removeFromCart={removeFromCart} 
-          settings={settings}
-          addToCart={addToCart}
-        />
-      </div>
-    </>
-  );
-}
