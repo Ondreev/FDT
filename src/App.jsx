@@ -596,7 +596,6 @@ export default function App() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                height: '100%',
               }}
             >
               {String(product.id).includes('H') && (
