@@ -431,7 +431,7 @@ export default function App() {
 
     @media (max-width: 400px) {
       .product-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
       }
     }
   `}
