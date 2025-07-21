@@ -2,6 +2,99 @@ import { useEffect, useState } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
 
+// Компонент прогрессбара скидки
+const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
+  if (!discounts || discounts.length === 0) return null;
+
+  // Находим ближайшую скидку
+  const nextDiscount = discounts
+    .filter(d => d.minTotal > subtotal)
+    .sort((a, b) => a.minTotal - b.minTotal)[0];
+
+  // Находим текущую скидку
+  const currentDiscount = discounts
+    .filter(d => d.minTotal <= subtotal)
+    .sort((a, b) => b.minTotal - a.minTotal)[0];
+
+  if (!nextDiscount && !currentDiscount) return null;
+
+  if (currentDiscount) {
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, #28a745, #20c997)',
+        color: 'white',
+        padding: '1rem',
+        borderRadius: '12px',
+        marginBottom: '1rem',
+        textAlign: 'center',
+      }}>
+        <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+          🎉 Скидка {currentDiscount.discountPercent}% применена!
+        </div>
+        <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+          Экономия: {Math.round(subtotal * currentDiscount.discountPercent / 100)} {settings.currency || '₽'}
+        </div>
+      </div>
+    );
+  }
+
+  if (nextDiscount) {
+    const remaining = nextDiscount.minTotal - subtotal;
+    const progress = Math.min((subtotal / nextDiscount.minTotal) * 100, 100);
+
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, #fff3cd, #ffeaa7)',
+        padding: '1rem',
+        borderRadius: '12px',
+        marginBottom: '1rem',
+        border: '2px dashed #f39c12',
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '0.75rem',
+          color: '#856404'
+        }}>
+          <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>
+            До скидки {nextDiscount.discountPercent}%
+          </div>
+          <div style={{ fontWeight: 'bold', color: '#d63384' }}>
+            {remaining} {settings.currency || '₽'}
+          </div>
+        </div>
+        
+        <div style={{
+          background: '#fff',
+          borderRadius: '999px',
+          height: '8px',
+          overflow: 'hidden',
+          marginBottom: '0.5rem',
+        }}>
+          <div style={{
+            background: 'linear-gradient(90deg, #ff7f32, #ff6b47)',
+            height: '100%',
+            width: `${progress}%`,
+            borderRadius: '999px',
+            transition: 'width 0.3s ease',
+          }} />
+        </div>
+        
+        <div style={{ 
+          fontSize: '0.85rem', 
+          color: '#856404',
+          textAlign: 'center'
+        }}>
+          Добавьте ещё товаров и получите скидку!
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 // Компонент "Заказывают сейчас"
 const OrderingNowBanner = ({ products, settings, addToCart }) => {
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -122,9 +215,36 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
   );
 };
 
-// Компонент корзины
+// Обновленный компонент корзины с прогрессбаром скидок
 const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings }) => {
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const [discounts, setDiscounts] = useState([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch(`${API_URL}?action=getDiscounts`)
+        .then(res => res.json())
+        .then(data => {
+          // Преобразуем данные в числа
+          const processedDiscounts = data.map(d => ({
+            minTotal: Number(d.minTotal),
+            discountPercent: Number(d.discountPercent)
+          }));
+          setDiscounts(processedDiscounts);
+        })
+        .catch(err => console.error('Error fetching discounts:', err));
+    }
+  }, [isOpen]);
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  
+  // Рассчитываем скидку
+  const currentDiscount = discounts
+    .filter(d => d.minTotal <= subtotal)
+    .sort((a, b) => b.minTotal - a.minTotal)[0];
+  
+  const discountAmount = currentDiscount ? Math.round(subtotal * currentDiscount.discountPercent / 100) : 0;
+  const total = subtotal - discountAmount;
+
   if (!isOpen) return null;
 
   return (
@@ -177,8 +297,27 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings 
         </button>
       </div>
 
+      {/* Прогрессбар скидки */}
+      {cart.length > 0 && (
+        <DiscountProgressBar 
+          subtotal={subtotal} 
+          discounts={discounts} 
+          settings={settings} 
+        />
+      )}
+
       {cart.length > 0 && (
         <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
+              Сумма: {subtotal} {settings.currency || '₽'}
+            </div>
+            {discountAmount > 0 && (
+              <div style={{ fontSize: '1rem', color: '#28a745', marginBottom: '0.25rem' }}>
+                Скидка: -{discountAmount} {settings.currency || '₽'}
+              </div>
+            )}
+          </div>
           <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
             Итого: {total} {settings.currency || '₽'}
           </div>
