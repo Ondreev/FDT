@@ -527,17 +527,20 @@ export default function App() {
 
         {categories.length > 0 && (
           <div
-            style={{
-              display: 'flex',
-              gap: '0.5rem',
-              marginBottom: '1.5rem',
-              flexWrap: 'nowrap',
-              overflowX: 'auto',
-              scrollBehavior: 'smooth',
-              WebkitOverflowScrolling: 'touch',
-              paddingBottom: '5px',
-            }}
-          >
+  style={{
+    position: 'sticky',
+    top: 0,
+    zIndex: 900,
+    background: settings.backgroundColor || '#fdf0e2',
+    display: 'flex',
+    gap: '0.5rem',
+    padding: '1rem 0',
+    flexWrap: 'nowrap',
+    overflowX: 'auto',
+    scrollBehavior: 'smooth',
+    WebkitOverflowScrolling: 'touch',
+  }}
+>
             <button
               onClick={() => setActiveCategory(null)}
               style={{
