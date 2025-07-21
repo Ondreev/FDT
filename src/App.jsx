@@ -14,9 +14,11 @@ function App() {
     removeFromCart, 
     activateFreeDelivery,
     subtotal, 
+    regularSubtotal,
     deliveryCost, 
     cartItemsCount,
-    calculateDiscount
+    calculateDiscount,
+    canPlaceOrder
   } = useCart();
 
   const [activeCategory, setActiveCategory] = useState(null);
@@ -425,6 +427,8 @@ function App() {
           addToCart={addToCart}
           activateFreeDelivery={activateFreeDelivery}
           calculateDiscount={(discounts) => calculateDiscount(discounts)}
+          regularSubtotal={regularSubtotal}
+          canPlaceOrder={canPlaceOrder}
         />
       </div>
     </>
