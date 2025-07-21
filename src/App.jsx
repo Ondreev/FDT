@@ -788,6 +788,164 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
   );
 };
 
+// Компонент мини-баннеров в главном меню
+const MainMenuBanners = ({ subtotal, products, settings, cart }) => {
+  // Находим специальный товар для flash-предложения
+  const specialProduct = products.find(p => String(p.id).includes('R2000'));
+  const isFlashInCart = cart.some(item => item.id === `${specialProduct?.id}_flash`);
+  const shouldShowFlash = subtotal >= 2000 && specialProduct && !isFlashInCart;
+
+  // Проверяем бесплатную доставку
+  const isFreeDeliveryActive = cart.some(item => item.id === 'free_delivery');
+  const shouldShowDelivery = subtotal >= 2000 && !isFreeDeliveryActive;
+
+  // Если нечего показывать - не рендерим
+  if (!shouldShowFlash && !shouldShowDelivery) return null;
+
+  return (
+    <div style={{
+      position: 'sticky',
+      top: '80px', // Под категориями
+      zIndex: 950,
+      background: settings.backgroundColor || '#fdf0e2',
+      padding: '0.5rem 0',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.5rem',
+      animation: 'slideDownIn 0.4s ease-out'
+    }}>
+      <style>
+        {`
+          @keyframes slideDownIn {
+            from {
+              transform: translateY(-20px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+          
+          @keyframes miniBannerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.005); }
+          }
+        `}
+      </style>
+
+      {/* Flash-товар баннер */}
+      {shouldShowFlash && (
+        <div style={{
+          background: 'linear-gradient(135deg, #ff0844, #ff6b6b)',
+          color: 'white',
+          padding: '0.5rem 0.75rem',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontSize: '0.8rem',
+          boxShadow: '0 2px 8px rgba(255, 8, 68, 0.3)',
+          animation: 'miniBannerPulse 2s infinite',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}>
+          <img
+            src={specialProduct.imageUrl}
+            alt={specialProduct.name}
+            style={{ 
+              width: '30px', 
+              height: '30px', 
+              borderRadius: '4px', 
+              objectFit: 'cover',
+              border: '1px solid rgba(255,255,255,0.3)'
+            }}
+          />
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: 'bold' }}>{specialProduct.name}</span>
+            <span style={{ 
+              marginLeft: '0.5rem', 
+              background: '#ffff00', 
+              color: '#ff0844', 
+              padding: '0.1rem 0.3rem', 
+              borderRadius: '4px', 
+              fontSize: '0.7rem',
+              fontWeight: 'bold'
+            }}>
+              -99%
+            </span>
+          </div>
+          <div style={{ 
+            fontSize: '0.7rem', 
+            opacity: 0.9,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem'
+          }}>
+            <span>В корзине</span>
+            <span style={{ fontSize: '1rem' }}>⚡</span>
+          </div>
+        </div>
+      )}
+
+      {/* Бесплатная доставка баннер */}
+      {shouldShowDelivery && (
+        <div style={{
+          background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
+          color: 'white',
+          padding: '0.5rem 0.75rem',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontSize: '0.8rem',
+          boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
+          animation: 'miniBannerPulse 3s infinite',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}>
+          <div style={{ 
+            background: 'rgba(255,255,255,0.2)', 
+            borderRadius: '50%', 
+            width: '30px', 
+            height: '30px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            fontSize: '1rem'
+          }}>
+            🚚
+          </div>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: 'bold' }}>Бесплатная доставка</span>
+            <span style={{ 
+              marginLeft: '0.5rem', 
+              background: '#4caf50', 
+              color: 'white', 
+              padding: '0.1rem 0.3rem', 
+              borderRadius: '4px', 
+              fontSize: '0.7rem',
+              fontWeight: 'bold'
+            }}>
+              -200₽
+            </span>
+          </div>
+          <div style={{ 
+            fontSize: '0.7rem', 
+            opacity: 0.9,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem'
+          }}>
+            <span>В корзине</span>
+            <span style={{ fontSize: '1rem' }}>🚀</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function App() {
   const [settings, setSettings] = useState({});
   const [products, setProducts] = useState([]);
@@ -1081,6 +1239,14 @@ export default function App() {
           </div>
         )}
 
+        {/* Мини-баннеры */}
+<MainMenuBanners 
+  subtotal={cart.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+  products={products}
+  settings={settings}
+  cart={cart}
+/>
+        
         <div
           className="product-grid"
           style={{
