@@ -11,8 +11,8 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
   // Находим товар с R2000 в ID
   const specialProduct = products.find(p => String(p.id).includes('R2000'));
   
-  // Проверяем, есть ли уже этот товар в корзине
-  const isInCart = cart.some(item => item.id === specialProduct?.id);
+  // Проверяем, есть ли уже этот flash-товар в корзине
+  const isInCart = cart.some(item => item.id === `${specialProduct?.id}_flash`);
 
   useEffect(() => {
     // Активируем предложение при достижении 2000₽ (только один раз)
@@ -192,13 +192,26 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
 
       <button
         onClick={() => {
-          // Добавляем товар со скидкой 99%
+          // Проверяем, нет ли уже этого товара в корзине
+          const existingFlashItem = cart.find(item => 
+            item.id === `${specialProduct.id}_flash`
+          );
+          
+          if (existingFlashItem) {
+            // Если уже есть - не добавляем и скрываем предложение
+            setIsActive(false);
+            return;
+          }
+
+          // Добавляем товар со скидкой 99% (только 1 штука)
           const discountedProduct = {
             ...specialProduct,
             price: discountedPrice,
             originalPrice: originalPrice,
             isFlashOffer: true,
-            name: `${specialProduct.name} ⚡`
+            quantity: 1, // Фиксированное количество
+            name: `${specialProduct.name} ⚡`,
+            id: `${specialProduct.id}_flash` // Уникальный ID для flash-версии
           };
           addToCart(discountedProduct);
           setIsActive(false); // Скрываем предложение после добавления
@@ -708,38 +721,69 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      style={{
-                        background: '#f0f0f0',
-                        border: 'none',
-                        borderRadius: '6px',
-                        width: '32px',
-                        height: '32px',
-                        fontSize: '18px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      −
-                    </button>
-                    <span style={{ fontWeight: 'bold', fontSize: '1.1rem', minWidth: '24px', textAlign: 'center' }}>
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      style={{
-                        background: settings.primaryColor || '#ff7f32',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        width: '32px',
-                        height: '32px',
-                        fontSize: '18px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      +
-                    </button>
+                    {!item.isFlashOffer ? (
+                      // Обычные товары - можно изменять количество
+                      <>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          style={{
+                            background: '#f0f0f0',
+                            border: 'none',
+                            borderRadius: '6px',
+                            width: '32px',
+                            height: '32px',
+                            fontSize: '18px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          −
+                        </button>
+                        <span style={{ fontWeight: 'bold', fontSize: '1.1rem', minWidth: '24px', textAlign: 'center' }}>
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          style={{
+                            background: settings.primaryColor || '#ff7f32',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            width: '32px',
+                            height: '32px',
+                            fontSize: '18px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          +
+                        </button>
+                      </>
+                    ) : (
+                      // Flash-товары - фиксированное количество
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        background: '#fff0f0',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '8px',
+                        border: '2px solid #ff0844',
+                      }}>
+                        <span style={{ 
+                          fontWeight: 'bold', 
+                          fontSize: '1rem',
+                          color: '#ff0844'
+                        }}>
+                          Количество: 1
+                        </span>
+                        <span style={{
+                          fontSize: '0.8rem',
+                          color: '#ff0844',
+                          fontWeight: 'bold'
+                        }}>
+                          (не изменяется)
+                        </span>
+                      </div>
+                    )}
                     <button
                       onClick={() => removeFromCart(item.id)}
                       style={{
@@ -748,6 +792,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                         color: '#e03636',
                         fontSize: '20px',
                         cursor: 'pointer',
+                        marginLeft: '0.5rem',
                       }}
                     >
                       🗑️
