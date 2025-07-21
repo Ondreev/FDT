@@ -571,71 +571,71 @@ export default function App() {
               </h2>
               <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
               <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
-              <div style={{ marginTop: 'auto', width: '100%' }}>
-  <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0.25rem 0', color: '#2c1e0f', textAlign: 'center' }}>
-    {product.price} {settings.currency || '₽'}
-  </p>
-  <div
-    style={{
-      display: 'flex',
-      gap: '0.25rem',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: '0.5rem',
-    }}
-  >
-    <button
-      onClick={() => {
-        const existing = cart.find(item => item.id === product.id);
-        if (existing && existing.quantity > 1) {
-          updateQuantity(product.id, existing.quantity - 1);
-        } else {
-          removeFromCart(product.id);
-        }
-      }}
-      style={{
-        backgroundColor: settings.primaryColor || '#ff7f32',
-        color: '#fff',
-        fontSize: '1.25rem',
-        padding: '0.2rem 0.7rem',
-        border: 'none',
-        borderRadius: '12px 0 0 12px',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-      }}
-    >
-      −
-    </button>
-    <div
-      style={{
-        background: '#fff1dd',
-        padding: '0.2rem 1rem',
-        border: 'none',
-        fontWeight: 'bold',
-        borderRadius: '4px',
-        minWidth: '40px',
-        textAlign: 'center',
-      }}
-    >
-      {cart.find(item => item.id === product.id)?.quantity || 0}
-    </div>
-    <button
-      onClick={() => addToCart(product)}
-      style={{
-        backgroundColor: settings.primaryColor || '#ff7f32',
-        color: '#fff',
-        fontSize: '1.25rem',
-        padding: '0.2rem 0.7rem',
-        border: 'none',
-        borderRadius: '0 12px 12px 0',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-      }}
-    >
-      +
-    </button>
-  </div>
-</div>
+              <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0.25rem 0', color: '#2c1e0f' }}>
+                {product.price} {settings.currency || '₽'}
+              </p>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.25rem',
+                  alignItems: 'center',
+                  marginTop: '0.5rem',
+                }}
+              >
+                <button
+                  onClick={() => {
+                    const existing = cart.find(item => item.id === product.id);
+                    if (existing && existing.quantity > 1) {
+                      updateQuantity(product.id, existing.quantity - 1);
+                    } else {
+                      removeFromCart(product.id);
+                    }
+                  }}
+                  style={{
+                    backgroundColor: settings.primaryColor || '#ff7f32',
+                    color: '#fff',
+                    fontSize: '1.25rem',
+                    padding: '0.2rem 0.7rem',
+                    border: 'none',
+                    borderRadius: '12px 0 0 12px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  −
+                </button>
+                <div
+                  style={{
+                    background: '#fff1dd',
+                    padding: '0.2rem 1rem',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    minWidth: '40px',
+                    textAlign: 'center',
+                  }}
+                >
+                  {cart.find(item => item.id === product.id)?.quantity || 0}
+                </div>
+                <button
+                  onClick={() => addToCart(product)}
+                  style={{
+                    backgroundColor: settings.primaryColor || '#ff7f32',
+                    color: '#fff',
+                    fontSize: '1.25rem',
+                    padding: '0.2rem 0.7rem',
+                    border: 'none',
+                    borderRadius: '0 12px 12px 0',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <OrderingNowBanner products={products} settings={settings} addToCart={addToCart} />
         <Cart 
