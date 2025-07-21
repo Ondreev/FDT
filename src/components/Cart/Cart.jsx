@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
-import { API_URL } from '../../utils/constants';
+import { API_URL, DELIVERY_THRESHOLD } from '../../utils/constants';
 
-const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, activateFreeDelivery, calculateDiscount }) => {
+const Cart = ({ 
+  isOpen, 
+  onClose, 
+  cart, 
+  updateQuantity, 
+  removeFromCart, 
+  settings, 
+  addToCart, 
+  activateFreeDelivery, 
+  calculateDiscount,
+  regularSubtotal,
+  canPlaceOrder
+}) => {
   const [discounts, setDiscounts] = useState([]);
   const [products, setProducts] = useState([]);
 
@@ -37,6 +49,9 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
   
   const discountAmount = calculateDiscount(discounts);
   const total = subtotal - discountAmount + deliveryCost;
+
+  const orderStatus = canPlaceOrder();
+  const hasFlashItems = cart.some(item => item.isFlashOffer);
 
   return (
     <div
@@ -75,7 +90,23 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         </button>
       </div>
 
-      {/* Здесь будут добавлены прогрессбары и таймеры */}
+      {/* ЗАЩИТНОЕ УВЕДОМЛЕНИЕ */}
+      {hasFlashItems && regularSubtotal < DELIVERY_THRESHOLD && (
+        <div style={{
+          background: 'linear-gradient(135deg, #ffeb3b, #ffc107)',
+          color: '#8a6914',
+          padding: '0.75rem',
+          borderRadius: '8px',
+          marginBottom: '1rem',
+          border: '2px solid #ff9800',
+          fontSize: '0.9rem',
+          fontWeight: 'bold',
+          textAlign: 'center',
+        }}>
+          ⚠️ Внимание! <br />
+          Для товаров со скидкой нужны обычные товары на сумму от {DELIVERY_THRESHOLD}₽
+        </div>
+      )}
 
       {/* Итоговая информация */}
       {cart.length > 0 && (
@@ -95,6 +126,11 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           <div style={{ marginBottom: '0.5rem' }}>
             <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
               Товары: {subtotal} {settings.currency || '₽'}
+              {hasFlashItems && (
+                <div style={{ fontSize: '0.8rem', color: '#ff9800', marginTop: '0.25rem' }}>
+                  (обычные: {regularSubtotal} {settings.currency || '₽'})
+                </div>
+              )}
             </div>
             <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
               Доставка: {deliveryCost > 0 ? `${deliveryCost} ${settings.currency || '₽'}` : 'Бесплатно 🎉'}
@@ -108,27 +144,46 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem', color: '#2c1e0f' }}>
             Итого: {total} {settings.currency || '₽'}
           </div>
+          
+          {/* ЗАЩИЩЕННАЯ КНОПКА ЗАКАЗА */}
           <button
+            disabled={!orderStatus.canOrder}
             style={{
               padding: '0.75rem 2rem',
-              background: settings.primaryColor || '#ff7f32',
-              color: 'white',
+              background: orderStatus.canOrder 
+                ? (settings.primaryColor || '#ff7f32')
+                : '#ccc',
+              color: orderStatus.canOrder ? 'white' : '#666',
               border: 'none',
               borderRadius: '12px',
               fontSize: '1.1rem',
               fontWeight: 'bold',
-              cursor: 'pointer',
+              cursor: orderStatus.canOrder ? 'pointer' : 'not-allowed',
               width: '100%',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              boxShadow: orderStatus.canOrder ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+              opacity: orderStatus.canOrder ? 1 : 0.7,
+              transition: 'all 0.2s ease',
             }}
+            title={orderStatus.reason || 'Оформить заказ'}
           >
-            Оформить заказ
+            {orderStatus.canOrder ? 'Оформить заказ' : '⚠️ Заказ недоступен'}
           </button>
+          
+          {!orderStatus.canOrder && (
+            <div style={{
+              fontSize: '0.8rem',
+              color: '#d32f2f',
+              marginTop: '0.5rem',
+              lineHeight: '1.3',
+            }}>
+              {orderStatus.reason}
+            </div>
+          )}
         </div>
       )}
 
       {/* Список товаров */}
-      <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 300px)', paddingRight: '0.5rem' }}>
+      <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 350px)', paddingRight: '0.5rem' }}>
         {cart.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
             Корзина пуста
@@ -148,8 +203,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                            item.isFreeDelivery ? 'linear-gradient(135deg, #e8f5e8, #f1f8e9)' : 'transparent',
                 borderRadius: (item.isFlashOffer || item.isFreeDelivery) ? '8px' : '0',
                 padding: (item.isFlashOffer || item.isFreeDelivery) ? '0.5rem' : '0',
-                border: item.isFlashOffer ? '2px solid #ff0844' : 
-                       item.isFreeDelivery ? '2px solid #4caf50' : 'none',
+                border: item.isFlashOffer ? 
+                  (regularSubtotal < DELIVERY_THRESHOLD ? '2px solid #ff9800' : '2px solid #ff0844') : 
+                  item.isFreeDelivery ? '2px solid #4caf50' : 'none',
+                opacity: item.isFlashOffer && regularSubtotal < DELIVERY_THRESHOLD ? 0.7 : 1,
               }}
             >
               <div style={{
@@ -177,9 +234,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                 <div style={{ 
                   fontWeight: 'bold', 
                   fontSize: '1rem', 
-                  color: item.isFlashOffer ? '#ff0844' : 
-                         item.isFreeDelivery ? '#4caf50' :
-                         item.isDelivery ? '#666' : '#2c1e0f', 
+                  color: item.isFlashOffer ? 
+                    (regularSubtotal < DELIVERY_THRESHOLD ? '#ff9800' : '#ff0844') : 
+                    item.isFreeDelivery ? '#4caf50' :
+                    item.isDelivery ? '#666' : '#2c1e0f', 
                   marginBottom: '0.2rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -188,14 +246,14 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                   {item.name}
                   {item.isFlashOffer && (
                     <span style={{
-                      background: '#ff0844',
+                      background: regularSubtotal < DELIVERY_THRESHOLD ? '#ff9800' : '#ff0844',
                       color: 'white',
                       fontSize: '0.7rem',
                       padding: '0.2rem 0.4rem',
                       borderRadius: '8px',
                       fontWeight: 'bold'
                     }}>
-                      -99%
+                      {regularSubtotal < DELIVERY_THRESHOLD ? '⚠️ РИСК' : '-99%'}
                     </span>
                   )}
                   {item.isFreeDelivery && (
@@ -225,8 +283,9 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                     )}
                     <span style={{ 
                       fontWeight: (item.isFlashOffer || item.isFreeDelivery) ? 'bold' : 'normal',
-                      color: item.isFlashOffer ? '#ff0844' : 
-                             item.isFreeDelivery ? '#4caf50' : '#666'
+                      color: item.isFlashOffer ? 
+                        (regularSubtotal < DELIVERY_THRESHOLD ? '#ff9800' : '#ff0844') : 
+                        item.isFreeDelivery ? '#4caf50' : '#666'
                     }}>
                       {item.price > 0 ? `${item.price} ${settings.currency || '₽'}` : 'Бесплатно'}
                     </span>
@@ -278,15 +337,17 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                                    item.isDelivery ? '#f8f8f8' : '#fff0f0',
                         padding: '0.3rem 0.6rem',
                         borderRadius: '6px',
-                        border: `1px solid ${item.isFlashOffer ? '#ff0844' : 
-                                              item.isFreeDelivery ? '#4caf50' : '#ccc'}`,
+                        border: `1px solid ${item.isFlashOffer ? 
+                          (regularSubtotal < DELIVERY_THRESHOLD ? '#ff9800' : '#ff0844') : 
+                          item.isFreeDelivery ? '#4caf50' : '#ccc'}`,
                       }}>
                         <span style={{ 
                           fontWeight: 'bold', 
                           fontSize: '0.9rem',
-                          color: item.isFlashOffer ? '#ff0844' : 
-                                 item.isFreeDelivery ? '#4caf50' :
-                                 item.isDelivery ? '#666' : '#ff0844'
+                          color: item.isFlashOffer ? 
+                            (regularSubtotal < DELIVERY_THRESHOLD ? '#ff9800' : '#ff0844') : 
+                            item.isFreeDelivery ? '#4caf50' :
+                            item.isDelivery ? '#666' : '#ff0844'
                         }}>
                           {item.isDelivery ? 'Услуга' : '1 шт'}
                         </span>
