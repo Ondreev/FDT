@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
 
-// Компонент таймера со скидкой 99%
+// Компонент таймера со скидкой 99% - КОМПАКТНАЯ ВЕРСИЯ
 const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
@@ -53,11 +53,11 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
     <div style={{
       background: 'linear-gradient(135deg, #ff0844, #ffb199)',
       color: 'white',
-      padding: '1.5rem',
-      borderRadius: '15px',
+      padding: '1rem',
+      borderRadius: '12px',
       marginBottom: '1rem',
-      border: '3px solid #ffd700',
-      boxShadow: '0 8px 25px rgba(255, 8, 68, 0.4)',
+      border: '2px solid #ffd700',
+      boxShadow: '0 4px 15px rgba(255, 8, 68, 0.3)',
       animation: 'flashPulse 2s infinite',
       position: 'relative',
       overflow: 'hidden',
@@ -65,8 +65,8 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
       <style>
         {`
           @keyframes flashPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 8px 25px rgba(255, 8, 68, 0.4); }
-            50% { transform: scale(1.02); box-shadow: 0 12px 35px rgba(255, 8, 68, 0.6); }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.01); }
           }
           
           @keyframes timerBlink {
@@ -75,73 +75,47 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
           }
         `}
       </style>
-      
-      {/* Блестящий эффект */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: '-100%',
-        width: '100%',
-        height: '100%',
-        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-        animation: 'shine 3s infinite',
-      }} />
-      
-      <style>
-        {`
-          @keyframes shine {
-            0% { left: -100%; }
-            100% { left: 100%; }
-          }
-        `}
-      </style>
 
-      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <div style={{ 
-          fontSize: '1.2rem', 
-          fontWeight: 'bold', 
-          marginBottom: '0.5rem',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-        }}>
-          ⚡ МОЛНИЕНОСНОЕ ПРЕДЛОЖЕНИЕ ⚡
-        </div>
-        <div style={{ fontSize: '0.9rem', opacity: 0.95 }}>
-          Только для заказов от 2000₽!
-        </div>
-      </div>
-
-      {/* Таймер */}
-      <div style={{
-        textAlign: 'center',
-        marginBottom: '1rem',
-        fontSize: '2rem',
-        fontWeight: 'bold',
-        fontFamily: 'monospace',
-        animation: timeLeft <= 30 ? 'timerBlink 1s infinite' : 'none',
-        color: timeLeft <= 30 ? '#ffff00' : '#ffffff',
-        textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+      {/* Компактный заголовок */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '0.75rem'
       }}>
-        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        <div style={{ 
+          fontSize: '1rem', 
+          fontWeight: 'bold',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+        }}>
+          ⚡ МОЛНИЕНОСНОЕ ПРЕДЛОЖЕНИЕ
+        </div>
+        <div style={{
+          fontSize: '1.5rem',
+          fontWeight: 'bold',
+          fontFamily: 'monospace',
+          animation: timeLeft <= 30 ? 'timerBlink 1s infinite' : 'none',
+          color: timeLeft <= 30 ? '#ffff00' : '#ffffff',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+        }}>
+          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        </div>
       </div>
 
-      {/* Товар */}
+      {/* Компактный товар */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
-        gap: '1rem',
-        marginBottom: '1rem',
-        background: 'rgba(255,255,255,0.1)',
-        padding: '1rem',
-        borderRadius: '10px',
-        backdropFilter: 'blur(10px)',
+        gap: '0.75rem',
+        marginBottom: '0.75rem',
       }}>
         <img
           src={specialProduct.imageUrl}
           alt={specialProduct.name}
           style={{ 
-            width: '80px', 
-            height: '80px', 
-            borderRadius: '12px', 
+            width: '50px', 
+            height: '50px', 
+            borderRadius: '8px', 
             objectFit: 'cover',
             border: '2px solid #ffd700',
           }}
@@ -149,8 +123,8 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
         <div style={{ flex: 1 }}>
           <div style={{ 
             fontWeight: 'bold', 
-            fontSize: '1.2rem', 
-            marginBottom: '0.5rem',
+            fontSize: '1rem', 
+            marginBottom: '0.25rem',
             textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
           }}>
             {specialProduct.name}
@@ -158,30 +132,29 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '0.5rem',
-            flexWrap: 'wrap'
+            gap: '0.5rem'
           }}>
             <span style={{ 
               textDecoration: 'line-through', 
-              fontSize: '1rem',
+              fontSize: '0.9rem',
               opacity: 0.8 
             }}>
-              {originalPrice} {settings.currency || '₽'}
+              {originalPrice} ₽
             </span>
             <span style={{ 
-              fontSize: '1.4rem', 
+              fontSize: '1.1rem', 
               fontWeight: 'bold',
               color: '#ffff00',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+              textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
             }}>
-              {discountedPrice} {settings.currency || '₽'}
+              {discountedPrice} ₽
             </span>
             <span style={{
               background: '#ffff00',
               color: '#ff0844',
-              padding: '0.2rem 0.5rem',
-              borderRadius: '15px',
-              fontSize: '0.8rem',
+              padding: '0.1rem 0.4rem',
+              borderRadius: '10px',
+              fontSize: '0.7rem',
               fontWeight: 'bold',
             }}>
               -99%
@@ -218,40 +191,31 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
         }}
         style={{
           width: '100%',
-          padding: '1rem',
+          padding: '0.6rem',
           background: 'linear-gradient(135deg, #ffff00, #ffd700)',
           color: '#ff0844',
           border: 'none',
-          borderRadius: '12px',
-          fontSize: '1.2rem',
+          borderRadius: '8px',
+          fontSize: '1rem',
           fontWeight: 'bold',
           cursor: 'pointer',
           textTransform: 'uppercase',
-          letterSpacing: '1px',
+          letterSpacing: '0.5px',
           textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-          boxShadow: '0 4px 15px rgba(255, 215, 0, 0.5)',
+          boxShadow: '0 2px 8px rgba(255, 215, 0, 0.4)',
           transition: 'all 0.2s ease',
         }}
         onMouseEnter={(e) => {
-          e.target.style.transform = 'scale(1.05)';
-          e.target.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.7)';
+          e.target.style.transform = 'scale(1.02)';
+          e.target.style.boxShadow = '0 4px 12px rgba(255, 215, 0, 0.6)';
         }}
         onMouseLeave={(e) => {
           e.target.style.transform = 'scale(1)';
-          e.target.style.boxShadow = '0 4px 15px rgba(255, 215, 0, 0.5)';
+          e.target.style.boxShadow = '0 2px 8px rgba(255, 215, 0, 0.4)';
         }}
       >
-        🔥 СХВАТИТЬ СЕЙЧАС! 🔥
+        🔥 СХВАТИТЬ! 🔥
       </button>
-
-      <div style={{ 
-        textAlign: 'center', 
-        fontSize: '0.8rem', 
-        marginTop: '0.5rem',
-        opacity: 0.9 
-      }}>
-        Предложение исчезнет через {minutes}:{String(seconds).padStart(2, '0')}
-      </div>
     </div>
   );
 };
@@ -633,25 +597,13 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           </div>
           <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
             Итого: {total} {settings.currency || '₽'}
-          </div>
-          <button
-            style={{
-              padding: '0.75rem 2rem',
-              background: settings.primaryColor || '#ff7f32',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-            }}
-          >
-            Оформить заказ
-          </button>
-        </div>
-      )}
-
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      {/* Список товаров - СКРОЛЛИРУЕМЫЙ */}
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto',
+        maxHeight: 'calc(100vh - 400px)', // Ограничиваем высоту
+        paddingRight: '0.5rem'
+      }}>
         {cart.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
             Корзина пуста
@@ -800,8 +752,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+          </div>
         )}
       </div>
     </div>
