@@ -293,6 +293,11 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  // Состояния для свайпа
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
 
   useEffect(() => {
     if (settings.font) {
@@ -346,6 +351,54 @@ export default function App() {
     setCart(prev => prev.filter(item => item.id !== id));
   };
 
+  // Функции для свайпа
+  const handleTouchStart = (e) => {
+    if (categories.length === 0) return;
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+    setIsSwiping(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isSwiping) return;
+    
+    // Предотвращаем скролл если это горизонтальный свайп
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+    
+    if (deltaX > deltaY && deltaX > 10) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!isSwiping || categories.length === 0) {
+      setIsSwiping(false);
+      return;
+    }
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    // Проверяем что это горизонтальный свайп
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      const allCategories = [null, ...categories.map(cat => cat.id)];
+      const currentIndex = allCategories.indexOf(activeCategory);
+
+      if (deltaX > 0 && currentIndex > 0) {
+        // Свайп вправо - предыдущая категория
+        setActiveCategory(allCategories[currentIndex - 1]);
+      } else if (deltaX < 0 && currentIndex < allCategories.length - 1) {
+        // Свайп влево - следующая категория
+        setActiveCategory(allCategories[currentIndex + 1]);
+      }
+    }
+
+    setIsSwiping(false);
+  };
+
   const filteredProducts = activeCategory
     ? products.filter((p) => p.category === activeCategory)
     : products;
@@ -386,6 +439,9 @@ export default function App() {
           padding: '1rem',
           minHeight: '100vh',
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <header
           style={{
@@ -533,6 +589,7 @@ export default function App() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
+                height: '100%',
               }}
             >
               {String(product.id).includes('H') && (
@@ -571,67 +628,77 @@ export default function App() {
               </h2>
               <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
               <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
-              <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0.25rem 0', color: '#2c1e0f' }}>
-                {product.price} {settings.currency || '₽'}
-              </p>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.25rem',
-                  alignItems: 'center',
-                  marginTop: '0.5rem',
-                }}
-              >
-                <button
-                  onClick={() => {
-                    const existing = cart.find(item => item.id === product.id);
-                    if (existing && existing.quantity > 1) {
-                      updateQuantity(product.id, existing.quantity - 1);
-                    } else {
-                      removeFromCart(product.id);
-                    }
-                  }}
-                  style={{
-                    backgroundColor: settings.primaryColor || '#ff7f32',
-                    color: '#fff',
-                    fontSize: '1.25rem',
-                    padding: '0.2rem 0.7rem',
-                    border: 'none',
-                    borderRadius: '12px 0 0 12px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                  }}
-                >
-                  −
-                </button>
+              
+              {/* Нижняя часть карточки */}
+              <div style={{ 
+                marginTop: 'auto',
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                gap: '0.5rem',
+                width: '100%'
+              }}>
+                <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0', color: '#2c1e0f' }}>
+                  {product.price} {settings.currency || '₽'}
+                </p>
                 <div
                   style={{
-                    background: '#fff1dd',
-                    padding: '0.2rem 1rem',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    borderRadius: '4px',
-                    minWidth: '40px',
-                    textAlign: 'center',
+                    display: 'flex',
+                    gap: '0.25rem',
+                    alignItems: 'center',
                   }}
                 >
-                  {cart.find(item => item.id === product.id)?.quantity || 0}
+                  <button
+                    onClick={() => {
+                      const existing = cart.find(item => item.id === product.id);
+                      if (existing && existing.quantity > 1) {
+                        updateQuantity(product.id, existing.quantity - 1);
+                      } else {
+                        removeFromCart(product.id);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: settings.primaryColor || '#ff7f32',
+                      color: '#fff',
+                      fontSize: '1.25rem',
+                      padding: '0.2rem 0.7rem',
+                      border: 'none',
+                      borderRadius: '12px 0 0 12px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    −
+                  </button>
+                  <div
+                    style={{
+                      background: '#fff1dd',
+                      padding: '0.2rem 1rem',
+                      border: 'none',
+                      fontWeight: 'bold',
+                      borderRadius: '4px',
+                      minWidth: '40px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {cart.find(item => item.id === product.id)?.quantity || 0}
+                  </div>
+                  <button
+                    onClick={() => addToCart(product)}
+                    style={{
+                      backgroundColor: settings.primaryColor || '#ff7f32',
+                      color: '#fff',
+                      fontSize: '1.25rem',
+                      padding: '0.2rem 0.7rem',
+                      border: 'none',
+                      borderRadius: '0 12px 12px 0',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    +
+                  </button>
                 </div>
-                <button
-                  onClick={() => addToCart(product)}
-                  style={{
-                    backgroundColor: settings.primaryColor || '#ff7f32',
-                    color: '#fff',
-                    fontSize: '1.25rem',
-                    padding: '0.2rem 0.7rem',
-                    border: 'none',
-                    borderRadius: '0 12px 12px 0',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                  }}
-                >
-                  +
-                </button>
               </div>
             </div>
           ))}
