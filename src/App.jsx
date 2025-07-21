@@ -1082,13 +1082,12 @@ export default function App() {
         )}
 
         <div
-          className="product-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '1rem',
-          }}
-        >
+  className="product-grid"
+  style={{
+    display: 'grid',
+    gap: '1rem',
+  }}
+>
           {filteredProducts.map((product) => (
             <div
               key={product.id}
