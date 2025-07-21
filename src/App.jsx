@@ -1,4 +1,736 @@
-</div>
+import { useEffect, useState } from 'react';
+
+const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
+
+// Компонент прогрессбара бесплатной доставки
+const DeliveryProgressBar = ({ subtotal, settings }) => {
+  const DELIVERY_THRESHOLD = 2000;
+  const DELIVERY_COST = 200;
+  
+  if (subtotal >= DELIVERY_THRESHOLD) {
+    return null; // Не показываем если порог достигнут - будет показан flash-баннер
+  }
+
+  const remaining = DELIVERY_THRESHOLD - subtotal;
+  const progress = Math.min((subtotal / DELIVERY_THRESHOLD) * 100, 100);
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #e8f5e8, #c8e6c9)',
+      padding: '0.75rem',
+      borderRadius: '10px',
+      marginBottom: '1rem',
+      border: '2px dashed #4caf50',
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '0.5rem',
+        color: '#2e7d32'
+      }}>
+        <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+          🚚 До бесплатной доставки
+        </div>
+        <div style={{ fontWeight: 'bold', color: '#d32f2f' }}>
+          ещё {remaining} {settings.currency || '₽'}
+        </div>
+      </div>
+      
+      <div style={{
+        background: '#fff',
+        borderRadius: '999px',
+        height: '6px',
+        overflow: 'hidden',
+        marginBottom: '0.3rem',
+        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+      }}>
+        <div style={{
+          background: 'linear-gradient(90deg, #4caf50, #66bb6a)',
+          height: '100%',
+          width: `${Math.max(progress, 3)}%`,
+          borderRadius: '999px',
+          transition: 'width 0.3s ease',
+        }} />
+      </div>
+      
+      <div style={{ 
+        fontSize: '0.75rem', 
+        color: '#2e7d32',
+        textAlign: 'center',
+        fontWeight: '500'
+      }}>
+        Сейчас доставка {DELIVERY_COST} {settings.currency || '₽'}
+      </div>
+    </div>
+  );
+};
+
+// Компонент таймера бесплатной доставки
+const FreeDeliveryTimer = ({ subtotal, settings, onActivate, cart }) => {
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [hasTriggered, setHasTriggered] = useState(false);
+
+  const DELIVERY_THRESHOLD = 2000;
+  
+  // Проверяем, активирована ли уже бесплатная доставка
+  const isFreeDeliveryActive = cart.some(item => item.id === 'free_delivery');
+
+  useEffect(() => {
+    // Активируем предложение при достижении 2000₽ (только один раз)
+    if (subtotal >= DELIVERY_THRESHOLD && !hasTriggered && !isFreeDeliveryActive) {
+      setTimeLeft(120); // 2 минуты
+      setIsActive(true);
+      setHasTriggered(true);
+    }
+  }, [subtotal, hasTriggered, isFreeDeliveryActive]);
+
+  useEffect(() => {
+    let interval = null;
+    if (isActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(timeLeft => {
+          if (timeLeft <= 1) {
+            setIsActive(false);
+            return 0;
+          }
+          return timeLeft - 1;
+        });
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setIsActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timeLeft]);
+
+  if (!isActive || timeLeft <= 0 || isFreeDeliveryActive) return null;
+
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
+      color: 'white',
+      padding: '0.75rem',
+      borderRadius: '10px',
+      marginBottom: '1rem',
+      border: '2px solid #81c784',
+      boxShadow: '0 3px 12px rgba(25, 118, 210, 0.3)',
+      animation: 'deliveryPulse 2s infinite',
+    }}>
+      <style>
+        {`
+          @keyframes deliveryPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.005); }
+          }
+          
+          @keyframes deliveryBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+          }
+        `}
+      </style>
+
+      {/* Компактный заголовок */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '0.5rem'
+      }}>
+        <div style={{ 
+          fontSize: '0.9rem', 
+          fontWeight: 'bold',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+        }}>
+          🚚 БЕСПЛАТНАЯ ДОСТАВКА
+        </div>
+        <div style={{
+          fontSize: '1.2rem',
+          fontWeight: 'bold',
+          fontFamily: 'monospace',
+          animation: timeLeft <= 30 ? 'deliveryBlink 1s infinite' : 'none',
+          color: timeLeft <= 30 ? '#ffff00' : '#ffffff',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+        }}>
+          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        </div>
+      </div>
+
+      {/* Компактная информация */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '0.5rem',
+        marginBottom: '0.5rem',
+      }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.2)',
+          padding: '0.3rem 0.6rem',
+          borderRadius: '6px',
+          fontSize: '0.8rem',
+          fontWeight: 'bold'
+        }}>
+          Экономия: 200 {settings.currency || '₽'}
+        </div>
+        <div style={{ 
+          fontSize: '0.8rem',
+          opacity: 0.9,
+          flex: 1
+        }}>
+          При заказе от 2000₽
+        </div>
+      </div>
+
+      <button
+        onClick={() => {
+          onActivate();
+          setIsActive(false);
+        }}
+        style={{
+          width: '100%',
+          padding: '0.5rem',
+          background: 'linear-gradient(135deg, #4caf50, #66bb6a)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          fontSize: '0.9rem',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+          boxShadow: '0 2px 6px rgba(76, 175, 80, 0.4)',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'scale(1.02)';
+          e.target.style.boxShadow = '0 3px 8px rgba(76, 175, 80, 0.6)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'scale(1)';
+          e.target.style.boxShadow = '0 2px 6px rgba(76, 175, 80, 0.4)';
+        }}
+      >
+        🚀 АКТИВИРОВАТЬ!
+      </button>
+    </div>
+  );
+};
+
+// Мини-баннеры для основного меню
+const MainMenuBanners = ({ subtotal, products, settings, addToCart, cart, onActivateFreeDelivery }) => {
+  const [showFlashOffer, setShowFlashOffer] = useState(false);
+  const [showDeliveryOffer, setShowDeliveryOffer] = useState(false);
+
+  // Логика показа flash-предложения (блюдо со скидкой 99%)
+  const specialProduct = products.find(p => String(p.id).includes('R2000'));
+  const isFlashInCart = cart.some(item => item.id === `${specialProduct?.id}_flash`);
+  const shouldShowFlash = subtotal >= 2000 && specialProduct && !isFlashInCart;
+
+  // Логика показа предложения доставки
+  const isFreeDeliveryActive = cart.some(item => item.id === 'free_delivery');
+  const shouldShowDelivery = subtotal >= 2000 && !isFreeDeliveryActive;
+
+  useEffect(() => {
+    setShowFlashOffer(shouldShowFlash);
+    setShowDeliveryOffer(shouldShowDelivery);
+  }, [shouldShowFlash, shouldShowDelivery]);
+
+  if (!showFlashOffer && !showDeliveryOffer) return null;
+
+  return (
+    <div style={{
+      position: 'sticky',
+      top: '80px', // Под категориями
+      zIndex: 950,
+      background: settings.backgroundColor || '#fdf0e2',
+      padding: '0.5rem 0',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.5rem',
+    }}>
+      {/* Мини-баннер блюда со скидкой 99% */}
+      {showFlashOffer && (
+        <div style={{
+          background: 'linear-gradient(135deg, #ff0844, #ff6b6b)',
+          color: 'white',
+          padding: '0.5rem 0.75rem',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontSize: '0.8rem',
+          boxShadow: '0 2px 8px rgba(255, 8, 68, 0.3)',
+        }}>
+          <img
+            src={specialProduct.imageUrl}
+            alt={specialProduct.name}
+            style={{ width: '30px', height: '30px', borderRadius: '4px', objectFit: 'cover' }}
+          />
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: 'bold' }}>{specialProduct.name}</span>
+            <span style={{ marginLeft: '0.5rem', background: '#ffff00', color: '#ff0844', padding: '0.1rem 0.3rem', borderRadius: '4px', fontSize: '0.7rem' }}>-99%</span>
+          </div>
+          <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>В корзине ⚡</div>
+        </div>
+      )}
+
+      {/* Мини-баннер бесплатной доставки */}
+      {showDeliveryOffer && (
+        <div style={{
+          background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
+          color: 'white',
+          padding: '0.5rem 0.75rem',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontSize: '0.8rem',
+          boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
+        }}>
+          <div style={{ 
+            background: 'rgba(255,255,255,0.2)', 
+            borderRadius: '50%', 
+            width: '30px', 
+            height: '30px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            fontSize: '1rem'
+          }}>
+            🚚
+          </div>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: 'bold' }}>Бесплатная доставка</span>
+            <span style={{ marginLeft: '0.5rem', background: '#4caf50', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '4px', fontSize: '0.7rem' }}>-200₽</span>
+          </div>
+          <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>В корзине 🚀</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Компонент прогрессбара скидки - ВСЕГДА показывает следующую цель
+const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
+  if (!discounts || discounts.length === 0) return null;
+
+  // Находим ближайшую БОЛЬШУЮ скидку (мотивируем увеличивать чек)
+  const nextDiscount = discounts
+    .filter(d => d.minTotal > subtotal)
+    .sort((a, b) => a.minTotal - b.minTotal)[0];
+
+  // Находим текущую скидку
+  const currentDiscount = discounts
+    .filter(d => d.minTotal <= subtotal)
+    .sort((a, b) => b.minTotal - a.minTotal)[0];
+
+  // Если достигли максимальной скидки - показываем достижение, но не прогрессбар
+  if (!nextDiscount && currentDiscount) {
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, #6f42c1, #e83e8c)',
+        color: 'white',
+        padding: '1rem',
+        borderRadius: '12px',
+        marginBottom: '1rem',
+        textAlign: 'center',
+        border: '2px solid #ffd700',
+      }}>
+        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+          👑 МАКСИМАЛЬНАЯ СКИДКА {currentDiscount.discountPercent}%!
+        </div>
+        <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+          Экономия: {Math.round(subtotal * currentDiscount.discountPercent / 100)} {settings.currency || '₽'}
+        </div>
+      </div>
+    );
+  }
+
+  // Если есть следующая цель - показываем прогрессбар к ней
+  if (nextDiscount) {
+    const remaining = nextDiscount.minTotal - subtotal;
+    const startPoint = currentDiscount ? currentDiscount.minTotal : 0;
+    const progress = Math.min(((subtotal - startPoint) / (nextDiscount.minTotal - startPoint)) * 100, 100);
+
+    return (
+      <div style={{
+        background: currentDiscount 
+          ? 'linear-gradient(135deg, #d1ecf1, #bee5eb)' // Если уже есть скидка - голубоватый фон
+          : 'linear-gradient(135deg, #fff3cd, #ffeaa7)', // Если скидки нет - жёлтый фон
+        padding: '1rem',
+        borderRadius: '12px',
+        marginBottom: '1rem',
+        border: `2px dashed ${currentDiscount ? '#17a2b8' : '#f39c12'}`,
+      }}>
+        {/* Показываем текущую скидку, если есть */}
+        {currentDiscount && (
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '0.75rem',
+            padding: '0.5rem',
+            background: 'rgba(23, 162, 184, 0.1)',
+            borderRadius: '8px',
+            color: '#0c5460',
+          }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
+              🎉 Сейчас скидка {currentDiscount.discountPercent}%
+            </div>
+          </div>
+        )}
+        
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '0.75rem',
+          color: currentDiscount ? '#0c5460' : '#856404'
+        }}>
+          <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>
+            До скидки {nextDiscount.discountPercent}%
+          </div>
+          <div style={{ fontWeight: 'bold', color: '#d63384' }}>
+            ещё {remaining} {settings.currency || '₽'}
+          </div>
+        </div>
+        
+        <div style={{
+          background: '#fff',
+          borderRadius: '999px',
+          height: '10px',
+          overflow: 'hidden',
+          marginBottom: '0.5rem',
+          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+        }}>
+          <div style={{
+            background: currentDiscount 
+              ? 'linear-gradient(90deg, #17a2b8, #20c997)' 
+              : 'linear-gradient(90deg, #ff7f32, #ff6b47)',
+            height: '100%',
+            width: `${Math.max(progress, 5)}%`, // Минимум 5% для видимости
+            borderRadius: '999px',
+            transition: 'width 0.3s ease',
+            position: 'relative',
+          }}>
+            {/* Блестящий эффект */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+              borderRadius: '999px',
+            }} />
+          </div>
+        </div>
+        
+        <div style={{ 
+          fontSize: '0.85rem', 
+          color: currentDiscount ? '#0c5460' : '#856404',
+          textAlign: 'center',
+          fontWeight: '500'
+        }}>
+          {currentDiscount 
+            ? `Увеличьте заказ и получите ещё больше скидки! 🚀`
+            : 'Добавьте ещё товаров и получите скидку! 💰'
+          }
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+// Компонент таймера со скидкой 99% - КОМПАКТНАЯ ВЕРСИЯ
+const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [hasTriggered, setHasTriggered] = useState(false);
+
+  // Находим товар с R2000 в ID
+  const specialProduct = products.find(p => String(p.id).includes('R2000'));
+  
+  // Проверяем, есть ли уже этот flash-товар в корзине
+  const isInCart = cart.some(item => item.id === `${specialProduct?.id}_flash`);
+
+  useEffect(() => {
+    // Активируем предложение при достижении 2000₽ (только один раз)
+    if (subtotal >= 2000 && !hasTriggered && specialProduct && !isInCart) {
+      setTimeLeft(120); // 2 минуты
+      setIsActive(true);
+      setHasTriggered(true);
+    }
+  }, [subtotal, hasTriggered, specialProduct, isInCart]);
+
+  useEffect(() => {
+    let interval = null;
+    if (isActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(timeLeft => {
+          if (timeLeft <= 1) {
+            setIsActive(false);
+            return 0;
+          }
+          return timeLeft - 1;
+        });
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setIsActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timeLeft]);
+
+  // Не показываем, если нет специального товара или предложение неактивно
+  if (!specialProduct || !isActive || timeLeft <= 0 || isInCart) return null;
+
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  const originalPrice = specialProduct.price;
+  const discountedPrice = Math.round(originalPrice * 0.01); // 99% скидка
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #ff0844, #ffb199)',
+      color: 'white',
+      padding: '1rem',
+      borderRadius: '12px',
+      marginBottom: '1rem',
+      border: '2px solid #ffd700',
+      boxShadow: '0 4px 15px rgba(255, 8, 68, 0.3)',
+      animation: 'flashPulse 2s infinite',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <style>
+        {`
+          @keyframes flashPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.01); }
+          }
+          
+          @keyframes timerBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+          }
+        `}
+      </style>
+
+      {/* Компактный заголовок */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '0.75rem'
+      }}>
+        <div style={{ 
+          fontSize: '1rem', 
+          fontWeight: 'bold',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+        }}>
+          ⚡ МОЛНИЕНОСНОЕ ПРЕДЛОЖЕНИЕ
+        </div>
+        <div style={{
+          fontSize: '1.5rem',
+          fontWeight: 'bold',
+          fontFamily: 'monospace',
+          animation: timeLeft <= 30 ? 'timerBlink 1s infinite' : 'none',
+          color: timeLeft <= 30 ? '#ffff00' : '#ffffff',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+        }}>
+          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        </div>
+      </div>
+
+      {/* Компактный товар */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '0.75rem',
+        marginBottom: '0.75rem',
+      }}>
+        <img
+          src={specialProduct.imageUrl}
+          alt={specialProduct.name}
+          style={{ 
+            width: '50px', 
+            height: '50px', 
+            borderRadius: '8px', 
+            objectFit: 'cover',
+            border: '2px solid #ffd700',
+          }}
+        />
+        <div style={{ flex: 1 }}>
+          <div style={{ 
+            fontWeight: 'bold', 
+            fontSize: '1rem', 
+            marginBottom: '0.25rem',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+          }}>
+            {specialProduct.name}
+          </div>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem'
+          }}>
+            <span style={{ 
+              textDecoration: 'line-through', 
+              fontSize: '0.9rem',
+              opacity: 0.8 
+            }}>
+              {originalPrice} ₽
+            </span>
+            <span style={{ 
+              fontSize: '1.1rem', 
+              fontWeight: 'bold',
+              color: '#ffff00',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+            }}>
+              {discountedPrice} ₽
+            </span>
+            <span style={{
+              background: '#ffff00',
+              color: '#ff0844',
+              padding: '0.1rem 0.4rem',
+              borderRadius: '10px',
+              fontSize: '0.7rem',
+              fontWeight: 'bold',
+            }}>
+              -99%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={() => {
+          // Проверяем, нет ли уже этого товара в корзине
+          const existingFlashItem = cart.find(item => 
+            item.id === `${specialProduct.id}_flash`
+          );
+          
+          if (existingFlashItem) {
+            // Если уже есть - не добавляем и скрываем предложение
+            setIsActive(false);
+            return;
+          }
+
+          // Добавляем товар со скидкой 99% (только 1 штука)
+          const discountedProduct = {
+            ...specialProduct,
+            price: discountedPrice,
+            originalPrice: originalPrice,
+            isFlashOffer: true,
+            quantity: 1, // Фиксированное количество
+            name: `${specialProduct.name} ⚡`,
+            id: `${specialProduct.id}_flash` // Уникальный ID для flash-версии
+          };
+          addToCart(discountedProduct);
+          setIsActive(false); // Скрываем предложение после добавления
+        }}
+        style={{
+          width: '100%',
+          padding: '0.6rem',
+          background: 'linear-gradient(135deg, #ffff00, #ffd700)',
+          color: '#ff0844',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '1rem',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+          boxShadow: '0 2px 8px rgba(255, 215, 0, 0.4)',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'scale(1.02)';
+          e.target.style.boxShadow = '0 4px 12px rgba(255, 215, 0, 0.6)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'scale(1)';
+          e.target.style.boxShadow = '0 2px 8px rgba(255, 215, 0, 0.4)';
+        }}
+      >
+        🔥 СХВАТИТЬ! 🔥
+      </button>
+    </div>
+  );
+};
+
+// Компонент "Заказывают сейчас"
+const OrderingNowBanner = ({ products, settings, addToCart }) => {
+  const [currentProduct, setCurrentProduct] = useState(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (products.length === 0) return;
+
+    const showBanner = () => {
+      const randomProduct = products[Math.floor(Math.random() * products.length)];
+      setCurrentProduct(randomProduct);
+      setVisible(true);
+
+      setTimeout(() => setVisible(false), 8000);
+    };
+
+    const initialTimer = setTimeout(showBanner, 5000);
+    const interval = setInterval(showBanner, Math.random() * 5000 + 15000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  }, [products]);
+
+  if (!visible || !currentProduct) return null;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        zIndex: 1000,
+        background: settings.backgroundColor || '#fdf0e2',
+        color: '#2c1e0f',
+        padding: '1rem',
+        borderRadius: '20px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+        maxWidth: '420px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        animation: 'slideIn 0.4s ease-out',
+        border: '2px solid #f0e6d2',
+        boxSizing: 'border-box',
+      }}
+    >
+      <style>
+        {`
+          @keyframes slideIn {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span>⭐</span> Сейчас заказывают </div>
         <button
           onClick={() => setVisible(false)}
           style={{
