@@ -408,28 +408,34 @@ export default function App() {
   return (
     <>
       <style>
-        {`
-          @keyframes slideIn {
-            from {
-              transform: translateX(100%);
-              opacity: 0;
-            }
-            to {
-              transform: translateX(0);
-              opacity: 1;
-            }
-          }
-          
-          @keyframes slideInRight {
-            from {
-              transform: translateX(100%);
-            }
-            to {
-              transform: translateX(0);
-            }
-          }
-        `}
-      </style>
+  {`
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    @media (max-width: 400px) {
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+  `}
+</style>
       
       <div
         className="app"
@@ -571,12 +577,13 @@ export default function App() {
         )}
 
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '1rem',
-          }}
-        >
+  className="product-grid"
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+    gap: '1rem',
+  }}
+>
           {filteredProducts.map((product) => (
             <div
               key={product.id}
