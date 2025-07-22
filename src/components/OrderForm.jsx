@@ -186,7 +186,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     setIsSubmitting(true);
     
     try {
-      // Создаем данные в том же формате, что использует ваш существующий API
+      // Создаем данные заказа
       const orderData = {
         action: 'createOrder',
         orderId: Date.now().toString(),
@@ -205,98 +205,42 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
         date: new Date().toISOString().split('T')[0]
       };
 
-      // Способ 1: Пробуем через GET параметры (как работают другие запросы в вашем приложении)
+      // Формируем URL параметры
       const params = new URLSearchParams(orderData);
+
+      // Отправляем через GET (как и остальные запросы в приложении)
+      const response = await fetch(`${API_URL}?${params.toString()}`, {
+        method: 'GET'
+      });
+
+      const result = await response.text();
       
-      let response;
-      try {
-        // Сначала пробуем POST
-        response = await fetch(API_URL, {
-          method: 'POST',
-          mode: 'no-cors', // Важно для Google Apps Script
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: params.toString()
-        });
-      } catch (postError) {
-        // Если POST не работает, пробуем GET
-        response = await fetch(`${API_URL}?${params.toString()}`, {
-          method: 'GET',
-          mode: 'no-cors'
-        });
+      if (result.includes('success') || response.ok) {
+        // Показываем сообщение об успехе
+        setMessages(prev => [...prev, {
+          type: 'bot',
+          text: '🎉 Заказ отправлен!\n\nМы свяжемся с тобой в WhatsApp в ближайшее время!\n\nСпасибо за заказ! ❤️',
+          timestamp: new Date()
+        }]);
+        
+        setTimeout(() => {
+          onClose();
+          if (onOrderSuccess) {
+            onOrderSuccess(); // Очищаем корзину
+          }
+        }, 3000);
+      } else {
+        throw new Error('Server response: ' + result);
       }
-      
-      // Показываем сообщение об успехе (при no-cors мы не можем проверить реальный статус)
-      setMessages(prev => [...prev, {
-        type: 'bot',
-        text: '🎉 Заказ отправлен!\n\nМы свяжемся с тобой в WhatsApp в ближайшее время!\n\nСпасибо за заказ! ❤️',
-        timestamp: new Date()
-      }]);
-      
-      setTimeout(() => {
-        onClose();
-        if (onOrderSuccess) {
-          onOrderSuccess(); // Очищаем корзину
-        }
-      }, 3000);
       
     } catch (error) {
       console.error('Error submitting order:', error);
       
-      // Пробуем альтернативный способ через fetch с jsonp
-      try {
-        const orderData = {
-          action: 'createOrder',
-          orderId: Date.now().toString(),
-          customerName: formData.customerName,
-          phone: formData.phone,
-          address: formData.address,
-          comment: formData.comment || '',
-          products: JSON.stringify(cart.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity
-          }))),
-          total: total.toString(),
-          status: 'pending',
-          date: new Date().toISOString().split('T')[0]
-        };
-        
-        // Создаем скрипт тег для JSONP
-        const script = document.createElement('script');
-        const params = new URLSearchParams(orderData);
-        script.src = `${API_URL}?${params.toString()}&callback=orderCallback`;
-        
-        // Создаем callback функцию
-        window.orderCallback = function(response) {
-          document.body.removeChild(script);
-          delete window.orderCallback;
-          
-          setMessages(prev => [...prev, {
-            type: 'bot',
-            text: '🎉 Заказ отправлен!\n\nМы свяжемся с тобой в WhatsApp в ближайшее время!\n\nСпасибо за заказ! ❤️',
-            timestamp: new Date()
-          }]);
-          
-          setTimeout(() => {
-            onClose();
-            if (onOrderSuccess) {
-              onOrderSuccess();
-            }
-          }, 3000);
-        };
-        
-        document.body.appendChild(script);
-        
-      } catch (jsonpError) {
-        setMessages(prev => [...prev, {
-          type: 'bot',
-          text: '😔 Упс! Что-то пошло не так...\n\nПопробуй еще раз или напиши нам напрямую в WhatsApp\n\n(Проверь подключение к интернету)',
-          timestamp: new Date()
-        }]);
-      }
+      setMessages(prev => [...prev, {
+        type: 'bot',
+        text: '😔 Упс! Что-то пошло не так...\n\nПопробуй еще раз или напиши нам напрямую в WhatsApp\n\nОшибка: ' + error.message,
+        timestamp: new Date()
+      }]);
     }
     
     setIsSubmitting(false);
