@@ -188,7 +188,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     try {
       const orderData = {
         action: 'createOrder',
-        orderId: Date.now(),
+        orderId: Date.now().toString(),
         customerName: formData.customerName,
         phone: formData.phone,
         address: formData.address, // Уже будет "Самовывоз" или адрес
@@ -199,24 +199,33 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
           price: item.price,
           quantity: item.quantity
         }))),
-        total: total,
+        total: total.toString(),
         status: 'pending',
         date: new Date().toISOString().split('T')[0]
       };
 
-      const formDataToSend = new FormData();
+      console.log('Отправляем данные:', orderData); // Для отладки
+
+      // Используем URLSearchParams для правильного формата
+      const formBody = new URLSearchParams();
       Object.keys(orderData).forEach(key => {
-        formDataToSend.append(key, orderData[key]);
+        formBody.append(key, orderData[key]);
       });
 
       const response = await fetch(API_URL, {
         method: 'POST',
-        body: formDataToSend
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formBody.toString()
       });
 
+      console.log('Статус ответа:', response.status); // Для отладки
+
       const result = await response.text();
+      console.log('Ответ сервера:', result); // Для отладки
       
-      if (response.ok) {
+      if (response.ok && (result.includes('success') || result.includes('Success') || result.includes('OK'))) {
         // Показываем сообщение об успехе
         setMessages(prev => [...prev, {
           type: 'bot',
@@ -237,7 +246,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
       console.error('Error submitting order:', error);
       setMessages(prev => [...prev, {
         type: 'bot',
-        text: '😔 Упс! Что-то пошло не так...\n\nПопробуй еще раз или напиши нам напрямую в WhatsApp',
+        text: '😔 Упс! Что-то пошло не так...\n\nПопробуй еще раз или напиши нам напрямую в WhatsApp\n\nОшибка: ' + error.message,
         timestamp: new Date()
       }]);
     }
