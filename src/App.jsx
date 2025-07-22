@@ -932,6 +932,8 @@ export default function App() {
           }
 
           .product-grid {
+  display: grid;
+  gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
 
@@ -1084,7 +1086,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="product-grid" style={{ display: 'grid', gap: '1rem' }}>
+        <div className="product-grid">
           {filteredProducts.map((product) => (
             <div
               key={product.id}
