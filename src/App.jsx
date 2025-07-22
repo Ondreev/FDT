@@ -144,9 +144,12 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
     const flashItem = cart.find(item => item.id === `${specialProduct.id}_flash`);
     if (!flashItem) return;
 
-    // Проверяем условие акции (вычитаем цену самого flash-товара)
-    const subtotalWithoutFlash = subtotal - (flashItem.price * flashItem.quantity);
+    // Проверяем условие акции (вычитаем ОРИГИНАЛЬНУЮ цену flash-товара)
+    const originalFlashPrice = flashItem.originalPrice || specialProduct.price;
+    const subtotalWithoutFlash = subtotal - (originalFlashPrice * flashItem.quantity);
     const conditionMet = subtotalWithoutFlash >= 2000;
+    
+    console.log(`Проверка условий: общая сумма ${subtotal}, без flash-товара ${subtotalWithoutFlash}, условие ${conditionMet ? 'выполнено' : 'нарушено'}`);
     
     // Определяем правильную цену и состояние
     const discountedPrice = Math.round(specialProduct.price * 0.01);
@@ -159,7 +162,7 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
         flashItem.isDiscounted !== shouldBeDiscounted || 
         flashItem.violatesCondition !== shouldViolateCondition) {
       
-      console.log(`Flash товар: условие ${conditionMet ? 'выполнено' : 'нарушено'}, цена: ${correctPrice}`);
+      console.log(`Обновляем flash товар: цена ${flashItem.price} -> ${correctPrice}, скидка: ${shouldBeDiscounted}`);
       
       setCart(prev => prev.map(item => 
         item.id === flashItem.id 
