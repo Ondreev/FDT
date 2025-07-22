@@ -148,7 +148,6 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
 
   useEffect(() => {
     // Активируем предложение при достижении 2000₽ (только один раз)
-    useEffect(() => {
   if (subtotal >= 2000 && !hasTriggered && specialProduct && !isInCart) {
     setTimeLeft(120);
     setIsActive(true);
