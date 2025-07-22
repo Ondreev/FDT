@@ -135,7 +135,7 @@ const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
 };
 
 // Компонент таймера со скидкой 99% - КОМПАКТНАЯ ВЕРСИЯ
-const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
+const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart, removeFromCart }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
@@ -147,44 +147,37 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
   const isInCart = cart.some(item => item.id === `${specialProduct?.id}_flash`);
 
   useEffect(() => {
-    // Активируем предложение при достижении 2000₽ (только один раз)
-  if (!specialProduct || !specialProduct.id) return;
+    if (!specialProduct || !specialProduct.id) return;
 
-  const flashItemId = `${specialProduct.id}_flash`;
-  const isFlashInCart = cart.some((item) => item.id === flashItemId);
-  const shouldShow = subtotal >= 2000;
+    const flashItemId = `${specialProduct.id}_flash`;
+    const isFlashInCart = cart.some((item) => item.id === flashItemId);
+    const shouldShow = subtotal >= 2000;
 
-  // Активируем предложение
-  if (shouldShow && !isFlashInCart) {
-    setTimeLeft(120);
-    setIsActive(true);
-    setHasTriggered(true);
-  }
+    // Активируем предложение при достижении 2000₽
+    if (shouldShow && !isFlashInCart && !hasTriggered) {
+      setTimeLeft(120);
+      setIsActive(true);
+      setHasTriggered(true);
+    }
 
-  // Если сумма упала — убираем flash-логику
-  if (!shouldShow && isFlashInCart) {
-    setIsActive(false);
-    setTimeLeft(0);
-    setHasTriggered(false);
+    // Если сумма упала ниже 2000₽ И есть flash-товар в корзине — удаляем его
+    if (!shouldShow && isFlashInCart) {
+      setIsActive(false);
+      setTimeLeft(0);
+      
+      // Просто удаляем flash-товар, не заменяем на обычный
+      removeFromCart(flashItemId);
+      
+      // Сбрасываем триггер, чтобы предложение могло появиться снова при достижении 2000₽
+      setHasTriggered(false);
+    }
 
-    // 🛡 Ищем сам товар в корзине
-    const flashItem = cart.find((item) => item.id === flashItemId);
-    if (!flashItem) return;
-
-    // 🧩 Создаём версию без скидки
-    const normalItem = {
-      ...specialProduct,
-      id: specialProduct.id,
-      price: specialProduct.price,
-    };
-
-    // 🧹 Безопасно заменяем
-    removeFromCart(flashItemId);
-    setTimeout(() => {
-      addToCart(normalItem);
-    }, 0); // чуть позже, чтобы не было коллизии рендера
-  }
-}, [subtotal, specialProduct, cart]);
+    // Если сумма снова поднялась выше 2000₽ и flash-товара нет в корзине
+    if (shouldShow && !isFlashInCart && hasTriggered && timeLeft <= 0) {
+      // Не показываем предложение повторно, если время уже истекло
+      return;
+    }
+  }, [subtotal, specialProduct, cart, hasTriggered, timeLeft, removeFromCart]);
 
   useEffect(() => {
     let interval = null;
