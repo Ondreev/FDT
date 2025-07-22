@@ -134,35 +134,104 @@ const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
   return null;
 };
 
+// Компонент для отладки (временный)
+const DebugInfo = ({ cart, products, subtotal }) => {
+  const specialProduct = products.find(p => String(p.id).includes('R2000'));
+  const flashItem = cart.find(item => item.id === `${specialProduct?.id}_flash`);
+  
+  if (!flashItem) return null;
+  
+  const otherItemsSubtotal = cart
+    .filter(item => item.id !== flashItem.id)
+    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+  const conditionMet = otherItemsSubtotal >= 2000;
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '100px',
+      left: '20px',
+      background: '#000',
+      color: '#fff',
+      padding: '10px',
+      borderRadius: '5px',
+      fontSize: '12px',
+      zIndex: 9999,
+      maxWidth: '300px'
+    }}>
+      <div>🔍 ОТЛАДКА:</div>
+      <div>Специальный товар: {specialProduct?.name} (ID: {specialProduct?.id})</div>
+      <div>Flash товар: {flashItem?.name} (ID: {flashItem?.id})</div>
+      <div>Цена flash: {flashItem?.price}₽ (оригинал: {flashItem?.originalPrice}₽)</div>
+      <div>Общая сумма: {subtotal}₽</div>
+      <div>Сумма остальных: {otherItemsSubtotal}₽</div>
+      <div>Условие выполнено: {conditionMet ? '✅ ДА' : '❌ НЕТ'}</div>
+      <div>Скидка активна: {flashItem?.isDiscounted ? '✅ ДА' : '❌ НЕТ'}</div>
+    </div>
+  );
+};
+
 // Компонент для управления flash-товарами в корзине
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   useEffect(() => {
-    // Находим товар с R2000 в ID
-    const specialProduct = products.find(p => String(p.id).includes('R2000'));
-    if (!specialProduct) return;
-
-    const flashItem = cart.find(item => item.id === `${specialProduct.id}_flash`);
-    if (!flashItem) return;
-
-    // Проверяем условие акции (вычитаем ОРИГИНАЛЬНУЮ цену flash-товара)
-    const originalFlashPrice = flashItem.originalPrice || specialProduct.price;
-    const subtotalWithoutFlash = subtotal - (originalFlashPrice * flashItem.quantity);
-    const conditionMet = subtotalWithoutFlash >= 2000;
+    console.log('🔍 FlashItemManager запущен');
+    console.log('Все товары из базы:', products.map(p => ({ id: p.id, name: p.name })));
     
-    console.log(`Проверка условий: общая сумма ${subtotal}, без flash-товара ${subtotalWithoutFlash}, условие ${conditionMet ? 'выполнено' : 'нарушено'}`);
+    // Находим товар с R2000 в ID (это будет "6R2000") 
+    const specialProduct = products.find(p => String(p.id).includes('R2000'));
+    console.log('Найден специальный товар:', specialProduct);
+    
+    if (!specialProduct) {
+      console.log('❌ Специальный товар с R2000 не найден');
+      return;
+    }
+
+    // Ищем flash-товар в корзине (с суффиксом _flash)
+    const flashItem = cart.find(item => item.id === `${specialProduct.id}_flash`);
+    console.log('Ищем flash товар с ID:', `${specialProduct.id}_flash`);
+    console.log('Flash товар в корзине:', flashItem);
+    
+    if (!flashItem) {
+      console.log('❌ Flash товар не найден в корзине');
+      return;
+    }
+
+    console.log('Flash товар найден в корзине:', flashItem);
+    console.log('Общая сумма корзины:', subtotal);
+
+    // Используем оригинальную цену для расчета
+    const originalFlashPrice = flashItem.originalPrice || specialProduct.price;
+    console.log('Оригинальная цена flash товара:', originalFlashPrice);
+    
+    // Вычисляем сумму остальных товаров
+    const otherItemsSubtotal = cart
+      .filter(item => item.id !== flashItem.id)
+      .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    console.log('Сумма остальных товаров:', otherItemsSubtotal);
+    
+    const conditionMet = otherItemsSubtotal >= 2000;
+    console.log('Условие акции выполнено:', conditionMet);
     
     // Определяем правильную цену и состояние
     const discountedPrice = Math.round(specialProduct.price * 0.01);
     const correctPrice = conditionMet ? discountedPrice : specialProduct.price;
     const shouldBeDiscounted = conditionMet;
-    const shouldViolateCondition = !conditionMet && flashItem.isFlashOffer;
+    const shouldViolateCondition = !conditionMet;
+    
+    console.log('Текущая цена flash товара:', flashItem.price);
+    console.log('Должна быть цена:', correctPrice);
     
     // Обновляем только если что-то изменилось
     if (flashItem.price !== correctPrice || 
         flashItem.isDiscounted !== shouldBeDiscounted || 
         flashItem.violatesCondition !== shouldViolateCondition) {
       
-      console.log(`Обновляем flash товар: цена ${flashItem.price} -> ${correctPrice}, скидка: ${shouldBeDiscounted}`);
+      console.log('🔄 ОБНОВЛЯЕМ FLASH ТОВАР!');
+      console.log('Цена:', flashItem.price, '->', correctPrice);
+      console.log('Скидка:', flashItem.isDiscounted, '->', shouldBeDiscounted);
+      console.log('Нарушение:', flashItem.violatesCondition, '->', shouldViolateCondition);
       
       setCart(prev => prev.map(item => 
         item.id === flashItem.id 
@@ -174,6 +243,8 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
             }
           : item
       ));
+    } else {
+      console.log('✅ Flash товар уже в правильном состоянии');
     }
   }, [cart, products, subtotal, setCart]);
 
@@ -186,7 +257,7 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
   const [isActive, setIsActive] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
 
-  // Находим товар с R2000 в ID
+  // Находим товар с R2000 в ID (это будет "6R2000")
   const specialProduct = products.find(p => String(p.id).includes('R2000'));
   
   // Проверяем, есть ли уже этот flash-товар в корзине
