@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Cart from './components/Cart';
 import OrderForm from './components/OrderForm';
 import OrderingNowBanner from './components/OrderingNowBanner';
+import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbytJQZKK_57WXTalemzNQgVmlcS_HajnL0vo-FxDT4DogOCLDnJ4vWl0GMp8oQCaOi0/exec';
 
@@ -16,9 +17,9 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
     const flashItem = cart.find(item => item.id === `${specialProduct.id}_flash`);
     if (!flashItem) return;
     
-    // Вычисляем сумму остальных товаров
+    // Вычисляем сумму остальных товаров (исключая доставку и этот flash товар)
     const otherItemsSubtotal = cart
-      .filter(item => item.id !== flashItem.id)
+      .filter(item => item.id !== flashItem.id && !item.isDelivery)
       .reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     const conditionMet = otherItemsSubtotal >= 2000;
@@ -178,8 +179,6 @@ export default function App() {
 
   // Рассчитываем финальную сумму со скидкой для формы заказа
   const calculateFinalTotal = () => {
-    // Здесь можно добавить логику расчета скидки
-    // Пока возвращаем просто subtotal
     return subtotal;
   };
 
@@ -490,7 +489,9 @@ export default function App() {
           ))}
         </div>
 
-        {/* Компоненты */}
+        {/* Менеджеры компонентов */}
+        <SimpleDeliveryManager cart={cart} setCart={setCart} />
+        
         <FlashItemManager 
           cart={cart} 
           setCart={setCart} 
@@ -508,6 +509,7 @@ export default function App() {
           removeFromCart={removeFromCart} 
           settings={settings}
           addToCart={addToCart}
+          setCart={setCart}
           onOpenOrderForm={() => {
             setIsCartOpen(false);
             setIsOrderFormOpen(true);
