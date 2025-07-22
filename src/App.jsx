@@ -942,6 +942,7 @@ export default function App() {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
   }
 }
+}
       </style>
       
       <div
