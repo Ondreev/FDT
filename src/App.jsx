@@ -744,10 +744,11 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           background: settings.backgroundColor || '#fdf0e2',
           zIndex: 1001,
           padding: '1rem',
+          display: 'flex',
+          flexDirection: 'column',
           animation: 'slideInLeft 0.3s ease-out',
           boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
           boxSizing: 'border-box',
-          overflowY: 'auto', // Теперь вся корзина прокручивается
         }}
       >
         <style>
@@ -801,165 +802,20 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           />
         )}
 
-        {/* Список товаров - БЕЗ ОТДЕЛЬНОГО СКРОЛЛА */}
-        <div style={{ marginBottom: '1rem' }}>
-          {cart.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
-              Корзина пуста
-            </div>
-          ) : (
-            cart.map((item) => (
-              <div
-                key={`${item.id}-${item.isFlashOffer ? 'flash' : 'regular'}`}
-                style={{
-                  display: 'flex',
-                  gap: '1rem',
-                  alignItems: 'center',
-                  marginBottom: '1rem',
-                  paddingBottom: '1rem',
-                  borderBottom: '1px solid #eee',
-                  background: item.isFlashOffer ? 'linear-gradient(135deg, #fff5f5, #ffe6e6)' : 'transparent',
-                  borderRadius: item.isFlashOffer ? '8px' : '0',
-                  padding: item.isFlashOffer ? '0.5rem' : '0',
-                  border: item.isFlashOffer ? '2px solid #ff0844' : 'none',
-                }}
-              >
-                <img
-                  src={item.imageUrl}
-                  alt={item.name}
-                  style={{ width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{ 
-                    fontWeight: 'bold', 
-                    fontSize: '1rem', 
-                    color: item.isFlashOffer ? '#ff0844' : '#2c1e0f', 
-                    marginBottom: '0.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    {item.name}
-                    {item.isFlashOffer && (
-                      <span style={{
-                        background: '#ff0844',
-                        color: 'white',
-                        fontSize: '0.7rem',
-                        padding: '0.2rem 0.4rem',
-                        borderRadius: '8px',
-                        fontWeight: 'bold'
-                      }}>
-                        -99%
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                      {item.isFlashOffer && item.originalPrice && (
-                        <span style={{ 
-                          textDecoration: 'line-through', 
-                          marginRight: '0.5rem',
-                          fontSize: '0.8rem' 
-                        }}>
-                          {item.originalPrice} {settings.currency || '₽'}
-                        </span>
-                      )}
-                      <span style={{ 
-                        fontWeight: item.isFlashOffer ? 'bold' : 'normal',
-                        color: item.isFlashOffer ? '#ff0844' : '#666'
-                      }}>
-                        {item.price} {settings.currency || '₽'}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      {!item.isFlashOffer ? (
-                        // Обычные товары - можно изменять количество
-                        <>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            style={{
-                              background: '#f0f0f0',
-                              border: 'none',
-                              borderRadius: '6px',
-                              width: '28px',
-                              height: '28px',
-                              fontSize: '16px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            −
-                          </button>
-                          <span style={{ fontWeight: 'bold', fontSize: '1rem', minWidth: '20px', textAlign: 'center' }}>
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            style={{
-                              background: settings.primaryColor || '#ff7f32',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              width: '28px',
-                              height: '28px',
-                              fontSize: '16px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            +
-                          </button>
-                        </>
-                      ) : (
-                        // Flash-товары - фиксированное количество
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          background: '#fff0f0',
-                          padding: '0.3rem 0.6rem',
-                          borderRadius: '6px',
-                          border: '1px solid #ff0844',
-                        }}>
-                          <span style={{ 
-                            fontWeight: 'bold', 
-                            fontSize: '0.9rem',
-                            color: '#ff0844'
-                          }}>
-                            1 шт
-                          </span>
-                        </div>
-                      )}
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#e03636',
-                          fontSize: '18px',
-                          cursor: 'pointer',
-                          marginLeft: '0.3rem',
-                        }}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Итоговая информация - ВНИЗУ */}
+        {/* Итоговая информация - ЗАФИКСИРОВАННАЯ */}
         {cart.length > 0 && (
           <div style={{ 
             backgroundColor: 'rgba(255,255,255,0.9)',
             backdropFilter: 'blur(10px)',
             padding: '1rem',
             borderRadius: '12px',
+            marginBottom: '1rem',
             textAlign: 'center',
+            position: 'sticky',
+            top: 0,
+            zIndex: 100,
             border: '1px solid #e0e0e0',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            marginTop: '1rem'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
             <div style={{ marginBottom: '0.5rem' }}>
               <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
@@ -993,10 +849,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
             </button>
           </div>
         )}
-      </div>
-    </>
-  );
-};
+
         {/* Список товаров - СКРОЛЛИРУЕМЫЙ */}
         <div style={{ 
           flex: 1, 
