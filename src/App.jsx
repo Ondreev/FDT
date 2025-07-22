@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Cart from './components/Cart';
 import OrderForm from './components/OrderForm';
 import OrderingNowBanner from './components/OrderingNowBanner';
+import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbytJQZKK_57WXTalemzNQgVmlcS_HajnL0vo-FxDT4DogOCLDnJ4vWl0GMp8oQCaOi0/exec';
 
 // Компонент для управления flash-товарами в корзине
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
@@ -51,7 +53,8 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   return null; // Этот компонент ничего не рендерит
 };
 
-export default function App() {
+// Основной компонент магазина (ваш существующий код)
+const ShopPage = () => {
   const [settings, setSettings] = useState({});
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -529,5 +532,20 @@ export default function App() {
         />
       </div>
     </>
+  );
+};
+
+// Главный App компонент с роутингом
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        {/* Основная страница магазина */}
+        <Route path="/" element={<ShopPage />} />
+        
+        {/* Админ панель */}
+        <Route path="/admin" element={<AdminPage />} />
+      </Routes>
+    </Router>
   );
 }
