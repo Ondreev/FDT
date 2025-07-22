@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 
+// Функция для форматирования числа с пробелами
+const formatNumber = (num) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+};
+
 // Простой менеджер доставки
 const SimpleDeliveryManager = ({ cart, setCart }) => {
   const DELIVERY_COST = 250;
@@ -72,7 +77,7 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
   return null;
 };
 
-// Простой прогрессбар к бесплатной доставке
+// Простой прогрессбар к бесплатной доставке (остается вверху)
 const FreeDeliveryProgress = ({ cart, settings }) => {
   const FREE_DELIVERY_THRESHOLD = 2000;
   
@@ -113,7 +118,7 @@ const FreeDeliveryProgress = ({ cart, settings }) => {
           🚚 До бесплатной доставки
         </div>
         <div style={{ fontWeight: 'bold', color: '#d32f2f' }}>
-          ещё {remaining} {settings.currency || '₽'}
+          ещё {formatNumber(remaining)} {settings.currency || '₽'}
         </div>
       </div>
       
@@ -157,8 +162,8 @@ const FreeDeliveryProgress = ({ cart, settings }) => {
   );
 };
 
-// Простой баннер бесплатной доставки
-const FreeDeliveryBanner = ({ cart, setCart, settings }) => {
+// Попап бесплатной доставки (теперь как модальное окно)
+const FreeDeliveryPopup = ({ cart, setCart, settings }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasShown, setHasShown] = useState(false);
   const FREE_DELIVERY_THRESHOLD = 2000;
@@ -196,82 +201,160 @@ const FreeDeliveryBanner = ({ cart, setCart, settings }) => {
     setIsVisible(false);
   };
 
+  const handleClose = () => {
+    setIsVisible(false);
+  };
+
   if (!isVisible) return null;
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #4caf50, #66bb6a)',
-      color: 'white',
-      padding: '1rem',
-      borderRadius: '12px',
-      marginBottom: '1rem',
-      border: '2px solid #ffeb3b',
-      boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
-      animation: 'bounceIn 0.5s ease-out',
-      textAlign: 'center'
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      zIndex: 2500,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px'
     }}>
-      <style>
-        {`
-          @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
-          }
-        `}
-      </style>
+      <div style={{
+        background: 'linear-gradient(135deg, #4caf50, #66bb6a)',
+        color: 'white',
+        padding: '2rem',
+        borderRadius: '20px',
+        textAlign: 'center',
+        maxWidth: '350px',
+        width: '100%',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+        border: '3px solid #ffeb3b',
+        position: 'relative',
+        animation: 'popupBounce 0.5s ease-out'
+      }}>
+        <style>
+          {`
+            @keyframes popupBounce {
+              0% { transform: scale(0.3); opacity: 0; }
+              50% { transform: scale(1.05); }
+              70% { transform: scale(0.95); }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          `}
+        </style>
 
-      <div style={{ 
-        fontSize: '2rem', 
-        marginBottom: '0.5rem' 
-      }}>
-        🎉
-      </div>
-      
-      <div style={{ 
-        fontSize: '1.2rem', 
-        fontWeight: 'bold',
-        marginBottom: '0.5rem',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-      }}>
-        Поздравляем!
-      </div>
-      
-      <div style={{ 
-        fontSize: '1rem', 
-        marginBottom: '1rem',
-        opacity: 0.9
-      }}>
-        Вы получили бесплатную доставку!
-      </div>
+        {/* Кнопка закрытия */}
+        <button
+          onClick={handleClose}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'rgba(255,255,255,0.2)',
+            border: 'none',
+            color: 'white',
+            fontSize: '1.5rem',
+            cursor: 'pointer',
+            borderRadius: '50%',
+            width: '30px',
+            height: '30px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          ✕
+        </button>
+        
+        <div style={{ 
+          fontSize: '3rem', 
+          marginBottom: '1rem',
+          animation: 'bounce 1s infinite'
+        }}>
+          🎉
+        </div>
 
-      <button
-        onClick={handleActivateFreeDelivery}
-        style={{
-          padding: '0.75rem 1.5rem',
-          background: 'linear-gradient(135deg, #ffeb3b, #ffc107)',
-          color: '#2e7d32',
-          border: 'none',
-          borderRadius: '25px',
-          fontSize: '1rem',
+        <style>
+          {`
+            @keyframes bounce {
+              0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+              40% { transform: translateY(-10px); }
+              60% { transform: translateY(-5px); }
+            }
+          `}
+        </style>
+        
+        <div style={{ 
+          fontSize: '1.5rem', 
           fontWeight: 'bold',
-          cursor: 'pointer',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          boxShadow: '0 3px 10px rgba(255, 235, 59, 0.4)',
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.transform = 'scale(1.05)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = 'scale(1)';
-        }}
-      >
-        🎁 Активировать!
-      </button>
+          marginBottom: '0.5rem',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+        }}>
+          Поздравляем!
+        </div>
+        
+        <div style={{ 
+          fontSize: '1.1rem', 
+          marginBottom: '1.5rem',
+          opacity: 0.95,
+          lineHeight: '1.4'
+        }}>
+          Вы получили<br/>
+          <strong>бесплатную доставку!</strong>
+        </div>
+
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}>
+          <button
+            onClick={handleActivateFreeDelivery}
+            style={{
+              padding: '1rem 2rem',
+              background: 'linear-gradient(135deg, #ffeb3b, #ffc107)',
+              color: '#2e7d32',
+              border: 'none',
+              borderRadius: '25px',
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              boxShadow: '0 4px 15px rgba(255, 235, 59, 0.4)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'scale(1)';
+            }}
+          >
+            🎁 Активировать!
+          </button>
+          
+          <button
+            onClick={handleClose}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: 'transparent',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.5)',
+              borderRadius: '25px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              opacity: 0.8
+            }}
+          >
+            Может позже
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
 
-export { SimpleDeliveryManager, FreeDeliveryProgress, FreeDeliveryBanner };
+export { SimpleDeliveryManager, FreeDeliveryProgress, FreeDeliveryPopup, formatNumber };
