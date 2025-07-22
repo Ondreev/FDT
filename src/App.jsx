@@ -148,23 +148,28 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
 
   useEffect(() => {
     // Активируем предложение при достижении 2000₽ (только один раз)
-  if (subtotal >= 2000 && !hasTriggered && specialProduct && !isInCart) {
+  const flashItemId = `${specialProduct?.id}_flash`;
+
+  const shouldShow = subtotal >= 2000;
+  const isFlashInCart = cart.some((item) => item.id === flashItemId);
+
+  if (shouldShow && !isFlashInCart) {
     setTimeLeft(120);
     setIsActive(true);
     setHasTriggered(true);
   }
 
-  // 🚫 Деактивируем, если сумма упала
-  if (subtotal < 2000 && isActive) {
+  if (!shouldShow) {
     setIsActive(false);
     setTimeLeft(0);
-  }
+    setHasTriggered(false);
 
-  // 🚫 Удаляем flash-товар, если он остался один в корзине
-  if (subtotal < 2000 && isInCart && cart.length === 1) {
-    removeFromCart(`${specialProduct?.id}_flash`);
+    // Удаляем flash-блюдо из корзины, если оно есть
+    if (isFlashInCart) {
+      removeFromCart(flashItemId);
+    }
   }
-}, [subtotal, hasTriggered, specialProduct, isInCart, cart]);
+}, [subtotal, specialProduct, cart]);
 
   useEffect(() => {
     let interval = null;
