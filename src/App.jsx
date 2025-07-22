@@ -148,34 +148,41 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
 
   useEffect(() => {
     // Активируем предложение при достижении 2000₽ (только один раз)
-  if (!specialProduct) return;
+  if (!specialProduct || !specialProduct.id) return;
 
   const flashItemId = `${specialProduct.id}_flash`;
-  const shouldShow = subtotal >= 2000;
   const isFlashInCart = cart.some((item) => item.id === flashItemId);
+  const shouldShow = subtotal >= 2000;
 
+  // Активируем предложение
   if (shouldShow && !isFlashInCart) {
     setTimeLeft(120);
     setIsActive(true);
     setHasTriggered(true);
   }
 
-  if (!shouldShow) {
+  // Если сумма упала — убираем flash-логику
+  if (!shouldShow && isFlashInCart) {
     setIsActive(false);
     setTimeLeft(0);
     setHasTriggered(false);
 
-    if (isFlashInCart) {
-      // 👇 Заменим flash-товар на обычный по полной цене
-      const originalItem = {
-        ...specialProduct,
-        id: specialProduct.id, // убираем _flash
-        price: specialProduct.price,
-      };
+    // 🛡 Ищем сам товар в корзине
+    const flashItem = cart.find((item) => item.id === flashItemId);
+    if (!flashItem) return;
 
-      removeFromCart(flashItemId);
-      addToCart(originalItem);
-    }
+    // 🧩 Создаём версию без скидки
+    const normalItem = {
+      ...specialProduct,
+      id: specialProduct.id,
+      price: specialProduct.price,
+    };
+
+    // 🧹 Безопасно заменяем
+    removeFromCart(flashItemId);
+    setTimeout(() => {
+      addToCart(normalItem);
+    }, 0); // чуть позже, чтобы не было коллизии рендера
   }
 }, [subtotal, specialProduct, cart]);
 
