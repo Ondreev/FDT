@@ -139,12 +139,22 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart, remove
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
+  const [shouldRemoveFlash, setShouldRemoveFlash] = useState(false);
 
   // Находим товар с R2000 в ID
   const specialProduct = products.find(p => String(p.id).includes('R2000'));
   
   // Проверяем, есть ли уже этот flash-товар в корзине
   const isInCart = cart.some(item => item.id === `${specialProduct?.id}_flash`);
+
+  // Отдельный эффект для удаления flash-товара
+  useEffect(() => {
+    if (shouldRemoveFlash && specialProduct) {
+      const flashItemId = `${specialProduct.id}_flash`;
+      removeFromCart(flashItemId);
+      setShouldRemoveFlash(false);
+    }
+  }, [shouldRemoveFlash, specialProduct, removeFromCart]);
 
   useEffect(() => {
     if (!specialProduct || !specialProduct.id) return;
@@ -160,24 +170,14 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart, remove
       setHasTriggered(true);
     }
 
-    // Если сумма упала ниже 2000₽ И есть flash-товар в корзине — удаляем его
+    // Если сумма упала ниже 2000₽ И есть flash-товар в корзине — планируем удаление
     if (!shouldShow && isFlashInCart) {
       setIsActive(false);
       setTimeLeft(0);
-      
-      // Просто удаляем flash-товар, не заменяем на обычный
-      removeFromCart(flashItemId);
-      
-      // Сбрасываем триггер, чтобы предложение могло появиться снова при достижении 2000₽
       setHasTriggered(false);
+      setShouldRemoveFlash(true);
     }
-
-    // Если сумма снова поднялась выше 2000₽ и flash-товара нет в корзине
-    if (shouldShow && !isFlashInCart && hasTriggered && timeLeft <= 0) {
-      // Не показываем предложение повторно, если время уже истекло
-      return;
-    }
-  }, [subtotal, specialProduct, cart, hasTriggered, timeLeft, removeFromCart]);
+  }, [subtotal, specialProduct, cart, hasTriggered]);
 
   useEffect(() => {
     let interval = null;
