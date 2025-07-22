@@ -7,6 +7,7 @@ const AdminLogin = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [availablePasswords, setAvailablePasswords] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,15 +26,21 @@ const AdminLogin = ({ onLoginSuccess }) => {
       const admins = await response.json();
       
       console.log('Найденные админы:', admins); // Для отладки
+      setAvailablePasswords(admins.map(a => a.passwordHash).filter(Boolean));
       
-      // Проверяем пароль
-      const admin = admins.find(admin => admin.passwordHash === password);
+      // Проверяем пароль (убираем пробелы)
+      const admin = admins.find(admin => 
+        admin.passwordHash && admin.passwordHash.trim() === password.trim()
+      );
       
       if (admin) {
+        console.log('✅ Авторизация успешна!', admin);
         onLoginSuccess(admin);
       } else {
         setError('Неверный пароль');
-        console.log('Введенный пароль:', password); // Для отладки
+        console.log('❌ Пароль не подошел');
+        console.log('Доступные пароли:', admins.map(a => `"${a.passwordHash}"`));
+        console.log('Введенный пароль:', `"${password}"`);
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -138,6 +145,33 @@ const AdminLogin = ({ onLoginSuccess }) => {
           color: '#666'
         }}>
           💡 Введите пароль админа из Google Sheets (колонка passwordHash)
+          
+          {/* Отладочные кнопки */}
+          {availablePasswords.length > 0 && (
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+                Быстрый вход (для отладки):
+              </div>
+              {availablePasswords.map((pass, index) => (
+                <button
+                  key={index}
+                  onClick={() => setPassword(pass)}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    margin: '0.25rem',
+                    background: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Использовать: "{pass}"
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
