@@ -158,30 +158,33 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart, update
       const subtotalWithoutFlash = subtotal - (flashItem.price * flashItem.quantity);
       const conditionMet = subtotalWithoutFlash >= 2000;
       
-      if (!conditionMet) {
+      // Обновляем только если текущее состояние отличается от нужного
+      if (!conditionMet && flashItem.isDiscounted) {
         // Условие нарушено - меняем товар на обычную цену
         updateFlashItemPrice(flashItem.id, specialProduct.price, false);
-      } else {
+      } else if (conditionMet && !flashItem.isDiscounted) {
         // Условие выполнено - возвращаем скидочную цену
         const discountedPrice = Math.round(specialProduct.price * 0.01);
         updateFlashItemPrice(flashItem.id, discountedPrice, true);
       }
       
       // Скрываем предложение если товар уже в корзине
-      setIsActive(false);
+      if (isActive) {
+        setIsActive(false);
+      }
       return;
     }
 
     // Если товара нет в корзине - показываем/скрываем предложение
-    if (shouldShow && !hasTriggered) {
+    if (shouldShow && !hasTriggered && !isActive) {
       setTimeLeft(120);
       setIsActive(true);
       setHasTriggered(true);
-    } else if (!shouldShow) {
+    } else if (!shouldShow && isActive) {
       setIsActive(false);
       setTimeLeft(0);
     }
-  }, [subtotal, specialProduct, cart, hasTriggered, isInCart, flashItem, updateFlashItemPrice]);
+  }, [subtotal, specialProduct, isInCart, flashItem, hasTriggered, isActive]);
 
   useEffect(() => {
     let interval = null;
