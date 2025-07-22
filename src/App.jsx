@@ -134,8 +134,44 @@ const DiscountProgressBar = ({ subtotal, discounts, settings }) => {
   return null;
 };
 
+// Компонент для управления flash-товарами в корзине
+const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
+  useEffect(() => {
+    // Находим товар с R2000 в ID
+    const specialProduct = products.find(p => String(p.id).includes('R2000'));
+    if (!specialProduct) return;
+
+    const flashItem = cart.find(item => item.id === `${specialProduct.id}_flash`);
+    if (!flashItem) return;
+
+    // Проверяем условие акции (вычитаем цену самого flash-товара)
+    const subtotalWithoutFlash = subtotal - (flashItem.price * flashItem.quantity);
+    const conditionMet = subtotalWithoutFlash >= 2000;
+    
+    // Определяем правильную цену
+    const discountedPrice = Math.round(specialProduct.price * 0.01);
+    const correctPrice = conditionMet ? discountedPrice : specialProduct.price;
+    
+    // Обновляем только если цена изменилась
+    if (flashItem.price !== correctPrice) {
+      setCart(prev => prev.map(item => 
+        item.id === flashItem.id 
+          ? { 
+              ...item, 
+              price: correctPrice,
+              isDiscounted: conditionMet,
+              violatesCondition: !conditionMet
+            }
+          : item
+      ));
+    }
+  }, [cart, products, subtotal, setCart]);
+
+  return null; // Этот компонент ничего не рендерит
+};
+
 // Компонент таймера со скидкой 99% - КОМПАКТНАЯ ВЕРСИЯ
-const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart, updateFlashItemPrice }) => {
+const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
@@ -147,44 +183,24 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart, update
   const flashItem = cart.find(item => item.id === `${specialProduct?.id}_flash`);
   const isInCart = !!flashItem;
 
+  // Простая логика активации предложения
   useEffect(() => {
-    if (!specialProduct || !specialProduct.id) return;
+    if (!specialProduct) return;
 
-    const shouldShow = subtotal >= 2000;
+    const shouldShow = subtotal >= 2000 && !isInCart && !hasTriggered;
     
-    // Если есть flash-товар в корзине
-    if (isInCart && flashItem) {
-      // Проверяем условие акции (вычитаем цену самого flash-товара из общей суммы)
-      const subtotalWithoutFlash = subtotal - (flashItem.price * flashItem.quantity);
-      const conditionMet = subtotalWithoutFlash >= 2000;
-      
-      // Обновляем только если текущее состояние отличается от нужного
-      if (!conditionMet && flashItem.isDiscounted) {
-        // Условие нарушено - меняем товар на обычную цену
-        updateFlashItemPrice(flashItem.id, specialProduct.price, false);
-      } else if (conditionMet && !flashItem.isDiscounted) {
-        // Условие выполнено - возвращаем скидочную цену
-        const discountedPrice = Math.round(specialProduct.price * 0.01);
-        updateFlashItemPrice(flashItem.id, discountedPrice, true);
-      }
-      
-      // Скрываем предложение если товар уже в корзине
-      if (isActive) {
-        setIsActive(false);
-      }
-      return;
-    }
-
-    // Если товара нет в корзине - показываем/скрываем предложение
-    if (shouldShow && !hasTriggered && !isActive) {
+    if (shouldShow) {
       setTimeLeft(120);
       setIsActive(true);
       setHasTriggered(true);
-    } else if (!shouldShow && isActive) {
+    }
+    
+    // Скрываем если сумма упала или товар добавлен
+    if ((subtotal < 2000 || isInCart) && isActive) {
       setIsActive(false);
       setTimeLeft(0);
     }
-  }, [subtotal, specialProduct, isInCart, flashItem, hasTriggered, isActive]);
+  }, [subtotal, specialProduct, isInCart, hasTriggered, isActive]);
 
   useEffect(() => {
     let interval = null;
