@@ -574,10 +574,12 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
   );
 };
 
-// Обновленный компонент корзины с таймером flash-предложения
+// Обновленный компонент корзины с проверкой flash-товаров
 const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart }) => {
   const [discounts, setDiscounts] = useState([]);
   const [products, setProducts] = useState([]);
+  const [showViolationAlert, setShowViolationAlert] = useState(false);
+  const [violatingItems, setViolatingItems] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -605,6 +607,50 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     addToCart(product);
   };
 
+  // Функция проверки flash-товаров
+  const checkFlashViolations = () => {
+    const violations = [];
+    
+    cart.forEach(item => {
+      if (item.isFlashOffer) {
+        // Находим оригинальный товар
+        const originalProduct = products.find(p => String(p.id).includes('R2000'));
+        if (!originalProduct) return;
+        
+        // Считаем сумму остальных товаров
+        const otherItemsTotal = cart
+          .filter(cartItem => cartItem.id !== item.id)
+          .reduce((sum, cartItem) => sum + (cartItem.price * cartItem.quantity), 0);
+        
+        // Проверяем условие (остальные товары >= 2000₽)
+        if (otherItemsTotal < 2000) {
+          violations.push({
+            ...item,
+            requiredAmount: 2000,
+            currentAmount: otherItemsTotal,
+            missing: 2000 - otherItemsTotal
+          });
+        }
+      }
+    });
+    
+    return violations;
+  };
+
+  // Функция оформления заказа
+  const handleOrderSubmit = () => {
+    const violations = checkFlashViolations();
+    
+    if (violations.length > 0) {
+      setViolatingItems(violations);
+      setShowViolationAlert(true);
+      return;
+    }
+    
+    // Здесь обычная логика оформления заказа
+    alert('Заказ оформлен успешно!');
+  };
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
   // Рассчитываем скидку
@@ -618,275 +664,346 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
   if (!isOpen) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        maxWidth: '400px',
-        height: '100vh',
-        background: settings.backgroundColor || '#fdf0e2',
-        zIndex: 1001,
-        padding: '1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        animation: 'slideInLeft 0.3s ease-out',
-        boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
-        boxSizing: 'border-box',
-      }}
-    >
-      <style>
-        {`
-          @keyframes slideInLeft {
-            from {
-              transform: translateX(-100%);
-            }
-            to {
-              transform: translateX(0);
-            }
-          }
-        `}
-      </style>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0.5rem',
-            borderRadius: '8px',
-            color: '#666',
-            fontSize: '20px',
-          }}
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Flash-предложение с таймером - ПЕРВЫМ */}
-      {cart.length > 0 && (
-        <FlashOfferTimer 
-          subtotal={subtotal} 
-          products={products}
-          settings={settings} 
-          addToCart={addToCartHandler}
-          cart={cart}
-        />
-      )}
-
-      {/* Прогрессбар скидки */}
-      {cart.length > 0 && (
-        <DiscountProgressBar 
-          subtotal={subtotal} 
-          discounts={discounts} 
-          settings={settings} 
-        />
-      )}
-
-      {/* Итоговая информация - ЗАФИКСИРОВАННАЯ */}
-      {cart.length > 0 && (
-        <div style={{ 
-          backgroundColor: 'rgba(255,255,255,0.9)',
-          backdropFilter: 'blur(10px)',
-          padding: '1rem',
-          borderRadius: '12px',
-          marginBottom: '1rem',
-          textAlign: 'center',
-          position: 'sticky',
+    <>
+      {/* Попап с предупреждением о нарушении условий */}
+      {showViolationAlert && (
+        <div style={{
+          position: 'fixed',
           top: 0,
-          zIndex: 100,
-          border: '1px solid #e0e0e0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
         }}>
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
-              Сумма: {subtotal} {settings.currency || '₽'}
+          <div style={{
+            background: '#fff',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+            <h2 style={{ color: '#e03636', marginBottom: '16px', fontSize: '20px' }}>
+              Нарушены условия акции!
+            </h2>
+            <div style={{ marginBottom: '20px', color: '#666', lineHeight: '1.5' }}>
+              {violatingItems.map((item, index) => (
+                <div key={index} style={{ 
+                  marginBottom: '12px',
+                  padding: '12px',
+                  background: '#ffebee',
+                  borderRadius: '8px',
+                  border: '2px solid #ff5722'
+                }}>
+                  <div style={{ fontWeight: 'bold', color: '#d32f2f' }}>
+                    {item.name}
+                  </div>
+                  <div style={{ fontSize: '14px', marginTop: '4px' }}>
+                    Нужно добавить товаров на <strong>{item.missing}₽</strong>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    (сейчас: {item.currentAmount}₽ из {item.requiredAmount}₽)
+                  </div>
+                </div>
+              ))}
             </div>
-            {discountAmount > 0 && (
-              <div style={{ fontSize: '1rem', color: '#28a745', marginBottom: '0.25rem' }}>
-                Скидка: -{discountAmount} {settings.currency || '₽'}
-              </div>
-            )}
+            <button
+              onClick={() => setShowViolationAlert(false)}
+              style={{
+                padding: '12px 24px',
+                background: settings.primaryColor || '#ff7f32',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              Понятно
+            </button>
           </div>
-          <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem', color: '#2c1e0f' }}>
-            Итого: {total} {settings.currency || '₽'}
-          </div>
-          <button
-            style={{
-              padding: '0.75rem 2rem',
-              background: settings.primaryColor || '#ff7f32',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              width: '100%',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            }}
-          >
-            Оформить заказ
-          </button>
         </div>
       )}
 
-      {/* Список товаров - СКРОЛЛИРУЕМЫЙ */}
-      <div style={{ 
-        flex: 1, 
-        overflowY: 'auto',
-        maxHeight: 'calc(100vh - 400px)', // Ограничиваем высоту
-        paddingRight: '0.5rem'
-      }}>
-        {cart.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
-            Корзина пуста
-          </div>
-        ) : (
-          cart.map((item) => (
-            <div
-              key={`${item.id}-${item.isFlashOffer ? 'flash' : 'regular'}`}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          maxWidth: '400px',
+          height: '100vh',
+          background: settings.backgroundColor || '#fdf0e2',
+          zIndex: 1001,
+          padding: '1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          animation: 'slideInLeft 0.3s ease-out',
+          boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
+          boxSizing: 'border-box',
+        }}
+      >
+        <style>
+          {`
+            @keyframes slideInLeft {
+              from {
+                transform: translateX(-100%);
+              }
+              to {
+                transform: translateX(0);
+              }
+            }
+          `}
+        </style>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f' }}>Корзина</h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0.5rem',
+              borderRadius: '8px',
+              color: '#666',
+              fontSize: '20px',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Flash-предложение с таймером */}
+        {cart.length > 0 && (
+          <FlashOfferTimer 
+            subtotal={subtotal} 
+            products={products}
+            settings={settings} 
+            addToCart={addToCartHandler}
+            cart={cart}
+          />
+        )}
+
+        {/* Прогрессбар скидки */}
+        {cart.length > 0 && (
+          <DiscountProgressBar 
+            subtotal={subtotal} 
+            discounts={discounts} 
+            settings={settings} 
+          />
+        )}
+
+        {/* Итоговая информация - ЗАФИКСИРОВАННАЯ */}
+        {cart.length > 0 && (
+          <div style={{ 
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            backdropFilter: 'blur(10px)',
+            padding: '1rem',
+            borderRadius: '12px',
+            marginBottom: '1rem',
+            textAlign: 'center',
+            position: 'sticky',
+            top: 0,
+            zIndex: 100,
+            border: '1px solid #e0e0e0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
+                Сумма: {subtotal} {settings.currency || '₽'}
+              </div>
+              {discountAmount > 0 && (
+                <div style={{ fontSize: '1rem', color: '#28a745', marginBottom: '0.25rem' }}>
+                  Скидка: -{discountAmount} {settings.currency || '₽'}
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.75rem', color: '#2c1e0f' }}>
+              Итого: {total} {settings.currency || '₽'}
+            </div>
+            <button
+              onClick={handleOrderSubmit}
               style={{
-                display: 'flex',
-                gap: '1rem',
-                alignItems: 'center',
-                marginBottom: '1rem',
-                paddingBottom: '1rem',
-                borderBottom: '1px solid #eee',
-                background: item.isFlashOffer ? 'linear-gradient(135deg, #fff5f5, #ffe6e6)' : 'transparent',
-                borderRadius: item.isFlashOffer ? '8px' : '0',
-                padding: item.isFlashOffer ? '0.5rem' : '0',
-                border: item.isFlashOffer ? '2px solid #ff0844' : 'none',
+                padding: '0.75rem 2rem',
+                background: settings.primaryColor || '#ff7f32',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                width: '100%',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               }}
             >
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                style={{ width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' }}
-              />
-              <div style={{ flex: 1 }}>
-                <div style={{ 
-                  fontWeight: 'bold', 
-                  fontSize: '1rem', 
-                  color: item.isFlashOffer ? '#ff0844' : '#2c1e0f', 
-                  marginBottom: '0.2rem',
+              Оформить заказ
+            </button>
+          </div>
+        )}
+
+        {/* Список товаров - СКРОЛЛИРУЕМЫЙ */}
+        <div style={{ 
+          flex: 1, 
+          overflowY: 'auto',
+          maxHeight: 'calc(100vh - 400px)', // Ограничиваем высоту
+          paddingRight: '0.5rem'
+        }}>
+          {cart.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
+              Корзина пуста
+            </div>
+          ) : (
+            cart.map((item) => (
+              <div
+                key={`${item.id}-${item.isFlashOffer ? 'flash' : 'regular'}`}
+                style={{
                   display: 'flex',
+                  gap: '1rem',
                   alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  {item.name}
-                  {item.isFlashOffer && (
-                    <span style={{
-                      background: '#ff0844',
-                      color: 'white',
-                      fontSize: '0.7rem',
-                      padding: '0.2rem 0.4rem',
-                      borderRadius: '8px',
-                      fontWeight: 'bold'
-                    }}>
-                      -99%
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                    {item.isFlashOffer && item.originalPrice && (
-                      <span style={{ 
-                        textDecoration: 'line-through', 
-                        marginRight: '0.5rem',
-                        fontSize: '0.8rem' 
+                  marginBottom: '1rem',
+                  paddingBottom: '1rem',
+                  borderBottom: '1px solid #eee',
+                  background: item.isFlashOffer ? 'linear-gradient(135deg, #fff5f5, #ffe6e6)' : 'transparent',
+                  borderRadius: item.isFlashOffer ? '8px' : '0',
+                  padding: item.isFlashOffer ? '0.5rem' : '0',
+                  border: item.isFlashOffer ? '2px solid #ff0844' : 'none',
+                }}
+              >
+                <img
+                  src={item.imageUrl}
+                  alt={item.name}
+                  style={{ width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '1rem', 
+                    color: item.isFlashOffer ? '#ff0844' : '#2c1e0f', 
+                    marginBottom: '0.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    {item.name}
+                    {item.isFlashOffer && (
+                      <span style={{
+                        background: '#ff0844',
+                        color: 'white',
+                        fontSize: '0.7rem',
+                        padding: '0.2rem 0.4rem',
+                        borderRadius: '8px',
+                        fontWeight: 'bold'
                       }}>
-                        {item.originalPrice} {settings.currency || '₽'}
+                        -99%
                       </span>
                     )}
-                    <span style={{ 
-                      fontWeight: item.isFlashOffer ? 'bold' : 'normal',
-                      color: item.isFlashOffer ? '#ff0844' : '#666'
-                    }}>
-                      {item.price} {settings.currency || '₽'}
-                    </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    {!item.isFlashOffer ? (
-                      // Обычные товары - можно изменять количество
-                      <>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          style={{
-                            background: '#f0f0f0',
-                            border: 'none',
-                            borderRadius: '6px',
-                            width: '28px',
-                            height: '28px',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          −
-                        </button>
-                        <span style={{ fontWeight: 'bold', fontSize: '1rem', minWidth: '20px', textAlign: 'center' }}>
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          style={{
-                            background: settings.primaryColor || '#ff7f32',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            width: '28px',
-                            height: '28px',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          +
-                        </button>
-                      </>
-                    ) : (
-                      // Flash-товары - фиксированное количество
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        background: '#fff0f0',
-                        padding: '0.3rem 0.6rem',
-                        borderRadius: '6px',
-                        border: '1px solid #ff0844',
-                      }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                      {item.isFlashOffer && item.originalPrice && (
                         <span style={{ 
-                          fontWeight: 'bold', 
-                          fontSize: '0.9rem',
-                          color: '#ff0844'
+                          textDecoration: 'line-through', 
+                          marginRight: '0.5rem',
+                          fontSize: '0.8rem' 
                         }}>
-                          1 шт
+                          {item.originalPrice} {settings.currency || '₽'}
                         </span>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#e03636',
-                        fontSize: '18px',
-                        cursor: 'pointer',
-                        marginLeft: '0.3rem',
-                      }}
-                    >
-                      🗑️
-                    </button>
+                      )}
+                      <span style={{ 
+                        fontWeight: item.isFlashOffer ? 'bold' : 'normal',
+                        color: item.isFlashOffer ? '#ff0844' : '#666'
+                      }}>
+                        {item.price} {settings.currency || '₽'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      {!item.isFlashOffer ? (
+                        // Обычные товары - можно изменять количество
+                        <>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            style={{
+                              background: '#f0f0f0',
+                              border: 'none',
+                              borderRadius: '6px',
+                              width: '28px',
+                              height: '28px',
+                              fontSize: '16px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            −
+                          </button>
+                          <span style={{ fontWeight: 'bold', fontSize: '1rem', minWidth: '20px', textAlign: 'center' }}>
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            style={{
+                              background: settings.primaryColor || '#ff7f32',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              width: '28px',
+                              height: '28px',
+                              fontSize: '16px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            +
+                          </button>
+                        </>
+                      ) : (
+                        // Flash-товары - фиксированное количество
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          background: '#fff0f0',
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: '6px',
+                          border: '1px solid #ff0844',
+                        }}>
+                          <span style={{ 
+                            fontWeight: 'bold', 
+                            fontSize: '0.9rem',
+                            color: '#ff0844'
+                          }}>
+                            1 шт
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#e03636',
+                          fontSize: '18px',
+                          cursor: 'pointer',
+                          marginLeft: '0.3rem',
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
