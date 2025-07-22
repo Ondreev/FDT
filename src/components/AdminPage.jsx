@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 
-import { useState, useEffect } from 'react';
-
 const API_URL = 'https://script.google.com/macros/s/AKfycbytJQZKK_57WXTalemzNQgVmlcS_HajnL0vo-FxDT4DogOCLDnJ4vWl0GMp8oQCaOi0/exec';
 
 // Рабочая админка с настоящим API
@@ -198,6 +196,7 @@ const SimpleAdminDashboard = ({ admin, onLogout }) => {
           </h2>
           <p style={{ color: '#666', lineHeight: '1.6' }}>
             Админка успешно загружается по адресу /#/admin<br/>
+            Авторизация прошла успешно!<br/>
             Теперь можно заменить на полную версию с заказами
           </p>
           <button
