@@ -997,7 +997,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     </>
   );
 };
-
         {/* Список товаров - СКРОЛЛИРУЕМЫЙ */}
         <div style={{ 
           flex: 1, 
