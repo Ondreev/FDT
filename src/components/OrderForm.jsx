@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbytJQZKK_57WXTalemzNQgVmlcS_HajnL0vo-FxDT4DogOCLDnJ4vWl0GMp8oQCaOi0/exec';
 
 const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) => {
   const [currentStep, setCurrentStep] = useState(0);
