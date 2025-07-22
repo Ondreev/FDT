@@ -183,44 +183,20 @@ const DebugInfo = ({ cart, products, subtotal }) => {
 // Компонент для управления flash-товарами в корзине
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   useEffect(() => {
-    console.log('🔍 FlashItemManager запущен');
-    console.log('Все товары из базы:', products.map(p => ({ id: p.id, name: p.name })));
-    
     // Находим товар с R2000 в ID (это будет "6R2000") 
     const specialProduct = products.find(p => String(p.id).includes('R2000'));
-    console.log('Найден специальный товар:', specialProduct);
-    
-    if (!specialProduct) {
-      console.log('❌ Специальный товар с R2000 не найден');
-      return;
-    }
+    if (!specialProduct) return;
 
     // Ищем flash-товар в корзине (с суффиксом _flash)
     const flashItem = cart.find(item => item.id === `${specialProduct.id}_flash`);
-    console.log('Ищем flash товар с ID:', `${specialProduct.id}_flash`);
-    console.log('Flash товар в корзине:', flashItem);
-    
-    if (!flashItem) {
-      console.log('❌ Flash товар не найден в корзине');
-      return;
-    }
-
-    console.log('Flash товар найден в корзине:', flashItem);
-    console.log('Общая сумма корзины:', subtotal);
-
-    // Используем оригинальную цену для расчета
-    const originalFlashPrice = flashItem.originalPrice || specialProduct.price;
-    console.log('Оригинальная цена flash товара:', originalFlashPrice);
+    if (!flashItem) return;
     
     // Вычисляем сумму остальных товаров
     const otherItemsSubtotal = cart
       .filter(item => item.id !== flashItem.id)
       .reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    console.log('Сумма остальных товаров:', otherItemsSubtotal);
-    
     const conditionMet = otherItemsSubtotal >= 2000;
-    console.log('Условие акции выполнено:', conditionMet);
     
     // Определяем правильную цену и состояние
     const discountedPrice = Math.round(specialProduct.price * 0.01);
@@ -228,18 +204,10 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
     const shouldBeDiscounted = conditionMet;
     const shouldViolateCondition = !conditionMet;
     
-    console.log('Текущая цена flash товара:', flashItem.price);
-    console.log('Должна быть цена:', correctPrice);
-    
     // Обновляем только если что-то изменилось
     if (flashItem.price !== correctPrice || 
         flashItem.isDiscounted !== shouldBeDiscounted || 
         flashItem.violatesCondition !== shouldViolateCondition) {
-      
-      console.log('🔄 ОБНОВЛЯЕМ FLASH ТОВАР!');
-      console.log('Цена:', flashItem.price, '->', correctPrice);
-      console.log('Скидка:', flashItem.isDiscounted, '->', shouldBeDiscounted);
-      console.log('Нарушение:', flashItem.violatesCondition, '->', shouldViolateCondition);
       
       setCart(prev => prev.map(item => 
         item.id === flashItem.id 
@@ -251,8 +219,6 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
             }
           : item
       ));
-    } else {
-      console.log('✅ Flash товар уже в правильном состоянии');
     }
   }, [cart, products, subtotal, setCart]);
 
