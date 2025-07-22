@@ -5,52 +5,6 @@ import OrderingNowBanner from './components/OrderingNowBanner';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIz5qxFXEc3vW4TnWkGyZAVA4Y9psWkvWXl7iR5V_vyyAT-fsmpGPGInuF2C3MIw427w/exec';
 
-// Компонент для отладки (временный)
-const DebugInfo = ({ cart, products, subtotal }) => {
-  const specialProduct = products.find(p => String(p.id).includes('R2000'));
-  const flashItem = cart.find(item => item.id === `${specialProduct?.id}_flash`);
-  
-  // Показываем отладку всегда, если есть товары в корзине
-  if (cart.length === 0) return null;
-  
-  const otherItemsSubtotal = flashItem ? cart
-    .filter(item => item.id !== flashItem.id)
-    .reduce((sum, item) => sum + (item.price * item.quantity), 0) : subtotal;
-    
-  const conditionMet = otherItemsSubtotal >= 2000;
-  
-  return (
-    <div style={{
-      position: 'fixed',
-      bottom: '100px',
-      left: '20px',
-      background: '#000',
-      color: '#fff',
-      padding: '10px',
-      borderRadius: '5px',
-      fontSize: '12px',
-      zIndex: 9999,
-      maxWidth: '300px'
-    }}>
-      <div>🔍 ОТЛАДКА:</div>
-      <div>Товаров в корзине: {cart.length}</div>
-      <div>Специальный товар найден: {specialProduct ? '✅' : '❌'}</div>
-      {specialProduct && <div>ID: {specialProduct.id}, Название: {specialProduct.name}</div>}
-      <div>Flash товар в корзине: {flashItem ? '✅' : '❌'}</div>
-      {flashItem && (
-        <>
-          <div>Flash ID: {flashItem.id}</div>
-          <div>Цена flash: {flashItem.price}₽ (оригинал: {flashItem.originalPrice}₽)</div>
-          <div>Скидка активна: {flashItem.isDiscounted ? '✅' : '❌'}</div>
-        </>
-      )}
-      <div>Общая сумма: {subtotal}₽</div>
-      <div>Сумма остальных: {otherItemsSubtotal}₽</div>
-      <div>Условие выполнено: {conditionMet ? '✅' : '❌'}</div>
-    </div>
-  );
-};
-
 // Компонент для управления flash-товарами в корзине
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   useEffect(() => {
@@ -571,9 +525,6 @@ export default function App() {
             setIsOrderFormOpen(false);
           }}
         />
-
-        {/* Отладочная информация */}
-        <DebugInfo cart={cart} products={products} subtotal={subtotal} />
       </div>
     </>
   );
