@@ -28,7 +28,7 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
         name: 'Доставка',
         price: DELIVERY_COST,
         quantity: 1,
-        imageUrl: '🛵',
+        imageUrl: 'https://i.imgur.com/H7YxQjN.gif',
         isDelivery: true,
         description: 'Доставка по городу',
         weight: ''
