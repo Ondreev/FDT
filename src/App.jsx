@@ -148,19 +148,26 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
     const subtotalWithoutFlash = subtotal - (flashItem.price * flashItem.quantity);
     const conditionMet = subtotalWithoutFlash >= 2000;
     
-    // Определяем правильную цену
+    // Определяем правильную цену и состояние
     const discountedPrice = Math.round(specialProduct.price * 0.01);
     const correctPrice = conditionMet ? discountedPrice : specialProduct.price;
+    const shouldBeDiscounted = conditionMet;
+    const shouldViolateCondition = !conditionMet && flashItem.isFlashOffer;
     
-    // Обновляем только если цена изменилась
-    if (flashItem.price !== correctPrice) {
+    // Обновляем только если что-то изменилось
+    if (flashItem.price !== correctPrice || 
+        flashItem.isDiscounted !== shouldBeDiscounted || 
+        flashItem.violatesCondition !== shouldViolateCondition) {
+      
+      console.log(`Flash товар: условие ${conditionMet ? 'выполнено' : 'нарушено'}, цена: ${correctPrice}`);
+      
       setCart(prev => prev.map(item => 
         item.id === flashItem.id 
           ? { 
               ...item, 
               price: correctPrice,
-              isDiscounted: conditionMet,
-              violatesCondition: !conditionMet
+              isDiscounted: shouldBeDiscounted,
+              violatesCondition: shouldViolateCondition
             }
           : item
       ));
