@@ -139,11 +139,12 @@ const DebugInfo = ({ cart, products, subtotal }) => {
   const specialProduct = products.find(p => String(p.id).includes('R2000'));
   const flashItem = cart.find(item => item.id === `${specialProduct?.id}_flash`);
   
-  if (!flashItem) return null;
+  // Показываем отладку всегда, если есть товары в корзине
+  if (cart.length === 0) return null;
   
-  const otherItemsSubtotal = cart
+  const otherItemsSubtotal = flashItem ? cart
     .filter(item => item.id !== flashItem.id)
-    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    .reduce((sum, item) => sum + (item.price * item.quantity), 0) : subtotal;
     
   const conditionMet = otherItemsSubtotal >= 2000;
   
@@ -161,13 +162,20 @@ const DebugInfo = ({ cart, products, subtotal }) => {
       maxWidth: '300px'
     }}>
       <div>🔍 ОТЛАДКА:</div>
-      <div>Специальный товар: {specialProduct?.name} (ID: {specialProduct?.id})</div>
-      <div>Flash товар: {flashItem?.name} (ID: {flashItem?.id})</div>
-      <div>Цена flash: {flashItem?.price}₽ (оригинал: {flashItem?.originalPrice}₽)</div>
+      <div>Товаров в корзине: {cart.length}</div>
+      <div>Специальный товар найден: {specialProduct ? '✅' : '❌'}</div>
+      {specialProduct && <div>ID: {specialProduct.id}, Название: {specialProduct.name}</div>}
+      <div>Flash товар в корзине: {flashItem ? '✅' : '❌'}</div>
+      {flashItem && (
+        <>
+          <div>Flash ID: {flashItem.id}</div>
+          <div>Цена flash: {flashItem.price}₽ (оригинал: {flashItem.originalPrice}₽)</div>
+          <div>Скидка активна: {flashItem.isDiscounted ? '✅' : '❌'}</div>
+        </>
+      )}
       <div>Общая сумма: {subtotal}₽</div>
       <div>Сумма остальных: {otherItemsSubtotal}₽</div>
-      <div>Условие выполнено: {conditionMet ? '✅ ДА' : '❌ НЕТ'}</div>
-      <div>Скидка активна: {flashItem?.isDiscounted ? '✅ ДА' : '❌ НЕТ'}</div>
+      <div>Условие выполнено: {conditionMet ? '✅' : '❌'}</div>
     </div>
   );
 };
