@@ -454,3 +454,193 @@ const AdminDashboard = ({ admin, onLogout }) => {
             Добро пожаловать, {admin.login}
           </div>
         </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{
+            background: '#e8f5e8',
+            color: '#2e7d32',
+            padding: '0.5rem 1rem',
+            borderRadius: '20px',
+            fontSize: '0.9rem',
+            fontWeight: 'bold'
+          }}>
+            Сегодня: {formatNumber(totalToday)} ₽
+          </div>
+          <button
+            onClick={onLogout}
+            style={{
+              background: '#ff5722',
+              color: 'white',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            Выйти
+          </button>
+        </div>
+      </div>
+
+      <div style={{
+        maxWidth: '800px',
+        margin: '0 auto',
+        padding: '2rem'
+      }}>
+        {/* Приветствие бота */}
+        <div style={{
+          background: 'white',
+          borderRadius: '20px 20px 20px 5px',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          position: 'relative'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <div style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem'
+            }}>
+              🤖
+            </div>
+            <div style={{ flex: 1 }}>
+              {isTyping ? (
+                <div style={{
+                  display: 'flex',
+                  gap: '3px',
+                  alignItems: 'center'
+                }}>
+                  <span>Печатаю</span>
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: '#999',
+                    animation: 'typing 1.4s infinite ease-in-out'
+                  }} />
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: '#999',
+                    animation: 'typing 1.4s infinite ease-in-out 0.2s'
+                  }} />
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: '#999',
+                    animation: 'typing 1.4s infinite ease-in-out 0.4s'
+                  }} />
+                </div>
+              ) : (
+                <div style={{
+                  fontSize: '1.1rem',
+                  color: '#2c1e0f',
+                  lineHeight: '1.4'
+                }}>
+                  {getBotMessage()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <style>
+          {`
+            @keyframes typing {
+              0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+              }
+              30% {
+                transform: translateY(-8px);
+                opacity: 1;
+              }
+            }
+          `}
+        </style>
+
+        {/* Фильтры */}
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '2rem',
+          flexWrap: 'wrap'
+        }}>
+          {[
+            { key: 'all', label: 'Все заказы', count: orders.length },
+            { key: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
+            { key: 'active', label: 'В работе', count: orders.filter(o => ['cooking', 'delivering'].includes(o.status)).length },
+            { key: 'done', label: 'Завершённые', count: orders.filter(o => o.status === 'done').length }
+          ].map((filter) => (
+            <button
+              key={filter.key}
+              onClick={() => setActiveFilter(filter.key)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: activeFilter === filter.key 
+                  ? 'linear-gradient(135deg, #667eea, #764ba2)' 
+                  : 'white',
+                color: activeFilter === filter.key ? 'white' : '#666',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease',
+                boxShadow: activeFilter === filter.key ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none'
+              }}
+            >
+              {filter.label} ({filter.count})
+            </button>
+          ))}
+        </div>
+
+        {/* Список заказов */}
+        {filteredOrders.length === 0 ? (
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '3rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📭</div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#2c1e0f' }}>
+              Заказов нет
+            </div>
+            <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+              {activeFilter === 'all' 
+                ? 'Пока что заказов не поступало'
+                : `В категории "${['pending', 'active', 'done'].find(f => f === activeFilter) || 'все'}" заказов нет`
+              }
+            </div>
+          </div>
+        ) : (
+          filteredOrders.map((order) => (
+            <OrderCard
+              key={order.orderId}
+              order={order}
+              statusLabels={statusLabels}
+              onStatusChange={handleStatusChange}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;
