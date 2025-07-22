@@ -148,7 +148,9 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
 
   useEffect(() => {
     // Активируем предложение при достижении 2000₽ (только один раз)
-  const flashItemId = `${specialProduct?.id}_flash`;
+  if (!specialProduct) return; // 🛡 Если предложения нет — вообще ничего не делаем
+
+  const flashItemId = `${specialProduct.id}_flash`;
   const shouldShow = subtotal >= 2000;
   const isFlashInCart = cart.some((item) => item.id === flashItemId);
 
@@ -160,7 +162,6 @@ const FlashOfferTimer = ({ subtotal, products, settings, addToCart, cart }) => {
 
   if (!shouldShow) {
     if (isFlashInCart) {
-      // 💡 Удаляем только flash-блюдо, не трогаем остальное
       removeFromCart(flashItemId);
     }
 
