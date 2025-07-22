@@ -910,40 +910,40 @@ export default function App() {
   return (
     <>
       <style>
-        {`
-          @keyframes slideIn {
-            from {
-              transform: translateX(100%);
-              opacity: 0;
-            }
-            to {
-              transform: translateX(0);
-              opacity: 1;
-            }
-          }
+  {`
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
 
-          @keyframes slideInRight {
-            from {
-              transform: translateX(100%);
-            }
-            to {
-              transform: translateX(0);
-            }
-          }
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
 
-          .product-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-}
+    .product-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
 
-@media (max-width: 400px) {
-  .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-  }
-}
-}
-      </style>
+    @media (max-width: 400px) {
+      .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+      }
+    }
+  `}
+</style>
       
       <div
         className="app"
