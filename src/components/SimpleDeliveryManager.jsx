@@ -5,13 +5,16 @@ const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
 
-// Простой менеджер доставки
+// Простой менеджер доставки с учетом режима
 const SimpleDeliveryManager = ({ cart, setCart }) => {
   const DELIVERY_COST = 250;
   const FREE_DELIVERY_THRESHOLD = 2000;
   const DELIVERY_ID = 'delivery_service';
 
   useEffect(() => {
+    // Получаем режим доставки из localStorage
+    const deliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+    
     // Находим товары (исключая доставку)
     const products = cart.filter(item => item.id !== DELIVERY_ID);
     const productsSubtotal = products.reduce((sum, item) => 
@@ -21,6 +24,16 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
     // Находим доставку в корзине
     const deliveryItem = cart.find(item => item.id === DELIVERY_ID);
     
+    // ГЛАВНАЯ ЛОГИКА: если самовывоз - убираем доставку
+    if (deliveryMode === 'pickup') {
+      if (deliveryItem) {
+        setCart(prev => prev.filter(item => item.id !== DELIVERY_ID));
+      }
+      return;
+    }
+    
+    // ЛОГИКА ДЛЯ ДОСТАВКИ:
+    
     // Логика 1: Добавляем доставку при первом товаре
     if (products.length > 0 && !deliveryItem) {
       const deliveryService = {
@@ -28,7 +41,7 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
         name: 'Доставка',
         price: DELIVERY_COST,
         quantity: 1,
-        imageUrl: '🛵',  // Без белого фона, выглядит современно
+        imageUrl: '🛵',
         isDelivery: true,
         description: 'Доставка по городу',
         weight: ''
