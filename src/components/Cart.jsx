@@ -37,7 +37,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     addToCart(product);
   };
 
-  // Функция проверки flash-товаров
+  // Функция проверки flash-товаров так
   const checkFlashViolations = () => {
     const violations = [];
     
