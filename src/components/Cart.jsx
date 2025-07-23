@@ -11,6 +11,9 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
   const [showViolationAlert, setShowViolationAlert] = useState(false);
   const [violatingItems, setViolatingItems] = useState([]);
 
+  // Отладка пропсов
+  console.log('Cart props:', { deliveryMode, setDeliveryMode: typeof setDeliveryMode });
+
   // Сохраняем режим доставки в localStorage и принудительно обновляем корзину
   useEffect(() => {
     localStorage.setItem('deliveryMode', deliveryMode);
@@ -266,7 +269,15 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <button
-                onClick={() => setDeliveryMode('delivery')}
+                onClick={() => {
+                  console.log('Delivery button clicked, current mode:', deliveryMode);
+                  console.log('setDeliveryMode function:', typeof setDeliveryMode);
+                  if (typeof setDeliveryMode === 'function') {
+                    setDeliveryMode('delivery');
+                  } else {
+                    console.error('setDeliveryMode is not a function!');
+                  }
+                }}
                 style={{
                   background: deliveryMode === 'delivery' ? settings.primaryColor || '#ff7f32' : 'transparent',
                   color: deliveryMode === 'delivery' ? 'white' : '#666',
@@ -288,7 +299,14 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               </button>
               
               <button
-                onClick={() => setDeliveryMode('pickup')}
+                onClick={() => {
+                  console.log('Pickup button clicked, current mode:', deliveryMode);
+                  if (typeof setDeliveryMode === 'function') {
+                    setDeliveryMode('pickup');
+                  } else {
+                    console.error('setDeliveryMode is not a function!');
+                  }
+                }}
                 style={{
                   background: deliveryMode === 'pickup' ? settings.primaryColor || '#ff7f32' : 'transparent',
                   color: deliveryMode === 'pickup' ? 'white' : '#666',
