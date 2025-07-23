@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwpgkiVZN5JwPdSYj-jLVZHZ_A5sw8P6PV4QXR7DJWchwP-19z31WUjcv7QRaHMAazCxg/exec';
 
 const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -684,7 +684,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
       case 'pending':
         return orders.filter(order => order.status === 'pending');
       case 'active':
-        return orders.filter(order => ['pending', 'cooking', 'delivering'].includes(order.status));
+        return orders.filter(order => ['cooking', 'delivering'].includes(order.status));
       case 'done':
         return orders.filter(order => order.status === 'done');
       default:
