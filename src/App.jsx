@@ -9,7 +9,7 @@ import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
 // Компонент для отображения звездного рейтинга
-const StarRating = ({ rating, size = 16 }) => {
+const StarRating = ({ rating, size = 16, onClick, isClickable = false }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
   const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
@@ -18,21 +18,18 @@ const StarRating = ({ rating, size = 16 }) => {
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '1px',
-      background: 'rgba(0, 0, 0, 0.7)',
-      padding: '4px 8px',
-      borderRadius: '12px',
-      backdropFilter: 'blur(4px)',
-    }}>
+      gap: '2px',
+      cursor: isClickable ? 'pointer' : 'default'
+    }} onClick={onClick}>
       {/* Полные звезды */}
       {Array(fullStars).fill().map((_, i) => (
         <span key={`full-${i}`} style={{ 
           color: '#FFD700', 
           fontSize: `${size}px`,
           lineHeight: 1,
-          filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))'
+          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))'
         }}>
-          ★
+          ⭐
         </span>
       ))}
       
@@ -43,40 +40,194 @@ const StarRating = ({ rating, size = 16 }) => {
           color: '#FFD700',
           fontSize: `${size}px`,
           lineHeight: 1,
-          filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))'
+          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))'
         }}>
           <span style={{ 
             position: 'absolute',
             overflow: 'hidden',
             width: '50%',
             color: '#FFD700'
-          }}>★</span>
-          <span style={{ color: '#888' }}>★</span>
+          }}>⭐</span>
+          <span style={{ color: '#ddd' }}>⭐</span>
         </span>
       )}
       
       {/* Пустые звезды */}
       {Array(emptyStars).fill().map((_, i) => (
         <span key={`empty-${i}`} style={{ 
-          color: '#888', 
+          color: '#ddd', 
           fontSize: `${size}px`,
           lineHeight: 1,
-          filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))'
+          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
         }}>
-          ★
+          ⭐
         </span>
       ))}
       
       {/* Числовой рейтинг */}
       <span style={{
-        color: '#fff',
+        color: '#ff7f32',
         fontSize: `${size - 2}px`,
         fontWeight: 'bold',
-        marginLeft: '4px',
-        textShadow: '0 1px 1px rgba(0,0,0,0.5)'
+        marginLeft: '4px'
       }}>
         {rating}
       </span>
+    </div>
+  );
+};
+
+// Компонент попапа для голосования
+const RatingPopup = ({ isOpen, onClose, productName, onRatingSubmit }) => {
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleRatingClick = (rating) => {
+    setSelectedRating(rating);
+    setIsSubmitted(true);
+    onRatingSubmit(rating);
+    
+    // Определяем сообщение в зависимости от оценки
+    if (rating >= 4) {
+      setMessage('Спасибо за оценку! 😊');
+    } else if (rating === 3) {
+      setMessage('Мы сожалеем, облажались, дайте нам еще шанс, мы все исправим! Вы - наше сокровище! 💖');
+    } else {
+      setMessage('Мы очень сожалеем, что блюдо Вам не понравилось! Пожалуйста, напишите нам на WhatsApp, мы хотим все исправить и стать лучше 📱');
+    }
+    
+    // Закрываем попап через 3 секунды
+    setTimeout(() => {
+      onClose();
+      setIsSubmitted(false);
+      setSelectedRating(0);
+      setHoverRating(0);
+    }, 3000);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 10000,
+      padding: '1rem'
+    }} onClick={onClose}>
+      <div style={{
+        background: 'white',
+        borderRadius: '20px',
+        padding: '2rem',
+        maxWidth: '400px',
+        width: '100%',
+        textAlign: 'center',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+        transform: isSubmitted ? 'scale(1.05)' : 'scale(1)',
+        transition: 'transform 0.3s ease'
+      }} onClick={(e) => e.stopPropagation()}>
+        
+        {!isSubmitted ? (
+          <>
+            <h3 style={{
+              color: '#2c1e0f',
+              fontSize: '1.5rem',
+              marginBottom: '0.5rem',
+              fontWeight: 'bold'
+            }}>
+              Оцените блюдо
+            </h3>
+            
+            <p style={{
+              color: '#666',
+              fontSize: '1rem',
+              marginBottom: '2rem'
+            }}>
+              {productName}
+            </p>
+            
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '8px',
+              marginBottom: '2rem'
+            }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '2.5rem',
+                    cursor: 'pointer',
+                    color: (hoverRating || selectedRating) >= star ? '#FFD700' : '#ddd',
+                    transform: (hoverRating || selectedRating) >= star ? 'scale(1.2)' : 'scale(1)',
+                    transition: 'all 0.2s ease',
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                  }}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => handleRatingClick(star)}
+                >
+                  ⭐
+                </button>
+              ))}
+            </div>
+            
+            <button
+              onClick={onClose}
+              style={{
+                background: '#f0f0f0',
+                border: 'none',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                color: '#666',
+                fontSize: '1rem'
+              }}
+            >
+              Отмена
+            </button>
+          </>
+        ) : (
+          <div style={{
+            animation: 'fadeIn 0.5s ease'
+          }}>
+            <div style={{
+              fontSize: '3rem',
+              marginBottom: '1rem'
+            }}>
+              {selectedRating >= 4 ? '🎉' : selectedRating === 3 ? '💝' : '🤝'}
+            </div>
+            
+            <p style={{
+              color: '#2c1e0f',
+              fontSize: '1.2rem',
+              lineHeight: '1.5',
+              fontWeight: '500'
+            }}>
+              {message}
+            </p>
+          </div>
+        )}
+      </div>
+      
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
     </div>
   );
 };
@@ -135,6 +286,10 @@ const ShopPage = () => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
+  
+  // Состояния для рейтинга
+  const [ratingPopup, setRatingPopup] = useState({ isOpen: false, product: null });
+  const [userRatings, setUserRatings] = useState({}); // Локальное хранение оценок
   
   // Состояния для свайпа
   const [touchStartX, setTouchStartX] = useState(0);
@@ -196,6 +351,24 @@ const ShopPage = () => {
   // Функция для очистки корзины после успешного заказа
   const clearCart = () => {
     setCart([]);
+  };
+
+  // Функции для рейтинга
+  const openRatingPopup = (product) => {
+    setRatingPopup({ isOpen: true, product });
+  };
+
+  const closeRatingPopup = () => {
+    setRatingPopup({ isOpen: false, product: null });
+  };
+
+  const handleRatingSubmit = (rating) => {
+    if (ratingPopup.product) {
+      setUserRatings(prev => ({
+        ...prev,
+        [ratingPopup.product.id]: rating
+      }));
+    }
   };
 
   // Функции для свайпа
@@ -453,11 +626,29 @@ const ShopPage = () => {
                 alignItems: 'center',
               }}
             >
+              {/* Рейтинг справа вверху */}
+              {product.rating && (
+                <div style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  zIndex: 3
+                }}>
+                  <StarRating 
+                    rating={parseFloat(product.rating)} 
+                    size={12} 
+                    onClick={() => openRatingPopup(product)}
+                    isClickable={true}
+                  />
+                </div>
+              )}
+
+              {/* Плашка ОСТРОЕ - под рейтингом */}
               {String(product.id).includes('H') && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: '1rem',
+                    top: '3rem', // Сдвинули вниз под рейтинг
                     right: '1rem',
                     backgroundColor: '#e03636',
                     color: '#fff',
@@ -466,37 +657,23 @@ const ShopPage = () => {
                     borderRadius: '999px',
                     fontSize: '0.9rem',
                     fontFamily: settings.font || 'Fredoka',
+                    zIndex: 2
                   }}
                 >
                   ОСТРОЕ
                 </div>
               )}
               
-              <div style={{ position: 'relative', width: '100%', maxWidth: '160px' }}>
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  style={{ 
-                    width: '100%', 
-                    borderRadius: '12px', 
-                    marginBottom: '0.5rem',
-                    display: 'block'
-                  }}
-                />
-                
-                {/* Рейтинг на фото */}
-                {product.rating && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '8px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    zIndex: 2
-                  }}>
-                    <StarRating rating={parseFloat(product.rating)} size={14} />
-                  </div>
-                )}
-              </div>
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                style={{ 
+                  width: '100%', 
+                  maxWidth: '160px', 
+                  borderRadius: '12px', 
+                  marginBottom: '0.5rem'
+                }}
+              />
               
               <h2
                 style={{
@@ -624,6 +801,14 @@ const ShopPage = () => {
             clearCart();
             setIsOrderFormOpen(false);
           }}
+        />
+
+        {/* Попап для голосования */}
+        <RatingPopup
+          isOpen={ratingPopup.isOpen}
+          onClose={closeRatingPopup}
+          productName={ratingPopup.product?.name}
+          onRatingSubmit={handleRatingSubmit}
         />
       </div>
     </>
