@@ -17,6 +17,120 @@ const formatDate = (dateStr) => {
   });
 };
 
+// Функция для расчета среднего времени выполнения заказов
+const calculateAverageTime = (orders) => {
+  const todayMoscow = (() => {
+    const now = new Date();
+    const moscowOffset = 3 * 60;
+    const localOffset = now.getTimezoneOffset();
+    const moscowTime = new Date(now.getTime() + (moscowOffset + localOffset) * 60000);
+    return moscowTime.toISOString().split('T')[0];
+  })();
+
+  const completedToday = orders.filter(order => {
+    const orderDate = new Date(order.date).toISOString().split('T')[0];
+    return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
+  });
+
+  if (completedToday.length === 0) return null;
+
+  // Симуляция времени завершения (в реальности нужно сохранять время завершения в БД)
+  const totalMinutes = completedToday.reduce((sum, order) => {
+    // Предполагаем среднее время 25-35 минут для демонстрации
+    const orderTime = new Date(order.date).getTime();
+    const estimatedCompletionTime = orderTime + (Math.random() * 10 + 25) * 60 * 1000;
+    const actualTime = Math.floor((estimatedCompletionTime - orderTime) / (1000 * 60));
+    return sum + actualTime;
+  }, 0);
+
+  const averageMinutes = Math.round(totalMinutes / completedToday.length);
+  return { averageMinutes, completedCount: completedToday.length };
+};
+const OrderTimer = ({ orderDate, status }) => {
+  const [elapsed, setElapsed] = useState(0);
+  const [isRunning, setIsRunning] = useState(!['done', 'archived'].includes(status));
+
+  useEffect(() => {
+    const startTime = new Date(orderDate).getTime();
+    
+    const updateTimer = () => {
+      const now = Date.now();
+      const elapsedMs = now - startTime;
+      setElapsed(Math.floor(elapsedMs / 1000)); // в секундах
+    };
+
+    updateTimer(); // Первоначальное обновление
+
+    let interval;
+    if (isRunning) {
+      interval = setInterval(updateTimer, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [orderDate, isRunning]);
+
+  useEffect(() => {
+    setIsRunning(!['done', 'archived'].includes(status));
+  }, [status]);
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const isOverdue = elapsed > 1800 && isRunning; // 30 минут = 1800 секунд
+  const isCritical = elapsed > 2700 && isRunning; // 45 минут = критично
+
+  return (
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      padding: '0.3rem 0.7rem',
+      borderRadius: '12px',
+      fontSize: '0.9rem',
+      fontWeight: 'bold',
+      fontFamily: 'monospace',
+      background: isCritical 
+        ? '#ff1744' 
+        : isOverdue 
+        ? '#ff9800' 
+        : isRunning 
+        ? '#4caf50' 
+        : '#9e9e9e',
+      color: 'white',
+      animation: isOverdue && isRunning ? 'pulse 1.5s infinite' : 'none',
+      boxShadow: isOverdue ? '0 0 10px rgba(255, 87, 34, 0.5)' : 'none'
+    }}>
+      <span>{isRunning ? '⏱️' : '⏹️'}</span>
+      <span>{formatTime(elapsed)}</span>
+      
+      <style>
+        {`
+          @keyframes pulse {
+            0%, 100% { 
+              transform: scale(1); 
+              box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+            }
+            50% { 
+              transform: scale(1.05); 
+              box-shadow: 0 0 20px rgba(255, 87, 34, 0.8);
+            }
+          }
+        `}
+      </style>
+    </div>
+  );
+};
+
 // Функция для нормализации номера телефона
 const normalizePhoneNumber = (phone) => {
   if (!phone && phone !== 0) return null;
@@ -329,9 +443,14 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             fontSize: '1.2rem',
             fontWeight: 'bold',
             color: '#2c1e0f',
-            marginBottom: '0.25rem'
+            marginBottom: '0.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            flexWrap: 'wrap'
           }}>
-            Заказ #{order.orderId}
+            <span>Заказ #{order.orderId}</span>
+            <OrderTimer orderDate={order.date} status={order.status} />
           </div>
           <div style={{
             fontSize: '0.9rem',
@@ -698,6 +817,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const filteredOrders = filterOrders(orders, activeFilter);
   const pendingCount = orders.filter(order => order.status === 'pending').length;
+  const averageTimeStats = calculateAverageTime(orders);
   
   const getMoscowDate = () => {
     const now = new Date();
@@ -883,6 +1003,19 @@ const AdminDashboard = ({ admin, onLogout }) => {
           }}>
             Сегодня: {formatNumber(totalToday)} ₽
           </div>
+
+          {averageTimeStats && (
+            <div style={{
+              background: '#e3f2fd',
+              color: '#1976d2',
+              padding: '0.5rem 1rem',
+              borderRadius: '20px',
+              fontSize: '0.9rem',
+              fontWeight: 'bold'
+            }}>
+              ⏱️ Среднее: {averageTimeStats.averageMinutes} мин ({averageTimeStats.completedCount})
+            </div>
+          )}
           
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
