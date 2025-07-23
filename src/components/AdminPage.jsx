@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzXamimf6YHIrXtbn_NKNCGATgt3wRNuly1HQlOhbm3tcUyygLXoNvRDyDRyFTAIsxuRw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwTZy6Kc0bEhEAo6MYHYBIxQvHX440J_FQbj6TEbDGiYKv7nIn9_V_iOBxQJ1gQoPnNsw/exec';
 
 const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -77,12 +77,53 @@ const createWhatsAppLink = (phone, orderId) => {
   return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
 };
 
-// Улучшенная функция fetch для iOS
+// JSONP функция для Google Apps Script (обход CORS)
+const fetchViaJSONP = (url, callback = 'callback') => {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'jsonp_callback_' + Date.now();
+    const script = document.createElement('script');
+    
+    // Создаем глобальную функцию обратного вызова
+    window[callbackName] = (data) => {
+      resolve({ ok: true, json: () => Promise.resolve(data) });
+      document.head.removeChild(script);
+      delete window[callbackName];
+    };
+    
+    // Формируем URL с параметром callback
+    const separator = url.includes('?') ? '&' : '?';
+    script.src = url + separator + 'callback=' + callbackName;
+    
+    script.onerror = () => {
+      reject(new Error('JSONP request failed'));
+      if (script.parentNode) {
+        document.head.removeChild(script);
+      }
+      delete window[callbackName];
+    };
+    
+    document.head.appendChild(script);
+    
+    // Таймаут 15 секунд
+    setTimeout(() => {
+      if (window[callbackName]) {
+        reject(new Error('JSONP request timeout'));
+        if (script.parentNode) {
+          document.head.removeChild(script);
+        }
+        delete window[callbackName];
+      }
+    }, 15000);
+  });
+};
+
+// Улучшенная функция fetch для iOS с JSONP fallback
 const safeFetch = async (url, options = {}) => {
   try {
-    // Добавляем заголовки для лучшей совместимости
+    // Сначала пробуем обычный fetch
     const response = await fetch(url, {
       ...options,
+      mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -96,7 +137,18 @@ const safeFetch = async (url, options = {}) => {
     
     return response;
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.warn('Fetch failed, trying JSONP:', error.message);
+    
+    // Если fetch не работает (CORS), используем JSONP
+    if (options.method !== 'POST') {
+      try {
+        return await fetchViaJSONP(url);
+      } catch (jsonpError) {
+        console.error('JSONP also failed:', jsonpError);
+        throw new Error('Both fetch and JSONP failed. Check your internet connection.');
+      }
+    }
+    
     throw error;
   }
 };
