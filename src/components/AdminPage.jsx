@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbwpgkiVZN5JwPdSYj-jLVZHZ_A5sw8P6PV4QXR7DJWchwP-19z31WUjcv7QRaHMAazCxg/exec';
 
-// Функция для форматирования числа с пробелами
 const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
 
-// Функция для форматирования даты
 const formatDate = (dateStr) => {
   const date = new Date(dateStr);
   return date.toLocaleDateString('ru-RU', {
@@ -19,7 +17,6 @@ const formatDate = (dateStr) => {
   });
 };
 
-// Компонент авторизации
 const AdminLogin = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -101,8 +98,6 @@ const AdminLogin = ({ onLoginSuccess }) => {
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
             />
           </div>
 
@@ -146,7 +141,6 @@ const AdminLogin = ({ onLoginSuccess }) => {
   );
 };
 
-// Компонент карточки заказа
 const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -164,17 +158,15 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   };
 
   return (
-    <div className="order-card" style={{
+    <div style={{
       background: 'white',
       borderRadius: '16px',
       padding: '1.5rem',
       marginBottom: '1rem',
       boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
       border: isDone ? '2px solid #4caf50' : '1px solid #e0e0e0',
-      position: 'relative',
-      transition: 'all 0.2s ease'
+      position: 'relative'
     }}>
-      {/* Зеленая галочка для завершенных */}
       {isDone && (
         <div style={{
           position: 'absolute',
@@ -189,15 +181,13 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
           justifyContent: 'center',
           fontSize: '1.5rem',
           color: 'white',
-          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
-          animation: 'checkmarkBounce 0.5s ease-out'
+          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
         }}>
           ✓
         </div>
       )}
 
-      {/* Заголовок заказа */}
-      <div className="order-header" style={{
+      <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -207,7 +197,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
       onClick={() => setIsExpanded(!isExpanded)}
       >
         <div>
-          <div className="order-title" style={{
+          <div style={{
             fontSize: '1.2rem',
             fontWeight: 'bold',
             color: '#2c1e0f',
@@ -234,7 +224,6 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
         </div>
       </div>
 
-      {/* Краткая информация */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -256,14 +245,11 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
         </div>
       </div>
 
-      {/* Развернутая информация */}
       {isExpanded && (
         <div style={{
           borderTop: '1px solid #f0f0f0',
-          paddingTop: '1.5rem',
-          animation: 'expandContent 0.3s ease-out'
+          paddingTop: '1.5rem'
         }}>
-          {/* Контактная информация */}
           <div style={{ marginBottom: '1.5rem' }}>
             <h4 style={{
               fontSize: '1rem',
@@ -283,7 +269,6 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             </div>
           </div>
 
-          {/* Список товаров */}
           <div style={{ marginBottom: '1.5rem' }}>
             <h4 style={{
               fontSize: '1rem',
@@ -356,7 +341,6 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             </div>
           </div>
 
-          {/* Кнопки смены статуса */}
           {!isDone && (
             <div style={{ marginBottom: '1rem' }}>
               <h4 style={{
@@ -367,7 +351,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
               }}>
                 🔄 Изменить статус
               </h4>
-              <div className="status-buttons" style={{
+              <div style={{
                 display: 'flex',
                 gap: '0.5rem',
                 flexWrap: 'wrap'
@@ -377,7 +361,6 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                   .map((status) => (
                     <button
                       key={status.status}
-                      className="status-button"
                       onClick={() => handleStatusChange(status.status)}
                       disabled={isUpdating}
                       style={{
@@ -389,18 +372,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                         fontSize: '0.9rem',
                         fontWeight: 'bold',
                         cursor: isUpdating ? 'not-allowed' : 'pointer',
-                        opacity: isUpdating ? 0.6 : 1,
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isUpdating) {
-                          e.target.style.opacity = '0.8';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isUpdating) {
-                          e.target.style.opacity = '1';
-                        }
+                        opacity: isUpdating ? 0.6 : 1
                       }}
                     >
                       {status.label}
@@ -412,7 +384,6 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
         </div>
       )}
 
-      {/* Индикатор развертывания */}
       <div style={{
         textAlign: 'center',
         marginTop: '0.5rem',
@@ -428,14 +399,12 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   );
 };
 
-// Основная админка
 const AdminDashboard = ({ admin, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [statusLabels, setStatusLabels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isTyping, setIsTyping] = useState(true);
-  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -443,8 +412,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const loadData = async () => {
     try {
-      console.log('🔄 Загружаю заказы и статусы...');
-      
       const [ordersRes, statusRes] = await Promise.all([
         fetch(`${API_URL}?action=getOrders&cache=${Date.now()}`),
         fetch(`${API_URL}?action=getStatusLabels&cache=${Date.now()}`)
@@ -453,13 +420,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
       const ordersData = await ordersRes.json();
       const statusData = await statusRes.json();
 
-      console.log('📋 Заказы:', ordersData);
-      console.log('🏷️ Статусы:', statusData);
-
-      if (!ordersData || ordersData.error) {
-        setOrders([]);
-      } else if (Array.isArray(ordersData)) {
-        // НОВЫЕ ЗАКАЗЫ СВЕРХУ - сортировка по убыванию даты
+      if (Array.isArray(ordersData)) {
         const sorted = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
         setOrders(sorted);
       } else {
@@ -477,11 +438,8 @@ const AdminDashboard = ({ admin, onLogout }) => {
           { status: 'archived', label: 'Архив', color: '#6c757d' }
         ]);
       }
-      
-      console.log('✅ Данные загружены успешно');
     } catch (error) {
-      console.error('❌ Ошибка загрузки данных:', error);
-      setLoadError(error.message);
+      console.error('Ошибка загрузки данных:', error);
     } finally {
       setIsLoading(false);
       setTimeout(() => setIsTyping(false), 2000);
@@ -498,13 +456,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
             ? { ...order, status: newStatus }
             : order
         ));
-        console.log(`✅ Статус заказа ${orderId} обновлен на ${newStatus}`);
       } else {
-        console.error('❌ Ошибка обновления статуса на сервере');
         alert('Ошибка обновления статуса. Попробуйте еще раз.');
       }
     } catch (error) {
-      console.error('❌ Ошибка обновления статуса:', error);
       alert('Ошибка соединения. Проверьте интернет.');
     }
   };
@@ -525,10 +480,9 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const filteredOrders = filterOrders(orders, activeFilter);
   const pendingCount = orders.filter(order => order.status === 'pending').length;
   
-  // Расчет суммы за сегодня по московскому времени
   const getMoscowDate = () => {
     const now = new Date();
-    const moscowOffset = 3 * 60; // UTC+3
+    const moscowOffset = 3 * 60;
     const localOffset = now.getTimezoneOffset();
     const moscowTime = new Date(now.getTime() + (moscowOffset + localOffset) * 60000);
     return moscowTime.toISOString().split('T')[0];
@@ -583,28 +537,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
     }}>
       <style>
         {`
-          @keyframes checkmarkBounce {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-          }
-          
-          @keyframes expandContent {
-            from { opacity: 0; maxHeight: 0; }
-            to { opacity: 1; maxHeight: 500px; }
-          }
-          
-          @keyframes typing {
-            0%, 60%, 100% {
-              transform: translateY(0);
-              opacity: 0.4;
-            }
-            30% {
-              transform: translateY(-8px);
-              opacity: 1;
-            }
-          }
-          
           @media (max-width: 768px) {
             .admin-header {
               flex-direction: column !important;
@@ -616,71 +548,15 @@ const AdminDashboard = ({ admin, onLogout }) => {
               font-size: 1.4rem !important;
             }
             
-            .admin-header-actions {
-              flex-direction: column !important;
-              width: 100% !important;
-            }
-            
-            .admin-container {
-              padding: 1rem !important;
-            }
-            
-            .filters-container {
-              gap: 0.3rem !important;
-            }
-            
             .filter-button {
               padding: 0.5rem 0.8rem !important;
               font-size: 0.8rem !important;
               flex: 1 !important;
-              min-width: 0 !important;
-              white-space: nowrap !important;
-            }
-            
-            .order-card {
-              padding: 1rem !important;
-            }
-            
-            .order-header {
-              flex-direction: column !important;
-              align-items: flex-start !important;
-              gap: 0.5rem !important;
-            }
-            
-            .order-title {
-              font-size: 1rem !important;
-            }
-            
-            .status-buttons {
-              gap: 0.3rem !important;
-            }
-            
-            .status-button {
-              padding: 0.4rem 0.8rem !important;
-              font-size: 0.8rem !important;
-              flex: 1 !important;
-              min-width: 0 !important;
-            }
-            
-            .bot-message {
-              padding: 1rem !important;
-              margin-bottom: 1rem !important;
-            }
-            
-            .bot-avatar {
-              width: 40px !important;
-              height: 40px !important;
-              font-size: 1.2rem !important;
-            }
-            
-            .bot-text {
-              font-size: 1rem !important;
             }
           }
         `}
       </style>
       
-      {/* Заголовок */}
       <div className="admin-header" style={{
         background: 'white',
         padding: '1rem 2rem',
@@ -706,7 +582,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
           </div>
         </div>
         
-        <div className="admin-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{
             background: '#e8f5e8',
             color: '#2e7d32',
@@ -734,26 +610,24 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
       </div>
 
-      <div className="admin-container" style={{
+      <div style={{
         maxWidth: '800px',
         margin: '0 auto',
         padding: '2rem'
       }}>
-        {/* Приветствие бота */}
-        <div className="bot-message" style={{
+        <div style={{
           background: 'white',
           borderRadius: '20px 20px 20px 5px',
           padding: '1.5rem',
           marginBottom: '2rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          position: 'relative'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '1rem'
           }}>
-            <div className="bot-avatar" style={{
+            <div style={{
               width: '50px',
               height: '50px',
               borderRadius: '50%',
@@ -766,50 +640,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
               🤖
             </div>
             <div style={{ flex: 1 }}>
-              {isTyping ? (
-                <div style={{
-                  display: 'flex',
-                  gap: '3px',
-                  alignItems: 'center'
-                }}>
-                  <span>Печатаю</span>
-                  <div style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: '#999',
-                    animation: 'typing 1.4s infinite ease-in-out'
-                  }} />
-                  <div style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: '#999',
-                    animation: 'typing 1.4s infinite ease-in-out 0.2s'
-                  }} />
-                  <div style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: '#999',
-                    animation: 'typing 1.4s infinite ease-in-out 0.4s'
-                  }} />
-                </div>
-              ) : (
-                <div className="bot-text" style={{
-                  fontSize: '1.1rem',
-                  color: '#2c1e0f',
-                  lineHeight: '1.4'
-                }}>
-                  {getBotMessage()}
-                </div>
-              )}
+              <div style={{
+                fontSize: '1.1rem',
+                color: '#2c1e0f',
+                lineHeight: '1.4'
+              }}>
+                {getBotMessage()}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Фильтры */}
-        <div className="filters-container" style={{
+        <div style={{
           display: 'flex',
           gap: '0.5rem',
           marginBottom: '2rem',
@@ -822,11 +664,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
             { key: 'done', label: 'Завершённые', count: orders.filter(o => o.status === 'done').length }
           ].map((filter) => (
             <button
-              key={filter.key}
-              className="filter-button"
-              onClick={() => setActiveFilter(filter.key)}
-              style={{
-                padding: '0.75rem 1.5rem',
               key={filter.key}
               className="filter-button"
               onClick={() => setActiveFilter(filter.key)}
@@ -850,63 +687,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
           ))}
         </div>
 
-        {/* Список заказов */}
-        {loadError ? (
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '3rem',
-            textAlign: 'center',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            border: '2px solid #ff5722'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#d32f2f', marginBottom: '1rem' }}>
-              Ошибка загрузки данных
-            </div>
-            <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '2rem' }}>
-              {loadError}
-            </div>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => {
-                  setLoadError(null);
-                  setIsLoading(true);
-                  loadData();
-                }}
-                style={{
-                  padding: '1rem 2rem',
-                  background: '#ff5722',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem'
-                }}
-              >
-                Повторить загрузку
-              </button>
-              
-              <button
-                onClick={() => {
-                  const testUrl = `${API_URL}?action=getOrders`;
-                  window.open(testUrl, '_blank');
-                }}
-                style={{
-                  padding: '1rem 2rem',
-                  background: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem'
-                }}
-              >
-                Проверить API
-              </button>
-            </div>
-          </div>
-        ) : filteredOrders.length === 0 ? (
+        {filteredOrders.length === 0 ? (
           <div style={{
             background: 'white',
             borderRadius: '16px',
@@ -940,7 +721,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
   );
 };
 
-// Главный компонент админки
 const AdminPage = () => {
   const [admin, setAdmin] = useState(null);
 
