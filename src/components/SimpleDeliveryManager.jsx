@@ -10,10 +10,19 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
   const DELIVERY_COST = 250;
   const FREE_DELIVERY_THRESHOLD = 2000;
   const DELIVERY_ID = 'delivery_service';
+  
+  // Добавляем state для отслеживания режима
+  const [currentMode, setCurrentMode] = useState(() => 
+    localStorage.getItem('deliveryMode') || 'delivery'
+  );
 
   useEffect(() => {
-    // Получаем режим доставки из localStorage
+    // Отслеживаем изменения в localStorage
     const deliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+    
+    if (deliveryMode !== currentMode) {
+      setCurrentMode(deliveryMode);
+    }
     
     // Находим товары (исключая доставку)
     const products = cart.filter(item => item.id !== DELIVERY_ID);
@@ -34,7 +43,7 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
     
     // ЛОГИКА ДЛЯ ДОСТАВКИ:
     
-    // Логика 1: Добавляем доставку при первом товаре
+    // Логика 1: Добавляем доставку при первом товаре ИЛИ при переключении на доставку
     if (products.length > 0 && !deliveryItem) {
       const deliveryService = {
         id: DELIVERY_ID,
@@ -85,7 +94,7 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
       }
     }
     
-  }, [cart, setCart]);
+  }, [cart, setCart, currentMode]);
 
   return null;
 };
