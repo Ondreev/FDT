@@ -72,7 +72,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
         comment: ''
       });
       
-      // Показываем первое сообщение бота
+      // Показываем первое сообщение бота так
       setTimeout(() => {
         setIsTyping(true);
         setTimeout(() => {
@@ -96,7 +96,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
       
       case 'address':
         return updatedFormData.deliveryType === 'pickup' 
-          ? '👌 Супер! Заберёшь по адресу самовывоза.\n\nТеперь напиши свой номер WhatsApp:'
+          ? '👌 Супер! Значит сам к нам заскочишь.\n\nТеперь напиши свой номер WhatsApp:'
           : '📍 Куда привезти заказ?\n\nНапиши точный адрес:';
       
       case 'phone':
