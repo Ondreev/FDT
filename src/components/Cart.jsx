@@ -5,17 +5,11 @@ import { FreeDeliveryProgress, FreeDeliveryPopup, formatNumber } from './SimpleD
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
-const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart }) => {
+const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart, deliveryMode, setDeliveryMode }) => {
   const [discounts, setDiscounts] = useState([]);
   const [products, setProducts] = useState([]);
   const [showViolationAlert, setShowViolationAlert] = useState(false);
   const [violatingItems, setViolatingItems] = useState([]);
-  
-  // Состояние для режима доставки
-  const [deliveryMode, setDeliveryMode] = useState(() => {
-    // Загружаем из localStorage или по умолчанию 'delivery'
-    return localStorage.getItem('deliveryMode') || 'delivery';
-  });
 
   // Сохраняем режим доставки в localStorage и принудительно обновляем корзину
   useEffect(() => {
