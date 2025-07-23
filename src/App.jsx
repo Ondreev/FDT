@@ -795,13 +795,9 @@ const ShopPage = () => {
           settings={settings}
           addToCart={addToCart}
           setCart={setCart}
-          onOpenOrderForm={(currentDeliveryMode) => {
+          onOpenOrderForm={() => {
             setIsCartOpen(false);
             setIsOrderFormOpen(true);
-            // Обновляем режим доставки если передан
-            if (currentDeliveryMode) {
-              setDeliveryMode(currentDeliveryMode);
-            }
           }}
         />
 
