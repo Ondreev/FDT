@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwTZy6Kc0bEhEAo6MYHYBIxQvHX440J_FQbj6TEbDGiYKv7nIn9_V_iOBxQJ1gQoPnNsw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
 const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -817,9 +817,22 @@ const AdminDashboard = ({ admin, onLogout }) => {
             }
             
             .header-controls {
-              flex-direction: column !important;
+              flex-direction: row !important;
+              flex-wrap: wrap !important;
               width: 100% !important;
               gap: 0.5rem !important;
+              justify-content: center !important;
+            }
+            
+            .header-controls > * {
+              flex: 0 0 auto !important;
+              min-width: fit-content !important;
+            }
+            
+            .today-sum {
+              flex: 1 1 100% !important;
+              text-align: center !important;
+              margin-bottom: 0.5rem !important;
             }
           }
         `}
@@ -856,7 +869,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
         
         <div className="header-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <div style={{
+          <div className="today-sum" style={{
             background: '#e8f5e8',
             color: '#2e7d32',
             padding: '0.5rem 1rem',
