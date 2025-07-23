@@ -19,7 +19,7 @@ const AdminLogin = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      // Получаем список админов
+      // Получаем список админов так
       const response = await fetch(`${API_URL}?action=getAdmins`);
       const admins = await response.json();
       
