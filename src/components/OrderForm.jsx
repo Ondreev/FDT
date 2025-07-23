@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
-const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) => {
+const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrderSuccess }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -15,6 +15,22 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  
+  // Ref для автоскролла
+  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+
+  // Автоскролл к последнему сообщению
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Скроллим при добавлении новых сообщений
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
 
   const steps = [
     {
@@ -26,24 +42,15 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     },
     {
       id: 'delivery',
-      type: 'buttons',
-      field: 'deliveryType',
-      options: [
-        { value: 'pickup', label: '🏃‍♂️ Заберу сам', emoji: '🏪' },
-        { value: 'delivery', label: '🚗 Привезите', emoji: '📍' }
-      ]
-    },
-    {
-      id: 'address',
-      type: 'address',
-      field: 'address',
-      placeholder: 'Улица, дом, квартира...'
+      type: 'delivery_info', // Адаптивный шаг
+      field: deliveryMode === 'pickup' ? 'phone' : 'address' // Для самовывоза сразу телефон, для доставки - адрес
     },
     {
       id: 'phone',
       type: 'phone',
       field: 'phone',
-      placeholder: '+7 999 123 45 67'
+      placeholder: '+7 999 123 45 67',
+      skip: deliveryMode === 'pickup' // Пропускаем если уже ввели на предыдущем шаге
     },
     {
       id: 'comment',
@@ -64,15 +71,17 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
       setCurrentStep(0);
       setMessages([]);
       setInputValue('');
+      
+      // Устанавливаем режим доставки из корзины
       setFormData({
         customerName: '',
-        deliveryType: '',
-        address: '',
+        deliveryType: deliveryMode, // Берем из пропса
+        address: deliveryMode === 'pickup' ? 'Самовывоз' : '',
         phone: '',
         comment: ''
       });
       
-      // Показываем первое сообщение бота так
+      // Показываем первое сообщение бота
       setTimeout(() => {
         setIsTyping(true);
         setTimeout(() => {
@@ -85,19 +94,18 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
         }, 1500);
       }, 500);
     }
-  }, [isOpen]);
+  }, [isOpen, deliveryMode]);
 
   const getBotMessage = (stepIndex, updatedFormData) => {
     const step = steps[stepIndex];
     
     switch(step.id) {
       case 'delivery':
-        return `Отлично, ${updatedFormData.customerName}! 🚀\n\nКак получишь заказ?`;
-      
-      case 'address':
-        return updatedFormData.deliveryType === 'pickup' 
-          ? '👌 Супер! Значит сам к нам заскочишь.\n\nТеперь напиши свой номер WhatsApp:'
-          : '📍 Куда привезти заказ?\n\nНапиши точный адрес:';
+        if (deliveryMode === 'pickup') {
+          return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ уже знаю, что ты выбрал самовывоз, заскочишь к нам в ресторан! 🏪\n\nТеперь напиши свой номер WhatsApp:`;
+        } else {
+          return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ знаю, ты выбрал нашу скоростную доставку, напиши свой адрес, чтобы заказ не увезли другому чуваку! 😄📍`;
+        }
       
       case 'phone':
         return '📱 Теперь напиши свой номер WhatsApp:';
@@ -105,7 +113,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
       case 'confirmation':
         return '🎯 Проверь заказ:\n\n' +
           `👤 ${updatedFormData.customerName}\n` +
-          `${updatedFormData.deliveryType === 'pickup' ? '🏪 Самовывоз' : '🚗 Доставка: ' + updatedFormData.address}\n` +
+          `${updatedFormData.deliveryType === 'pickup' ? '🏪 Самовывоз (Реутов, ул. Калинина, д. 8)' : '🚗 Доставка: ' + updatedFormData.address}\n` +
           `📱 ${updatedFormData.phone}\n` +
           `${updatedFormData.comment ? '💬 ' + updatedFormData.comment + '\n' : ''}` +
           `💰 Итого: ${total} ${settings.currency || '₽'}\n\n` +
@@ -121,9 +129,6 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     
     // Добавляем сообщение пользователя
     let userDisplayText = value;
-    if (currentStepData.type === 'buttons') {
-      userDisplayText = currentStepData.options.find(opt => opt.value === value)?.label || value;
-    }
     
     const userMessage = {
       type: 'user',
@@ -136,11 +141,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     // Обновляем данные формы
     const updatedFormData = { ...formData };
     
-    if (currentStepData.field === 'address' && formData.deliveryType === 'pickup') {
-      // Если самовывоз - в поле address записываем "Самовывоз", а в phone записываем введенное значение
-      updatedFormData.address = 'Самовывоз';
-      updatedFormData.phone = value;
-    } else {
+    if (currentStepData.field) {
       updatedFormData[currentStepData.field] = value;
     }
     
@@ -172,8 +173,8 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     for (let i = currentIndex + 1; i < steps.length; i++) {
       const step = steps[i];
       
-      // Пропускаем шаг с телефоном если самовывоз (телефон уже спросили в поле адреса)
-      if (step.id === 'phone' && formData.deliveryType === 'pickup') {
+      // Пропускаем шаг телефона если самовывоз (телефон уже введен на шаге delivery)
+      if (step.skip && deliveryMode === 'pickup') {
         continue;
       }
       
@@ -251,51 +252,6 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     
     const step = steps[currentStep];
     
-    if (step.type === 'buttons') {
-      return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem',
-          marginTop: '1rem'
-        }}>
-          {step.options.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => handleUserInput(option.value)}
-              style={{
-                padding: '1rem',
-                background: 'linear-gradient(135deg, #25d366, #128c7e)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '25px',
-                fontSize: '1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = 'scale(1.02)';
-                e.target.style.boxShadow = '0 6px 16px rgba(37, 211, 102, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = 'scale(1)';
-                e.target.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
-              }}
-            >
-              <span>{option.emoji}</span>
-              {option.label}
-            </button>
-          ))}
-        </div>
-      );
-    }
-    
     if (step.type === 'confirmation') {
       return (
         <div style={{
@@ -357,6 +313,14 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
       }
     };
 
+    // Определяем placeholder в зависимости от шага и режима доставки
+    let placeholder = step.placeholder;
+    if (step.id === 'delivery' && deliveryMode === 'pickup') {
+      placeholder = '+7 999 123 45 67';
+    } else if (step.id === 'delivery' && deliveryMode === 'delivery') {
+      placeholder = 'Улица, дом, квартира...';
+    }
+
     return (
       <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
         <div style={{ position: 'relative' }}>
@@ -364,7 +328,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={step.placeholder}
+              placeholder={placeholder}
               autoFocus
               style={{
                 width: '100%',
@@ -383,10 +347,10 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
             />
           ) : (
             <input
-              type={step.type === 'phone' ? 'tel' : 'text'}
+              type={(step.type === 'phone' || step.id === 'delivery' && deliveryMode === 'pickup') ? 'tel' : 'text'}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={step.placeholder}
+              placeholder={placeholder}
               required={!step.optional}
               autoFocus
               style={{
@@ -529,15 +493,18 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
         </div>
 
         {/* Чат */}
-        <div style={{
-          flex: 1,
-          padding: '1rem',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          minHeight: '300px'
-        }}>
+        <div 
+          ref={chatContainerRef}
+          style={{
+            flex: 1,
+            padding: '1rem',
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            minHeight: '300px'
+          }}
+        >
           {messages.map((message, index) => (
             <div
               key={index}
@@ -607,6 +574,9 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
               </div>
             </div>
           )}
+          
+          {/* Элемент для автоскролла */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Поле ввода */}
