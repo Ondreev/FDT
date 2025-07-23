@@ -8,6 +8,79 @@ import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
+// Компонент для отображения звездного рейтинга
+const StarRating = ({ rating, size = 16 }) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1px',
+      background: 'rgba(0, 0, 0, 0.7)',
+      padding: '4px 8px',
+      borderRadius: '12px',
+      backdropFilter: 'blur(4px)',
+    }}>
+      {/* Полные звезды */}
+      {Array(fullStars).fill().map((_, i) => (
+        <span key={`full-${i}`} style={{ 
+          color: '#FFD700', 
+          fontSize: `${size}px`,
+          lineHeight: 1,
+          filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))'
+        }}>
+          ★
+        </span>
+      ))}
+      
+      {/* Половинчатая звезда */}
+      {hasHalfStar && (
+        <span style={{ 
+          position: 'relative',
+          color: '#FFD700',
+          fontSize: `${size}px`,
+          lineHeight: 1,
+          filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))'
+        }}>
+          <span style={{ 
+            position: 'absolute',
+            overflow: 'hidden',
+            width: '50%',
+            color: '#FFD700'
+          }}>★</span>
+          <span style={{ color: '#888' }}>★</span>
+        </span>
+      )}
+      
+      {/* Пустые звезды */}
+      {Array(emptyStars).fill().map((_, i) => (
+        <span key={`empty-${i}`} style={{ 
+          color: '#888', 
+          fontSize: `${size}px`,
+          lineHeight: 1,
+          filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))'
+        }}>
+          ★
+        </span>
+      ))}
+      
+      {/* Числовой рейтинг */}
+      <span style={{
+        color: '#fff',
+        fontSize: `${size - 2}px`,
+        fontWeight: 'bold',
+        marginLeft: '4px',
+        textShadow: '0 1px 1px rgba(0,0,0,0.5)'
+      }}>
+        {rating}
+      </span>
+    </div>
+  );
+};
+
 // Компонент для управления flash-товарами в корзине так
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   useEffect(() => {
@@ -398,11 +471,33 @@ const ShopPage = () => {
                   ОСТРОЕ
                 </div>
               )}
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                style={{ width: '100%', maxWidth: '160px', borderRadius: '12px', marginBottom: '0.5rem' }}
-              />
+              
+              <div style={{ position: 'relative', width: '100%', maxWidth: '160px' }}>
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  style={{ 
+                    width: '100%', 
+                    borderRadius: '12px', 
+                    marginBottom: '0.5rem',
+                    display: 'block'
+                  }}
+                />
+                
+                {/* Рейтинг на фото */}
+                {product.rating && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '8px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 2
+                  }}>
+                    <StarRating rating={parseFloat(product.rating)} size={14} />
+                  </div>
+                )}
+              </div>
+              
               <h2
                 style={{
                   fontSize: '1.4rem',
