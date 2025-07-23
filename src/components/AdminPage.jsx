@@ -576,13 +576,45 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isTyping, setIsTyping] = useState(true);
+  const [lastOrderCount, setLastOrderCount] = useState(0);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdateTime, setLastUpdateTime] = useState(null);
 
   useEffect(() => {
     loadData();
+    
+    // Запрашиваем разрешение на уведомления
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        setNotificationsEnabled(permission === 'granted');
+        if (permission === 'granted') {
+          console.log('✅ Разрешение на уведомления получено');
+        }
+      });
+    } else if (Notification.permission === 'granted') {
+      setNotificationsEnabled(true);
+    }
   }, []);
 
-  const loadData = async () => {
+  // Автообновление каждые 30 секунд
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      console.log('🔄 Автообновление заказов...');
+      loadData(true); // true = это автообновление
+    }, 30000); // 30 секунд
+
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
+
+  const loadData = async (isAutoRefresh = false) => {
     try {
+      if (!isAutoRefresh) {
+        setIsLoading(true);
+      }
+
       const [ordersRes, statusRes] = await Promise.all([
         fetch(`${API_URL}?action=getOrders&cache=${Date.now()}`),
         fetch(`${API_URL}?action=getStatusLabels&cache=${Date.now()}`)
@@ -593,9 +625,19 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
       if (Array.isArray(ordersData)) {
         const sorted = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Проверяем на новые заказы (только при автообновлении)
+        if (isAutoRefresh && lastOrderCount > 0 && sorted.length > lastOrderCount) {
+          const newOrdersCount = sorted.length - lastOrderCount;
+          showNewOrderNotification(newOrdersCount, sorted[0]);
+        }
+        
         setOrders(sorted);
+        setLastOrderCount(sorted.length);
+        setLastUpdateTime(new Date());
       } else {
         setOrders([]);
+        setLastOrderCount(0);
       }
 
       if (Array.isArray(statusData)) {
@@ -612,8 +654,49 @@ const AdminDashboard = ({ admin, onLogout }) => {
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
     } finally {
-      setIsLoading(false);
-      setTimeout(() => setIsTyping(false), 2000);
+      if (!isAutoRefresh) {
+        setIsLoading(false);
+        setTimeout(() => setIsTyping(false), 2000);
+      }
+    }
+  };
+
+  // Функция показа уведомления о новых заказах
+  const showNewOrderNotification = (count, latestOrder) => {
+    if (!notificationsEnabled) return;
+
+    // Звуковой сигнал
+    try {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dr0X0vBClRuvHUfywFJHfH8N2QQAoUXrTp66hVFApGn+Dr0X0vBCgxGK45kGVJAAFmMGBbdF1fnNTKcBdSP1WCwHGgzS19TQT2a6T5u3w0Cgpd');
+      audio.play().catch(e => console.log('Не удалось воспроизвести звук'));
+    } catch (e) {
+      console.log('Аудио не поддерживается');
+    }
+
+    // Push уведомление
+    new Notification('🍕 Новый заказ!', {
+      body: count === 1 
+        ? `Заказ #${latestOrder.orderId} от ${latestOrder.customerName}\nСумма: ${formatNumber(latestOrder.total)} ₽`
+        : `Поступило ${count} новых заказов!\nПоследний: #${latestOrder.orderId}`,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: 'new-order',
+      requireInteraction: true, // Уведомление не исчезает автоматически
+      actions: [
+        { action: 'view', title: 'Посмотреть заказы' }
+      ]
+    });
+
+    console.log(`🔔 Показано уведомление о ${count} новых заказах`);
+  };
+
+  // Переключение автообновления
+  const toggleAutoRefresh = () => {
+    setAutoRefresh(!autoRefresh);
+    if (!autoRefresh) {
+      console.log('✅ Автообновление включено');
+    } else {
+      console.log('⏸️ Автообновление отключено');
     }
   };
 
@@ -750,10 +833,15 @@ const AdminDashboard = ({ admin, onLogout }) => {
             color: '#666'
           }}>
             Добро пожаловать, {admin.login}
+            {lastUpdateTime && (
+              <div style={{ fontSize: '0.7rem', color: '#999' }}>
+                Обновлено: {lastUpdateTime.toLocaleTimeString('ru-RU')}
+              </div>
+            )}
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{
             background: '#e8f5e8',
             color: '#2e7d32',
@@ -764,6 +852,64 @@ const AdminDashboard = ({ admin, onLogout }) => {
           }}>
             Сегодня: {formatNumber(totalToday)} ₽
           </div>
+          
+          {/* Кнопка автообновления */}
+          <button
+            onClick={toggleAutoRefresh}
+            style={{
+              background: autoRefresh ? '#4caf50' : '#757575',
+              color: 'white',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+            title={autoRefresh ? 'Автообновление включено (каждые 30 сек)' : 'Автообновление отключено'}
+          >
+            {autoRefresh ? '🔄' : '⏸️'} 
+            <span style={{ fontSize: '0.8rem' }}>
+              {autoRefresh ? 'Авто' : 'Выкл'}
+            </span>
+          </button>
+
+          {/* Индикатор уведомлений */}
+          <div style={{
+            background: notificationsEnabled ? '#e8f5e8' : '#ffebee',
+            color: notificationsEnabled ? '#2e7d32' : '#c62828',
+            padding: '0.5rem 1rem',
+            borderRadius: '8px',
+            fontSize: '0.8rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+          title={notificationsEnabled ? 'Уведомления включены' : 'Уведомления отключены'}
+          >
+            {notificationsEnabled ? '🔔' : '🔕'}
+            <span>{notificationsEnabled ? 'Звук' : 'Тихо'}</span>
+          </div>
+
+          {/* Кнопка ручного обновления */}
+          <button
+            onClick={() => loadData()}
+            style={{
+              background: '#2196f3',
+              color: 'white',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+            title="Обновить заказы вручную"
+          >
+            ↻
+          </button>
+          
           <button
             onClick={onLogout}
             style={{
