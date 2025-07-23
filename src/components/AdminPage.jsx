@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzXeMAkXVVy618VdDT6ICPOemHu6P046QTpCH2R1fM8WlHNhHXdamqeBIntaVeuwz4U4A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbytJQZKK_57WXTalemzNQgVmlcS_HajnL0vo-FxDT4DogOCLDnJ4vWl0GMp8oQCaOi0/exec';
 
 // Функция для форматирования числа с пробелами
 const formatNumber = (num) => {
@@ -464,52 +464,60 @@ const AdminDashboard = ({ admin, onLogout }) => {
     try {
       console.log('🔄 Загружаю заказы и статусы...');
       
-      // Загружаем заказы и статусы
-      const [ordersRes, statusRes] = await Promise.all([
-        fetch(`${API_URL}?action=getOrders`),
-        fetch(`${API_URL}?action=getStatusLabels`)
-      ]);
-
-      console.log('📦 Ответ заказов:', ordersRes.status, ordersRes.statusText);
-      console.log('🏷️ Ответ статусов:', statusRes.status, statusRes.statusText);
-
-      const ordersData = await ordersRes.json();
+      // Пробуем разные варианты названий действий для заказов
+      let ordersData = null;
+      const orderActions = ['getOrders', 'getAllOrders', 'getOrdersList', 'fetchOrders'];
+      
+      for (const action of orderActions) {
+        try {
+          console.log(`🔍 Пробую действие: ${action}`);
+          const response = await fetch(`${API_URL}?action=${action}`);
+          const data = await response.json();
+          
+          if (!data.error) {
+            console.log(`✅ Действие ${action} работает!`);
+            ordersData = data;
+            break;
+          } else {
+            console.log(`❌ Действие ${action} вернуло ошибку:`, data.error);
+          }
+        } catch (err) {
+          console.log(`❌ Ошибка при ${action}:`, err.message);
+        }
+      }
+      
+      // Загружаем статусы (это работает)
+      const statusRes = await fetch(`${API_URL}?action=getStatusLabels`);
       const statusData = await statusRes.json();
 
       console.log('📋 Заказы:', ordersData);
       console.log('🏷️ Статусы:', statusData);
 
-      // Проверяем что данные корректны
-      if (!Array.isArray(ordersData)) {
-        console.error('❌ Заказы не являются массивом:', ordersData);
-        
-        // Возможно API возвращает объект с ключом orders или data
-        if (ordersData && ordersData.orders && Array.isArray(ordersData.orders)) {
-          console.log('✅ Найдены заказы в ordersData.orders');
-          setOrders(ordersData.orders.sort((a, b) => new Date(b.date) - new Date(a.date)));
-        } else if (ordersData && ordersData.data && Array.isArray(ordersData.data)) {
-          console.log('✅ Найдены заказы в ordersData.data');
-          setOrders(ordersData.data.sort((a, b) => new Date(b.date) - new Date(a.date)));
-        } else {
-          console.log('❌ Заказы не найдены. API вернул:', ordersData);
-          setOrders([]); // Устанавливаем пустой массив
-        }
+      // Обрабатываем заказы
+      if (!ordersData || ordersData.error) {
+        console.log('❌ Не удалось загрузить заказы. Устанавливаю пустой массив.');
+        setOrders([]);
+      } else if (Array.isArray(ordersData)) {
+        setOrders(ordersData.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      } else if (ordersData.orders && Array.isArray(ordersData.orders)) {
+        setOrders(ordersData.orders.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      } else if (ordersData.data && Array.isArray(ordersData.data)) {
+        setOrders(ordersData.data.sort((a, b) => new Date(b.date) - new Date(a.date)));
       } else {
-        // Сортируем заказы по дате (новые сверху)
-        const sortedOrders = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
-        setOrders(sortedOrders);
+        console.log('❌ Неизвестный формат заказов:', ordersData);
+        setOrders([]);
       }
 
+      // Обрабатываем статусы
       if (!Array.isArray(statusData)) {
         console.error('❌ Статусы не являются массивом:', statusData);
         
-        // Возможно API возвращает объект со статусами
         if (statusData && statusData.statuses && Array.isArray(statusData.statuses)) {
           setStatusLabels(statusData.statuses);
         } else if (statusData && statusData.data && Array.isArray(statusData.data)) {
           setStatusLabels(statusData.data);
         } else {
-          // Устанавливаем базовые статусы если API не отвечает
+          // Устанавливаем базовые статусы
           setStatusLabels([
             { status: 'pending', label: 'В обработке', color: '#ffa500' },
             { status: 'cooking', label: 'Готовится', color: '#ff7f32' },
@@ -522,16 +530,12 @@ const AdminDashboard = ({ admin, onLogout }) => {
         setStatusLabels(statusData);
       }
       
-      console.log('✅ Данные загружены успешно:', {
-        orders: sortedOrders.length,
-        statuses: statusData.length
-      });
+      console.log('✅ Данные обработаны успешно');
     } catch (error) {
       console.error('❌ Ошибка загрузки данных:', error);
       setLoadError(error.message);
     } finally {
       setIsLoading(false);
-      // Имитация печатания
       setTimeout(() => setIsTyping(false), 2000);
     }
   };
