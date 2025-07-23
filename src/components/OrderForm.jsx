@@ -69,8 +69,6 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
 
   useEffect(() => {
     if (isOpen) {
-      console.log('OrderForm opened with deliveryMode:', deliveryMode); // Отладка
-      
       setCurrentStep(0);
       setMessages([]);
       setInputValue('');
@@ -102,16 +100,12 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
   const getBotMessage = (stepIndex, updatedFormData) => {
     const step = getSteps()[stepIndex];
     
-    console.log('getBotMessage called:', { stepIndex, stepId: step.id, deliveryMode, formDataDeliveryType: updatedFormData.deliveryType }); // Отладка
-    
     switch(step.id) {
       case 'delivery':
         // Используем deliveryMode из пропсов, а не из formData
         if (deliveryMode === 'pickup') {
-          console.log('Showing pickup message'); // Отладка
           return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ уже знаю, что ты выбрал самовывоз, заскочишь к нам в ресторан! 🏪\n\nТеперь напиши свой номер WhatsApp:`;
         } else {
-          console.log('Showing delivery message'); // Отладка
           return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ знаю, ты выбрал нашу скоростную доставку, напиши свой адрес, чтобы заказ не увезли другому чуваку! 😄📍`;
         }
       
