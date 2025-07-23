@@ -277,6 +277,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
 
   const products = JSON.parse(order.products || '[]');
   const isDone = order.status === 'done';
+  const isArchived = order.status === 'archived';
 
   const handleStatusChange = async (newStatus) => {
     setIsUpdating(true);
@@ -291,15 +292,15 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
       padding: '1.5rem',
       marginBottom: '1rem',
       boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      border: isDone ? '2px solid #4caf50' : '1px solid #e0e0e0',
+      border: isDone ? '2px solid #4caf50' : isArchived ? '2px solid #999' : '1px solid #e0e0e0',
       position: 'relative'
     }}>
-      {isDone && (
+      {(isDone || isArchived) && (
         <div style={{
           position: 'absolute',
           top: '-10px',
           right: '-10px',
-          background: '#4caf50',
+          background: isDone ? '#4caf50' : '#999',
           borderRadius: '50%',
           width: '40px',
           height: '40px',
@@ -520,7 +521,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             </div>
           </div>
 
-          {!isDone && (
+          {!isArchived && (
             <div style={{ marginBottom: '1rem' }}>
               <h4 style={{
                 fontSize: '1rem',
@@ -680,18 +681,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
   };
 
   const filterOrders = (orders, filter) => {
-    // Исключаем архивные заказы из всех основных вкладок
-    const activeOrders = orders.filter(order => order.status !== 'done');
+    // Исключаем завершенные и архивные заказы из основных вкладок  
+    const activeOrders = orders.filter(order => !['done', 'archived'].includes(order.status));
     
     switch (filter) {
       case 'pending':
         return activeOrders.filter(order => order.status === 'pending');
       case 'active':
-        return activeOrders.filter(order => ['cooking', 'delivering'].includes(order.status));
+        return activeOrders.filter(order => ['cooking', 'delivering'].includes(order.status)); // Убрали done
       case 'archive':
-        return orders.filter(order => order.status === 'done'); // Только для архива показываем завершенные
+        return orders.filter(order => ['done', 'archived'].includes(order.status)); // И завершенные, и архивные
       default:
-        return activeOrders; // По умолчанию показываем только активные
+        return activeOrders;
     }
   };
 
@@ -988,7 +989,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
           {[
             { key: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
             { key: 'active', label: 'В работе', count: orders.filter(o => ['cooking', 'delivering'].includes(o.status)).length },
-            { key: 'archive', label: 'Архив', count: orders.filter(o => o.status === 'done').length }
+            { key: 'archive', label: 'Архив', count: orders.filter(o => ['done', 'archived'].includes(o.status)).length }
           ].map((filter) => (
             <button
               key={filter.key}
