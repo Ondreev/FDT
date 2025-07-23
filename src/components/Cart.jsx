@@ -10,6 +10,46 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
   const [products, setProducts] = useState([]);
   const [showViolationAlert, setShowViolationAlert] = useState(false);
   const [violatingItems, setViolatingItems] = useState([]);
+  
+  // Состояние для режима доставки
+  const [deliveryMode, setDeliveryMode] = useState(() => {
+    // Загружаем из localStorage или по умолчанию 'delivery'
+    return localStorage.getItem('deliveryMode') || 'delivery';
+  });
+
+  // Сохраняем режим доставки в localStorage
+  useEffect(() => {
+    localStorage.setItem('deliveryMode', deliveryMode);
+  }, [deliveryMode]);
+
+  // Управление доставкой при переключении режима
+  useEffect(() => {
+    const DELIVERY_ID = 'delivery_service';
+    const deliveryItem = cart.find(item => item.id === DELIVERY_ID);
+    const hasProducts = cart.filter(item => !item.isDelivery).length > 0;
+
+    if (deliveryMode === 'pickup') {
+      // Самовывоз - убираем доставку
+      if (deliveryItem) {
+        setCart(prev => prev.filter(item => item.id !== DELIVERY_ID));
+      }
+    } else {
+      // Доставка - добавляем если есть товары и нет доставки
+      if (hasProducts && !deliveryItem) {
+        const deliveryService = {
+          id: DELIVERY_ID,
+          name: 'Доставка',
+          price: 250,
+          quantity: 1,
+          imageUrl: '🛵',
+          isDelivery: true,
+          description: 'Доставка по городу',
+          weight: ''
+        };
+        setCart(prev => [...prev, deliveryService]);
+      }
+    }
+  }, [deliveryMode, cart, setCart]);
 
   useEffect(() => {
     if (isOpen) {
@@ -164,15 +204,17 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         </div>
       )}
 
-      {/* Попап бесплатной доставки */}
-      <FreeDeliveryPopup 
-        cart={cart}
-        setCart={setCart}
-        settings={settings}
-      />
+      {/* Попап бесплатной доставки - только при доставке */}
+      {deliveryMode === 'delivery' && (
+        <FreeDeliveryPopup 
+          cart={cart}
+          setCart={setCart}
+          settings={settings}
+        />
+      )}
 
-      {/* Попап flash-предложения товара */}
-      {cart.length > 0 && (
+      {/* Попап flash-предложения товара - только при доставке */}
+      {cart.length > 0 && deliveryMode === 'delivery' && (
         <FlashOfferPopup 
           subtotal={productsSubtotal}
           products={products}
@@ -212,7 +254,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           `}
         </style>
 
-        {/* Заголовок корзины */}
+        {/* Заголовок корзины с переключателем */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -223,20 +265,45 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           flexShrink: 0
         }}>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f', margin: 0 }}>Корзина</h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '8px',
-              color: '#666',
-              fontSize: '20px',
-            }}
-          >
-            ✕
-          </button>
+          
+          {/* Переключатель доставки */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              onClick={() => setDeliveryMode(deliveryMode === 'delivery' ? 'pickup' : 'delivery')}
+              style={{
+                background: deliveryMode === 'delivery' ? settings.primaryColor || '#ff7f32' : '#f0f0f0',
+                color: deliveryMode === 'delivery' ? 'white' : '#666',
+                border: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '20px',
+                fontSize: '0.9rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {deliveryMode === 'delivery' ? '🚗' : '🏃‍♂️'}
+              {deliveryMode === 'delivery' ? 'Доставка' : 'Самовывоз'}
+            </button>
+            
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                color: '#666',
+                fontSize: '20px',
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Скроллируемая область с маркетингом и товарами */}
@@ -257,11 +324,45 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               />
             )}
 
-            {/* Прогрессбар бесплатной доставки */}
-            <FreeDeliveryProgress 
-              cart={cart}
-              settings={settings}
-            />
+            {/* Прогрессбар бесплатной доставки - только при доставке */}
+            {deliveryMode === 'delivery' && (
+              <FreeDeliveryProgress 
+                cart={cart}
+                settings={settings}
+              />
+            )}
+
+            {/* Адрес самовывоза */}
+            {deliveryMode === 'pickup' && cart.length > 0 && (
+              <div style={{
+                background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)',
+                padding: '1rem',
+                borderRadius: '12px',
+                marginBottom: '1rem',
+                border: '2px solid #2196f3',
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem',
+                  color: '#1565c0'
+                }}>
+                  <span style={{ fontSize: '1.2rem' }}>🏪</span>
+                  <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>
+                    Адрес самовывоза
+                  </div>
+                </div>
+                <div style={{ 
+                  fontSize: '1rem', 
+                  color: '#1976d2',
+                  fontWeight: '500',
+                  lineHeight: '1.4'
+                }}>
+                  Реутов, ул. Калинина, д. 8
+                </div>
+              </div>
+            )}
           </div>
 
           {/* СПИСОК ТОВАРОВ */}
