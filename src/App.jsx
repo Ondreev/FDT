@@ -8,7 +8,7 @@ import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbwpgkiVZN5JwPdSYj-jLVZHZ_A5sw8P6PV4QXR7DJWchwP-19z31WUjcv7QRaHMAazCxg/exec';
 
-// Компонент для управления flash-товарами в корзине
+// Компонент для управления flash-товарами в корзине так
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   useEffect(() => {
     // Находим товар с R2000 в ID (это будет "6R2000") 
