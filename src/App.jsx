@@ -291,10 +291,20 @@ const ShopPage = () => {
   const [ratingPopup, setRatingPopup] = useState({ isOpen: false, product: null });
   const [userRatings, setUserRatings] = useState({}); // Локальное хранение оценок
   
+  // Состояние для режима доставки (перенесено из Cart в App)
+  const [deliveryMode, setDeliveryMode] = useState(() => {
+    return localStorage.getItem('deliveryMode') || 'delivery';
+  });
+  
   // Состояния для свайпа
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
+
+  // Сохраняем режим доставки в localStorage
+  useEffect(() => {
+    localStorage.setItem('deliveryMode', deliveryMode);
+  }, [deliveryMode]);
 
   useEffect(() => {
     if (settings.font) {
