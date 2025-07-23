@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbwpgkiVZN5JwPdSYj-jLVZHZ_A5sw8P6PV4QXR7DJWchwP-19z31WUjcv7QRaHMAazCxg/exec';
 
-// Функция для форматирования числа с пробелами
+// Функция для форматирования числа с пробелами так
 const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
