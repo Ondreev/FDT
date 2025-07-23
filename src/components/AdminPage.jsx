@@ -17,6 +17,86 @@ const formatDate = (dateStr) => {
   });
 };
 
+// Функция для нормализации номера телефона
+const normalizePhoneNumber = (phone) => {
+  if (!phone) return null;
+  
+  // Убираем все лишние символы (пробелы, скобки, дефисы и т.д.)
+  const cleanPhone = phone.replace(/[^\d+]/g, '');
+  
+  // Коды стран бывшего СССР
+  const countryCodes = {
+    '7': '+7',      // Россия, Казахстан
+    '375': '+375',  // Беларусь
+    '380': '+380',  // Украина
+    '994': '+994',  // Азербайджан
+    '374': '+374',  // Армения
+    '995': '+995',  // Грузия
+    '996': '+996',  // Киргизия
+    '373': '+373',  // Молдова
+    '992': '+992',  // Таджикистан
+    '993': '+993',  // Туркменистан
+    '998': '+998',  // Узбекистан
+    '371': '+371',  // Латвия
+    '372': '+372',  // Эстония
+    '370': '+370'   // Литва
+  };
+  
+  // Если номер начинается с +
+  if (cleanPhone.startsWith('+')) {
+    // Проверяем известные коды
+    for (const [code, fullCode] of Object.entries(countryCodes)) {
+      if (cleanPhone.startsWith(`+${code}`) && cleanPhone.length >= code.length + 10) {
+        return cleanPhone;
+      }
+    }
+    return cleanPhone; // Возвращаем как есть, если код неизвестен
+  }
+  
+  // Если номер начинается с 8 (российский формат)
+  if (cleanPhone.startsWith('8') && cleanPhone.length === 11) {
+    return '+7' + cleanPhone.substring(1);
+  }
+  
+  // Если номер начинается с 7 и длина 11
+  if (cleanPhone.startsWith('7') && cleanPhone.length === 11) {
+    return '+' + cleanPhone;
+  }
+  
+  // Проверяем на коды других стран
+  for (const [code, fullCode] of Object.entries(countryCodes)) {
+    if (cleanPhone.startsWith(code) && cleanPhone.length >= code.length + 9) {
+      return '+' + cleanPhone;
+    }
+  }
+  
+  // Если номер из 10 цифр без кода - считаем российским
+  if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
+    return '+7' + cleanPhone;
+  }
+  
+  // Если номер из 10 цифр и не начинается с 9 - тоже считаем российским
+  if (cleanPhone.length === 10) {
+    return '+7' + cleanPhone;
+  }
+  
+  // По умолчанию считаем российским номером
+  return '+7' + cleanPhone;
+};
+
+// Функция для создания WhatsApp ссылки
+const createWhatsAppLink = (phone, orderId) => {
+  const normalizedPhone = normalizePhoneNumber(phone);
+  if (!normalizedPhone) return null;
+  
+  // Убираем + для WhatsApp API
+  const whatsappPhone = normalizedPhone.replace('+', '');
+  
+  const message = `😊 Добрый день! Это из ресторана, по поводу Вашего заказа #${orderId} 🍕✨`;
+  
+  return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+};
+
 const AdminLogin = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -261,7 +341,50 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             </h4>
             <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.6' }}>
               <div><strong>Клиент:</strong> {order.customerName}</div>
-              <div><strong>Телефон:</strong> {order.phone}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <strong>Телефон:</strong> 
+                {(() => {
+                  const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
+                  const normalizedPhone = normalizePhoneNumber(order.phone);
+                  
+                  return whatsappLink ? (
+                    <a
+                      href={whatsappLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#25D366',
+                        textDecoration: 'none',
+                        fontWeight: 'bold',
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid #25D366',
+                        background: '#f0fff0',
+                        transition: 'all 0.2s ease',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = '#25D366';
+                        e.target.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = '#f0fff0';
+                        e.target.style.color = '#25D366';
+                      }}
+                      title={`Написать в WhatsApp: ${normalizedPhone}`}
+                    >
+                      📱 {normalizedPhone || order.phone}
+                    </a>
+                  ) : (
+                    <span style={{ 
+                      color: '#999',
+                      fontStyle: 'italic'
+                    }}>
+                      {order.phone} (некорректный номер)
+                    </span>
+                  );
+                })()}
+              </div>
               <div><strong>Адрес:</strong> {order.address}</div>
               {order.comment && (
                 <div><strong>Комментарий:</strong> {order.comment}</div>
