@@ -6,7 +6,7 @@ import OrderingNowBanner from './components/OrderingNowBanner';
 import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbytJQZKK_57WXTalemzNQgVmlcS_HajnL0vo-FxDT4DogOCLDnJ4vWl0GMp8oQCaOi0/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzXeMAkXVVy618VdDT6ICPOemHu6P046QTpCH2R1fM8WlHNhHXdamqeBIntaVeuwz4U4A/exec';
 
 // Компонент для управления flash-товарами в корзине
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
