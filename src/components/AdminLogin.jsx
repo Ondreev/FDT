@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzXeMAkXVVy618VdDT6ICPOemHu6P046QTpCH2R1fM8WlHNhHXdamqeBIntaVeuwz4U4A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwpgkiVZN5JwPdSYj-jLVZHZ_A5sw8P6PV4QXR7DJWchwP-19z31WUjcv7QRaHMAazCxg/exec';
 
 const AdminLogin = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
