@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
-const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrderSuccess }) => {
+const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -15,6 +15,9 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  
+  // Читаем deliveryMode прямо из localStorage
+  const deliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
   
   // Ref для автоскролла
   const messagesEndRef = useRef(null);
@@ -33,51 +36,59 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
   }, [messages, isTyping]);
 
   // Функция для получения шагов в зависимости от режима доставки
-  const getSteps = () => [
-    {
-      id: 'greeting',
-      botMessage: '👋 Привет! Давай оформим твой заказ?\n\nКак к тебе обращаться?',
-      type: 'text',
-      field: 'customerName',
-      placeholder: 'Введи своё имя...'
-    },
-    {
-      id: 'delivery',
-      type: 'delivery_info', // Адаптивный шаг
-      field: deliveryMode === 'pickup' ? 'phone' : 'address' // Для самовывоза сразу телефон, для доставки - адрес
-    },
-    {
-      id: 'phone',
-      type: 'phone',
-      field: 'phone',
-      placeholder: '+7 999 123 45 67',
-      skip: deliveryMode === 'pickup' // Пропускаем если уже ввели на предыдущем шаге
-    },
-    {
-      id: 'comment',
-      botMessage: '💬 Хочешь добавить комментарий к заказу?\n\n(Можешь пропустить этот шаг)',
-      type: 'textarea',
-      field: 'comment',
-      placeholder: 'Например: без лука, очень острое...',
-      optional: true
-    },
-    {
-      id: 'confirmation',
-      type: 'confirmation'
-    }
-  ];
+  const getSteps = () => {
+    // Читаем актуальный режим каждый раз при вызове
+    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
+    
+    return [
+      {
+        id: 'greeting',
+        botMessage: '👋 Привет! Давай оформим твой заказ?\n\nКак к тебе обращаться?',
+        type: 'text',
+        field: 'customerName',
+        placeholder: 'Введи своё имя...'
+      },
+      {
+        id: 'delivery',
+        type: 'delivery_info', // Адаптивный шаг
+        field: currentMode === 'pickup' ? 'phone' : 'address' // Для самовывоза сразу телефон, для доставки - адрес
+      },
+      {
+        id: 'phone',
+        type: 'phone',
+        field: 'phone',
+        placeholder: '+7 999 123 45 67',
+        skip: currentMode === 'pickup' // Пропускаем если уже ввели на предыдущем шаге
+      },
+      {
+        id: 'comment',
+        botMessage: '💬 Хочешь добавить комментарий к заказу?\n\n(Можешь пропустить этот шаг)',
+        type: 'textarea',
+        field: 'comment',
+        placeholder: 'Например: без лука, очень острое...',
+        optional: true
+      },
+      {
+        id: 'confirmation',
+        type: 'confirmation'
+      }
+    ];
+  };
 
   useEffect(() => {
     if (isOpen) {
+      // Читаем актуальный режим доставки
+      const currentDeliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+      
       setCurrentStep(0);
       setMessages([]);
       setInputValue('');
       
-      // Устанавливаем режим доставки из корзины
+      // Устанавливаем режим доставки из localStorage
       setFormData({
         customerName: '',
-        deliveryType: deliveryMode, // Берем из пропса
-        address: deliveryMode === 'pickup' ? 'Самовывоз' : '',
+        deliveryType: currentDeliveryMode,
+        address: currentDeliveryMode === 'pickup' ? 'Самовывоз' : '',
         phone: '',
         comment: ''
       });
@@ -95,15 +106,17 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
         }, 1500);
       }, 500);
     }
-  }, [isOpen, deliveryMode]);
+  }, [isOpen]); // Убираем зависимость от deliveryMode
 
   const getBotMessage = (stepIndex, updatedFormData) => {
     const step = getSteps()[stepIndex];
+    // Читаем актуальный режим каждый раз
+    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
     
     switch(step.id) {
       case 'delivery':
-        // Используем deliveryMode из пропсов, а не из formData
-        if (deliveryMode === 'pickup') {
+        // Используем актуальный режим из localStorage
+        if (currentMode === 'pickup') {
           return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ уже знаю, что ты выбрал самовывоз, заскочишь к нам в ресторан! 🏪\n\nТеперь напиши свой номер WhatsApp:`;
         } else {
           return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ знаю, ты выбрал нашу скоростную доставку, напиши свой адрес, чтобы заказ не увезли другому чуваку! 😄📍`;
@@ -115,7 +128,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
       case 'confirmation':
         return '🎯 Проверь заказ:\n\n' +
           `👤 ${updatedFormData.customerName}\n` +
-          `${deliveryMode === 'pickup' ? '🏪 Самовывоз (Реутов, ул. Калинина, д. 8)' : '🚗 Доставка: ' + updatedFormData.address}\n` +
+          `${currentMode === 'pickup' ? '🏪 Самовывоз (Реутов, ул. Калинина, д. 8)' : '🚗 Доставка: ' + updatedFormData.address}\n` +
           `📱 ${updatedFormData.phone}\n` +
           `${updatedFormData.comment ? '💬 ' + updatedFormData.comment + '\n' : ''}` +
           `💰 Итого: ${total} ${settings.currency || '₽'}\n\n` +
@@ -173,11 +186,13 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
 
   const findNextStep = (currentIndex, formData) => {
     const steps = getSteps();
+    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
+    
     for (let i = currentIndex + 1; i < steps.length; i++) {
       const step = steps[i];
       
       // Пропускаем шаг телефона если самовывоз (телефон уже введен на шаге delivery)
-      if (step.skip && deliveryMode === 'pickup') {
+      if (step.skip && currentMode === 'pickup') {
         continue;
       }
       
@@ -317,10 +332,11 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
     };
 
     // Определяем placeholder в зависимости от шага и режима доставки
+    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
     let placeholder = step.placeholder;
-    if (step.id === 'delivery' && deliveryMode === 'pickup') {
+    if (step.id === 'delivery' && currentMode === 'pickup') {
       placeholder = '+7 999 123 45 67';
-    } else if (step.id === 'delivery' && deliveryMode === 'delivery') {
+    } else if (step.id === 'delivery' && currentMode === 'delivery') {
       placeholder = 'Улица, дом, квартира...';
     }
 
@@ -350,7 +366,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
             />
           ) : (
             <input
-              type={(step.type === 'phone' || step.id === 'delivery' && deliveryMode === 'pickup') ? 'tel' : 'text'}
+              type={(step.type === 'phone' || step.id === 'delivery' && currentMode === 'pickup') ? 'tel' : 'text'}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={placeholder}
