@@ -1,30 +1,4 @@
-{/* Кнопка тестирования уведомлений */}
-          <button
-            onClick={() => {
-              if (notificationsEnabled) {
-                showNewOrderNotification(1, {
-                  orderId: 'TEST123',
-                  customerName: 'Тестовый клиент',
-                  total: 1500
-                });
-              } else {
-                requestNotificationPermission();
-              }
-            }}
-            style={{
-              background: notificationsEnabled ? '#4caf50' : '#ff9800',
-              color: 'white',
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '0.9rem'
-            }}
-            title={notificationsEnabled ? 'Тест уведомления' : 'Включить уведомления'}
-          >
-            {notificationsEnabled ? '🔊 Тест' : '🔔 Вкл'}
-          </button>
-          import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbwpgkiVZN5JwPdSYj-jLVZHZ_A5sw8P6PV4QXR7DJWchwP-19z31WUjcv7QRaHMAazCxg/exec';
 
@@ -610,51 +584,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
   useEffect(() => {
     loadData();
     
-    // Запрашиваем разрешение на уведомления при загрузке
-    requestNotificationPermission();
-  }, []);
-
-  // Функция запроса разрешения на уведомления
-  const requestNotificationPermission = async () => {
-    if (!('Notification' in window)) {
-      console.log('❌ Браузер не поддерживает уведомления');
-      return;
-    }
-
-    if (Notification.permission === 'default') {
-      try {
-        const permission = await Notification.requestPermission();
+    // Запрашиваем разрешение на уведомления
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
         setNotificationsEnabled(permission === 'granted');
-        console.log(`🔔 Разрешение на уведомления: ${permission}`);
-        
         if (permission === 'granted') {
-          // Тестовое уведомление
-          showTestNotification();
+          console.log('✅ Разрешение на уведомления получено');
         }
-      } catch (error) {
-        console.error('Ошибка при запросе разрешения:', error);
-      }
+      });
     } else if (Notification.permission === 'granted') {
       setNotificationsEnabled(true);
-      console.log('✅ Уведомления уже разрешены');
-    } else {
-      console.log('❌ Уведомления заблокированы пользователем');
     }
-  };
-
-  // Тестовое уведомление при первом запуске
-  const showTestNotification = () => {
-    try {
-      new Notification('🍕 Админка готова!', {
-        body: 'Уведомления о новых заказах включены',
-        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🍕</text></svg>',
-        tag: 'test-notification'
-      });
-      console.log('✅ Тестовое уведомление отправлено');
-    } catch (error) {
-      console.error('Ошибка тестового уведомления:', error);
-    }
-  };
+  }, []);
 
   // Автообновление каждые 30 секунд
   useEffect(() => {
@@ -722,89 +663,31 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   // Функция показа уведомления о новых заказах
   const showNewOrderNotification = (count, latestOrder) => {
-    console.log(`🔔 Попытка показать уведомление о ${count} заказах`);
-    console.log('Статус уведомлений:', notificationsEnabled, Notification.permission);
+    if (!notificationsEnabled) return;
 
-    if (!notificationsEnabled || Notification.permission !== 'granted') {
-      console.log('❌ Уведомления отключены или не разрешены');
-      return;
-    }
-
-    // Звуковой сигнал через Web Audio API
+    // Звуковой сигнал
     try {
-      playNotificationSound();
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dr0X0vBClRuvHUfywFJHfH8N2QQAoUXrTp66hVFApGn+Dr0X0vBCgxGK45kGVJAAFmMGBbdF1fnNTKcBdSP1WCwHGgzS19TQT2a6T5u3w0Cgpd');
+      audio.play().catch(e => console.log('Не удалось воспроизвести звук'));
     } catch (e) {
-      console.log('❌ Не удалось воспроизвести звук:', e);
+      console.log('Аудио не поддерживается');
     }
 
     // Push уведомление
-    try {
-      const notification = new Notification('🍕 Новый заказ!', {
-        body: count === 1 
-          ? `Заказ #${latestOrder.orderId} от ${latestOrder.customerName}\nСумма: ${formatNumber(latestOrder.total)} ₽`
-          : `Поступило ${count} новых заказов!\nПоследний: #${latestOrder.orderId}`,
-        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🍕</text></svg>',
-        badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>',
-        tag: 'new-order',
-        requireInteraction: true,
-        silent: false
-      });
+    new Notification('🍕 Новый заказ!', {
+      body: count === 1 
+        ? `Заказ #${latestOrder.orderId} от ${latestOrder.customerName}\nСумма: ${formatNumber(latestOrder.total)} ₽`
+        : `Поступило ${count} новых заказов!\nПоследний: #${latestOrder.orderId}`,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: 'new-order',
+      requireInteraction: true, // Уведомление не исчезает автоматически
+      actions: [
+        { action: 'view', title: 'Посмотреть заказы' }
+      ]
+    });
 
-      // Обработчик клика по уведомлению
-      notification.onclick = function() {
-        window.focus();
-        this.close();
-      };
-
-      // Автозакрытие через 10 секунд
-      setTimeout(() => {
-        notification.close();
-      }, 10000);
-
-      console.log(`✅ Уведомление показано для ${count} заказов`);
-    } catch (error) {
-      console.error('❌ Ошибка показа уведомления:', error);
-    }
-  };
-
-  // Функция воспроизведения звука
-  const playNotificationSound = () => {
-    try {
-      // Создаем звук через Web Audio API
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 800; // Частота звука
-      gainNode.gain.value = 0.3; // Громкость
-
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.2); // Длительность 0.2 сек
-
-      // Второй сигнал
-      setTimeout(() => {
-        const oscillator2 = audioContext.createOscillator();
-        const gainNode2 = audioContext.createGain();
-
-        oscillator2.connect(gainNode2);
-        gainNode2.connect(audioContext.destination);
-
-        oscillator2.type = 'sine';
-        oscillator2.frequency.value = 1000;
-        gainNode2.gain.value = 0.3;
-
-        oscillator2.start();
-        oscillator2.stop(audioContext.currentTime + 0.2);
-      }, 300);
-
-      console.log('🔊 Звук воспроизведен');
-    } catch (error) {
-      console.error('❌ Ошибка воспроизведения звука:', error);
-    }
+    console.log(`🔔 Показано уведомление о ${count} новых заказах`);
   };
 
   // Переключение автообновления
