@@ -184,8 +184,8 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         />
       )}
 
-      {/* Попап flash-предложения товара - только при доставке */}
-      {cart.length > 0 && deliveryMode === 'delivery' && (
+      {/* Попап flash-предложения товара - работает всегда */}
+      {cart.length > 0 && (
         <FlashOfferPopup 
           subtotal={productsSubtotal}
           products={products}
