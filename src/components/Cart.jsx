@@ -19,15 +19,13 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
   // Используем пропсы если они переданы, иначе локальное состояние
   const deliveryMode = propDeliveryMode !== undefined ? propDeliveryMode : localDeliveryMode;
   const setDeliveryMode = propSetDeliveryMode || setLocalDeliveryMode;
-  
+
+  // Сохраняем режим доставки в localStorage и принудительно обновляем корзину
   // Синхронизируем с localStorage
   useEffect(() => {
     localStorage.setItem('deliveryMode', deliveryMode);
   }, [deliveryMode]);
 
-  console.log('Cart - using deliveryMode:', deliveryMode, typeof setDeliveryMode);
-
-  // Сохраняем режим доставки в localStorage и принудительно обновляем корзину
   useEffect(() => {
     localStorage.setItem('deliveryMode', deliveryMode);
     
@@ -657,7 +655,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
             </div>
             
             <button
-              onClick={handleOrderSubmit}
+              onClick={() => {
+                // Передаем текущий режим доставки при открытии формы
+                onOpenOrderForm(deliveryMode);
+              }}
               style={{
                 padding: '0.75rem 2rem',
                 background: settings.primaryColor || '#ff7f32',
