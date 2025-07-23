@@ -17,9 +17,32 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     return localStorage.getItem('deliveryMode') || 'delivery';
   });
 
-  // Сохраняем режим доставки в localStorage
+  // Сохраняем режим доставки в localStorage и принудительно обновляем корзину
   useEffect(() => {
     localStorage.setItem('deliveryMode', deliveryMode);
+    
+    // Принудительно обновляем корзину при переключении режима
+    // Добавляем/убираем один товар и сразу возвращаем обратно для триггера
+    if (cart.length > 0) {
+      const firstNonDeliveryItem = cart.find(item => !item.isDelivery);
+      if (firstNonDeliveryItem) {
+        // Микро-изменение для триггера SimpleDeliveryManager
+        setCart(prev => prev.map(item => 
+          item.id === firstNonDeliveryItem.id 
+            ? { ...item, quantity: item.quantity + 0.001 } // Добавляем микро-количество
+            : item
+        ));
+        
+        // Сразу возвращаем обратно
+        setTimeout(() => {
+          setCart(prev => prev.map(item => 
+            item.id === firstNonDeliveryItem.id 
+              ? { ...item, quantity: Math.round(item.quantity) } // Округляем обратно
+              : item
+          ));
+        }, 10);
+      }
+    }
   }, [deliveryMode]);
 
   useEffect(() => {
@@ -237,28 +260,61 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         }}>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f', margin: 0 }}>Корзина</h2>
           
-          {/* Переключатель доставки */}
+          {/* Переключатель доставки - современный дизайн */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
-              onClick={() => setDeliveryMode(deliveryMode === 'delivery' ? 'pickup' : 'delivery')}
-              style={{
-                background: deliveryMode === 'delivery' ? settings.primaryColor || '#ff7f32' : '#f0f0f0',
-                color: deliveryMode === 'delivery' ? 'white' : '#666',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '20px',
-                fontSize: '0.9rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {deliveryMode === 'delivery' ? '🚗' : '🏃‍♂️'}
-              {deliveryMode === 'delivery' ? 'Доставка' : 'Самовывоз'}
-            </button>
+            {/* Переключатель в стиле iOS */}
+            <div style={{
+              background: '#f0f0f0',
+              borderRadius: '25px',
+              padding: '4px',
+              display: 'flex',
+              position: 'relative',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <button
+                onClick={() => setDeliveryMode('delivery')}
+                style={{
+                  background: deliveryMode === 'delivery' ? settings.primaryColor || '#ff7f32' : 'transparent',
+                  color: deliveryMode === 'delivery' ? 'white' : '#666',
+                  border: 'none',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  transition: 'all 0.3s ease',
+                  boxShadow: deliveryMode === 'delivery' ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                }}
+              >
+                <span>🚗</span>
+                <span style={{ fontSize: '0.8rem' }}>Доставка</span>
+              </button>
+              
+              <button
+                onClick={() => setDeliveryMode('pickup')}
+                style={{
+                  background: deliveryMode === 'pickup' ? settings.primaryColor || '#ff7f32' : 'transparent',
+                  color: deliveryMode === 'pickup' ? 'white' : '#666',
+                  border: 'none',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  transition: 'all 0.3s ease',
+                  boxShadow: deliveryMode === 'pickup' ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                }}
+              >
+                <span>🏃‍♂️</span>
+                <span style={{ fontSize: '0.8rem' }}>Самовывоз</span>
+              </button>
+            </div>
             
             <button
               onClick={onClose}
