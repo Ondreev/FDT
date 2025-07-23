@@ -655,10 +655,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
             </div>
             
             <button
-              onClick={() => {
-                // Передаем текущий режим доставки при открытии формы
-                onOpenOrderForm(deliveryMode);
-              }}
+              onClick={handleOrderSubmit}
               style={{
                 padding: '0.75rem 2rem',
                 background: settings.primaryColor || '#ff7f32',
