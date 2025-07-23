@@ -1,4 +1,37 @@
-import { useState, useEffect } from 'react';
+<div className="order-card" style={{
+      background: 'white',
+      borderRadius: '16px',
+      padding: '1.5rem',
+      marginBottom: '1rem',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+      border: isDone ? '2px solid #4caf50' : '1px solid #e0e0e0',
+      position: 'relative',
+      transition: 'all 0.2s ease'
+    }}>
+      {/* Зеленая галочка для завершенных */}
+      {isDone && (
+        <div style={{
+          position: 'absolute',
+          top: '-10px',
+          right: '-10px',
+          background: '#4caf50',
+          borderRadius: '50%',
+          width: '40px',
+          height: '40px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.5rem',
+          color: 'white',
+          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+          animation: 'checkmarkBounce 0.5s ease-out'
+        }}>
+          ✓
+        </div>
+      )}
+
+      {/* Заголовок заказа */}
+      <div className="order-header"import { useState, useEffect } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbzXeMAkXVVy618VdDT6ICPOemHu6P046QTpCH2R1fM8WlHNhHXdamqeBIntaVeuwz4U4A/exec';
 
@@ -208,7 +241,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
       </style>
 
       {/* Заголовок заказа */}
-      <div style={{
+      <div className="order-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -218,7 +251,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
       onClick={() => setIsExpanded(!isExpanded)}
       >
         <div>
-          <div style={{
+          <div className="order-title" style={{
             fontSize: '1.2rem',
             fontWeight: 'bold',
             color: '#2c1e0f',
@@ -387,7 +420,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
               }}>
                 🔄 Изменить статус
               </h4>
-              <div style={{
+              <div className="status-buttons" style={{
                 display: 'flex',
                 gap: '0.5rem',
                 flexWrap: 'wrap'
@@ -397,6 +430,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                   .map((status) => (
                     <button
                       key={status.status}
+                      className="status-button"
                       onClick={() => handleStatusChange(status.status)}
                       disabled={isUpdating}
                       style={{
@@ -463,16 +497,21 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const loadData = async () => {
     try {
       console.log('🔄 Загружаю заказы и статусы...');
+      console.log('🌐 Используемый API URL:', API_URL);
       
       // Пробуем разные варианты названий действий для заказов
       let ordersData = null;
-      const orderActions = ['getOrders', 'getAllOrders', 'getOrdersList', 'fetchOrders'];
+      const orderActions = ['getOrders'];
       
       for (const action of orderActions) {
         try {
-          console.log(`🔍 Пробую действие: ${action}`);
-          const response = await fetch(`${API_URL}?action=${action}`);
+          const fullUrl = `${API_URL}?action=${action}&cache=${Date.now()}`;
+          console.log(`🔍 Запрос к: ${fullUrl}`);
+          
+          const response = await fetch(fullUrl);
           const data = await response.json();
+          
+          console.log(`📦 Ответ от ${action}:`, data);
           
           if (!data.error) {
             console.log(`✅ Действие ${action} работает!`);
@@ -487,21 +526,27 @@ const AdminDashboard = ({ admin, onLogout }) => {
       }
       
       // Загружаем статусы (это работает)
-      const statusRes = await fetch(`${API_URL}?action=getStatusLabels`);
+      const statusRes = await fetch(`${API_URL}?action=getStatusLabels&cache=${Date.now()}`);
       const statusData = await statusRes.json();
 
-      console.log('📋 Заказы:', ordersData);
-      console.log('🏷️ Статусы:', statusData);
+      console.log('📋 Полученные заказы:', ordersData);
+      console.log('🏷️ Полученные статусы:', statusData);
 
       // Обрабатываем заказы
       if (!ordersData || ordersData.error) {
         console.log('❌ Не удалось загрузить заказы. Устанавливаю пустой массив.');
         setOrders([]);
       } else if (Array.isArray(ordersData)) {
-        setOrders(ordersData.sort((a, b) => new Date(b.date) - new Date(a.date)));
+        console.log('✅ Заказы получены как массив, сортирую...');
+        // Сортируем по дате (НОВЫЕ СВЕРХУ) - больше дата = выше
+        const sorted = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setOrders(sorted);
+        console.log('✅ Заказов отсортировано:', sorted.length);
       } else if (ordersData.orders && Array.isArray(ordersData.orders)) {
+        console.log('✅ Заказы найдены в ordersData.orders');
         setOrders(ordersData.orders.sort((a, b) => new Date(b.date) - new Date(a.date)));
       } else if (ordersData.data && Array.isArray(ordersData.data)) {
+        console.log('✅ Заказы найдены в ordersData.data');
         setOrders(ordersData.data.sort((a, b) => new Date(b.date) - new Date(a.date)));
       } else {
         console.log('❌ Неизвестный формат заказов:', ordersData);
@@ -542,17 +587,26 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      // Здесь можно добавить API метод для обновления статуса
-      // const response = await fetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`);
+      // Отправляем запрос на сервер для обновления статуса
+      const response = await fetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`, {
+        method: 'POST'
+      });
       
-      // Пока просто обновляем локально
-      setOrders(prev => prev.map(order => 
-        order.orderId === orderId 
-          ? { ...order, status: newStatus }
-          : order
-      ));
+      if (response.ok) {
+        // Обновляем локально только если сервер ответил успешно
+        setOrders(prev => prev.map(order => 
+          order.orderId === orderId 
+            ? { ...order, status: newStatus }
+            : order
+        ));
+        console.log(`✅ Статус заказа ${orderId} обновлен на ${newStatus}`);
+      } else {
+        console.error('❌ Ошибка обновления статуса на сервере');
+        alert('Ошибка обновления статуса. Попробуйте еще раз.');
+      }
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error('❌ Ошибка обновления статуса:', error);
+      alert('Ошибка соединения. Проверьте интернет.');
     }
   };
 
@@ -571,9 +625,24 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const filteredOrders = filterOrders(orders, activeFilter);
   const pendingCount = orders.filter(order => order.status === 'pending').length;
+  
+  // Исправляем расчет суммы за сегодня с учетом московского времени
+  const getMoscowDate = () => {
+    const now = new Date();
+    const moscowOffset = 3 * 60; // Москва UTC+3
+    const localOffset = now.getTimezoneOffset();
+    const moscowTime = new Date(now.getTime() + (moscowOffset + localOffset) * 60000);
+    return moscowTime.toISOString().split('T')[0]; // YYYY-MM-DD
+  };
+  
+  const todayMoscow = getMoscowDate();
   const totalToday = orders
-    .filter(order => new Date(order.date).toDateString() === new Date().toDateString())
-    .reduce((sum, order) => sum + parseInt(order.total), 0);
+    .filter(order => {
+      // Преобразуем дату заказа в формат YYYY-MM-DD для сравнения
+      const orderDate = new Date(order.date).toISOString().split('T')[0];
+      return orderDate === todayMoscow;
+    })
+    .reduce((sum, order) => sum + parseInt(order.total || 0), 0);
 
   const getBotMessage = () => {
     if (pendingCount === 0) {
@@ -614,8 +683,107 @@ const AdminDashboard = ({ admin, onLogout }) => {
       background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
       fontFamily: 'Fredoka, sans-serif'
     }}>
+      <style>
+        {`
+          @keyframes checkmarkBounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+          }
+          
+          @keyframes expandContent {
+            from { opacity: 0; maxHeight: 0; }
+            to { opacity: 1; maxHeight: 500px; }
+          }
+          
+          @keyframes typing {
+            0%, 60%, 100% {
+              transform: translateY(0);
+              opacity: 0.4;
+            }
+            30% {
+              transform: translateY(-8px);
+              opacity: 1;
+            }
+          }
+          
+          @media (max-width: 768px) {
+            .admin-header {
+              flex-direction: column !important;
+              gap: 1rem !important;
+              text-align: center !important;
+            }
+            
+            .admin-header h1 {
+              fontSize: 1.4rem !important;
+            }
+            
+            .admin-header-actions {
+              flex-direction: column !important;
+              width: 100% !important;
+            }
+            
+            .admin-container {
+              padding: 1rem !important;
+            }
+            
+            .filters-container {
+              gap: 0.3rem !important;
+            }
+            
+            .filter-button {
+              padding: 0.5rem 0.8rem !important;
+              fontSize: 0.8rem !important;
+              flex: 1 !important;
+              min-width: 0 !important;
+              white-space: nowrap !important;
+            }
+            
+            .order-card {
+              padding: 1rem !important;
+            }
+            
+            .order-header {
+              flex-direction: column !important;
+              align-items: flex-start !important;
+              gap: 0.5rem !important;
+            }
+            
+            .order-title {
+              fontSize: 1rem !important;
+            }
+            
+            .status-buttons {
+              gap: 0.3rem !important;
+            }
+            
+            .status-button {
+              padding: 0.4rem 0.8rem !important;
+              fontSize: 0.8rem !important;
+              flex: 1 !important;
+              min-width: 0 !important;
+            }
+            
+            .bot-message {
+              padding: 1rem !important;
+              margin-bottom: 1rem !important;
+            }
+            
+            .bot-avatar {
+              width: 40px !important;
+              height: 40px !important;
+              fontSize: 1.2rem !important;
+            }
+            
+            .bot-text {
+              fontSize: 1rem !important;
+            }
+          }
+        `}
+      </style>
+      
       {/* Заголовок */}
-      <div style={{
+      <div className="admin-header" style={{
         background: 'white',
         padding: '1rem 2rem',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -640,7 +808,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="admin-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{
             background: '#e8f5e8',
             color: '#2e7d32',
@@ -668,13 +836,13 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
       </div>
 
-      <div style={{
+      <div className="admin-container" style={{
         maxWidth: '800px',
         margin: '0 auto',
         padding: '2rem'
       }}>
         {/* Приветствие бота */}
-        <div style={{
+        <div className="bot-message" style={{
           background: 'white',
           borderRadius: '20px 20px 20px 5px',
           padding: '1.5rem',
@@ -687,7 +855,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
             alignItems: 'center',
             gap: '1rem'
           }}>
-            <div style={{
+            <div className="bot-avatar" style={{
               width: '50px',
               height: '50px',
               borderRadius: '50%',
@@ -730,7 +898,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
                   }} />
                 </div>
               ) : (
-                <div style={{
+                <div className="bot-text" style={{
                   fontSize: '1.1rem',
                   color: '#2c1e0f',
                   lineHeight: '1.4'
@@ -742,23 +910,8 @@ const AdminDashboard = ({ admin, onLogout }) => {
           </div>
         </div>
 
-        <style>
-          {`
-            @keyframes typing {
-              0%, 60%, 100% {
-                transform: translateY(0);
-                opacity: 0.4;
-              }
-              30% {
-                transform: translateY(-8px);
-                opacity: 1;
-              }
-            }
-          `}
-        </style>
-
         {/* Фильтры */}
-        <div style={{
+        <div className="filters-container" style={{
           display: 'flex',
           gap: '0.5rem',
           marginBottom: '2rem',
@@ -772,6 +925,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
           ].map((filter) => (
             <button
               key={filter.key}
+              className="filter-button"
               onClick={() => setActiveFilter(filter.key)}
               style={{
                 padding: '0.75rem 1.5rem',
@@ -846,6 +1000,40 @@ const AdminDashboard = ({ admin, onLogout }) => {
                 }}
               >
                 Проверить API
+              </button>
+              
+              <button
+                onClick={() => {
+                  // Создаем тестовый заказ для демонстрации
+                  const testOrder = {
+                    orderId: `TEST${Date.now()}`,
+                    customerName: 'Тестовый клиент',
+                    phone: '+7 999 123-45-67',
+                    address: 'ул. Тестовая, д. 1',
+                    comment: 'Тестовый заказ для проверки админки',
+                    products: JSON.stringify([
+                      {id: 1, name: 'Пицца Маргарита', price: 450, quantity: 2},
+                      {id: 'delivery_service', name: 'Доставка', price: 250, quantity: 1}
+                    ]),
+                    total: 1150,
+                    status: 'pending',
+                    date: new Date().toISOString().split('T')[0]
+                  };
+                  
+                  setOrders([testOrder]);
+                  setLoadError(null);
+                }}
+                style={{
+                  padding: '1rem 2rem',
+                  background: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '1rem'
+                }}
+              >
+                Добавить тестовый заказ
               </button>
             </div>
           </div>
