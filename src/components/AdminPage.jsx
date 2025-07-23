@@ -19,10 +19,14 @@ const formatDate = (dateStr) => {
 
 // Функция для нормализации номера телефона
 const normalizePhoneNumber = (phone) => {
-  if (!phone) return null;
+  // Проверяем, что phone это строка
+  if (!phone || typeof phone !== 'string') return null;
   
   // Убираем все лишние символы (пробелы, скобки, дефисы и т.д.)
   const cleanPhone = phone.replace(/[^\d+]/g, '');
+  
+  // Если после очистки номер пустой
+  if (!cleanPhone) return null;
   
   // Коды стран бывшего СССР
   const countryCodes = {
@@ -86,6 +90,10 @@ const normalizePhoneNumber = (phone) => {
 
 // Функция для создания WhatsApp ссылки
 const createWhatsAppLink = (phone, orderId) => {
+  // Проверяем входные данные
+  if (!phone || typeof phone !== 'string') return null;
+  if (!orderId) return null;
+  
   const normalizedPhone = normalizePhoneNumber(phone);
   if (!normalizedPhone) return null;
   
@@ -344,48 +352,60 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <span><strong>Телефон:</strong></span>
                 {(() => {
-                  const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
-                  const normalizedPhone = normalizePhoneNumber(order.phone);
-                  
-                  if (whatsappLink) {
-                    return (
-                      <a
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          color: '#25D366',
-                          textDecoration: 'none',
-                          fontWeight: 'bold',
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '8px',
-                          border: '1px solid #25D366',
-                          background: '#f0fff0',
-                          transition: 'all 0.2s ease',
-                          cursor: 'pointer',
-                          display: 'inline-block'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = '#25D366';
-                          e.target.style.color = 'white';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = '#f0fff0';
-                          e.target.style.color = '#25D366';
-                        }}
-                        title={`Написать в WhatsApp: ${normalizedPhone}`}
-                      >
-                        📱 {normalizedPhone || order.phone}
-                      </a>
-                    );
-                  } else {
+                  try {
+                    const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
+                    const normalizedPhone = normalizePhoneNumber(order.phone);
+                    
+                    if (whatsappLink && normalizedPhone) {
+                      return (
+                        <a
+                          href={whatsappLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            color: '#25D366',
+                            textDecoration: 'none',
+                            fontWeight: 'bold',
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '8px',
+                            border: '1px solid #25D366',
+                            background: '#f0fff0',
+                            transition: 'all 0.2s ease',
+                            cursor: 'pointer',
+                            display: 'inline-block'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.background = '#25D366';
+                            e.target.style.color = 'white';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = '#f0fff0';
+                            e.target.style.color = '#25D366';
+                          }}
+                          title={`Написать в WhatsApp: ${normalizedPhone}`}
+                        >
+                          📱 {normalizedPhone}
+                        </a>
+                      );
+                    } else {
+                      return (
+                        <span style={{ 
+                          color: '#999',
+                          fontStyle: 'italic'
+                        }}>
+                          {order.phone || 'Не указан'}
+                        </span>
+                      );
+                    }
+                  } catch (error) {
+                    console.error('Ошибка при обработке номера телефона:', error);
                     return (
                       <span style={{ 
                         color: '#999',
                         fontStyle: 'italic'
                       }}>
-                        {order.phone} (некорректный номер)
+                        {order.phone || 'Не указан'} (ошибка обработки)
                       </span>
                     );
                   }
