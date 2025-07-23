@@ -582,7 +582,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [statusLabels, setStatusLabels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState('pending'); // По умолчанию "Новые"
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
@@ -680,15 +680,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
   };
 
   const filterOrders = (orders, filter) => {
+    // Исключаем архивные заказы из всех основных вкладок
+    const activeOrders = orders.filter(order => order.status !== 'done');
+    
     switch (filter) {
       case 'pending':
-        return orders.filter(order => order.status === 'pending');
+        return activeOrders.filter(order => order.status === 'pending');
       case 'active':
-        return orders.filter(order => ['cooking', 'delivering'].includes(order.status));
-      case 'done':
-        return orders.filter(order => order.status === 'done');
+        return activeOrders.filter(order => ['cooking', 'delivering'].includes(order.status));
+      case 'archive':
+        return orders.filter(order => order.status === 'done'); // Только для архива показываем завершенные
       default:
-        return orders;
+        return activeOrders; // По умолчанию показываем только активные
     }
   };
 
@@ -983,10 +986,9 @@ const AdminDashboard = ({ admin, onLogout }) => {
           flexWrap: 'wrap'
         }}>
           {[
-            { key: 'all', label: 'Все заказы', count: orders.length },
             { key: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
             { key: 'active', label: 'В работе', count: orders.filter(o => ['cooking', 'delivering'].includes(o.status)).length },
-            { key: 'done', label: 'Завершённые', count: orders.filter(o => o.status === 'done').length }
+            { key: 'archive', label: 'Архив', count: orders.filter(o => o.status === 'done').length }
           ].map((filter) => (
             <button
               key={filter.key}
@@ -1025,9 +1027,11 @@ const AdminDashboard = ({ admin, onLogout }) => {
               Заказов нет
             </div>
             <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-              {activeFilter === 'all' 
-                ? 'Пока что заказов не поступало'
-                : `В категории "${activeFilter}" заказов нет`
+              {activeFilter === 'pending' 
+                ? 'Новых заказов пока нет'
+                : activeFilter === 'active'
+                ? 'Нет заказов в работе'  
+                : 'Архив пуст'
               }
             </div>
           </div>
