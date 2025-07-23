@@ -341,48 +341,54 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             </h4>
             <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.6' }}>
               <div><strong>Клиент:</strong> {order.customerName}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <strong>Телефон:</strong> 
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span><strong>Телефон:</strong></span>
                 {(() => {
                   const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
                   const normalizedPhone = normalizePhoneNumber(order.phone);
                   
-                  return whatsappLink ? (
-                    <a
-                      href={whatsappLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: '#25D366',
-                        textDecoration: 'none',
-                        fontWeight: 'bold',
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid #25D366',
-                        background: '#f0fff0',
-                        transition: 'all 0.2s ease',
-                        cursor: 'pointer'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#25D366';
-                        e.target.style.color = 'white';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = '#f0fff0';
-                        e.target.style.color = '#25D366';
-                      }}
-                      title={`Написать в WhatsApp: ${normalizedPhone}`}
-                    >
-                      📱 {normalizedPhone || order.phone}
-                    </a>
-                  ) : (
-                    <span style={{ 
-                      color: '#999',
-                      fontStyle: 'italic'
-                    }}>
-                      {order.phone} (некорректный номер)
-                    </span>
-                  );
+                  if (whatsappLink) {
+                    return (
+                      <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          color: '#25D366',
+                          textDecoration: 'none',
+                          fontWeight: 'bold',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '8px',
+                          border: '1px solid #25D366',
+                          background: '#f0fff0',
+                          transition: 'all 0.2s ease',
+                          cursor: 'pointer',
+                          display: 'inline-block'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = '#25D366';
+                          e.target.style.color = 'white';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = '#f0fff0';
+                          e.target.style.color = '#25D366';
+                        }}
+                        title={`Написать в WhatsApp: ${normalizedPhone}`}
+                      >
+                        📱 {normalizedPhone || order.phone}
+                      </a>
+                    );
+                  } else {
+                    return (
+                      <span style={{ 
+                        color: '#999',
+                        fontStyle: 'italic'
+                      }}>
+                        {order.phone} (некорректный номер)
+                      </span>
+                    );
+                  }
                 })()}
               </div>
               <div><strong>Адрес:</strong> {order.address}</div>
