@@ -170,17 +170,10 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
   };
 
   const findNextStep = (currentIndex, formData) => {
-    for (let i = currentIndex + 1; i < steps.length; i++) {
-      const step = steps[i];
-      
-      // Пропускаем шаг телефона если самовывоз (телефон уже введен на шаге delivery)
-      if (step.skip && deliveryMode === 'pickup') {
-        continue;
-      }
-      
-      return i;
-    }
-    return steps.length;
+    // Просто переходим к следующему шагу без пропусков
+    // Телефон всегда нужен, независимо от режима доставки
+    const nextIndex = currentIndex + 1;
+    return nextIndex < steps.length ? nextIndex : steps.length;
   };
 
   const handleSubmitOrder = async () => {
