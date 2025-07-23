@@ -3,7 +3,7 @@ import DiscountProgressBar from './DiscountProgressBar';
 import FlashOfferPopup from './FlashOfferTimer';
 import { FreeDeliveryProgress, FreeDeliveryPopup, formatNumber } from './SimpleDeliveryManager';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwTZy6Kc0bEhEAo6MYHYBIxQvHX440J_FQbj6TEbDGiYKv7nIn9_V_iOBxQJ1gQoPnNsw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
 const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart }) => {
   const [discounts, setDiscounts] = useState([]);
