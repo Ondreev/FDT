@@ -19,16 +19,19 @@ const formatDate = (dateStr) => {
 
 // Функция для нормализации номера телефона
 const normalizePhoneNumber = (phone) => {
-  // Проверяем, что phone это строка
-  if (!phone || typeof phone !== 'string') return null;
+  // Проверяем, что phone существует и преобразуем в строку
+  if (!phone && phone !== 0) return null;
+  
+  // Преобразуем в строку (на случай если это число)
+  const phoneStr = String(phone);
   
   // Убираем все лишние символы (пробелы, скобки, дефисы и т.д.)
-  const cleanPhone = phone.replace(/[^\d+]/g, '');
+  const cleanPhone = phoneStr.replace(/[^\d+]/g, '');
   
   // Если после очистки номер пустой
   if (!cleanPhone) return null;
   
-  console.log('Обрабатываю номер:', phone, '→', cleanPhone); // Для отладки
+  console.log('Обрабатываю номер:', phone, typeof phone, '→', cleanPhone); // Для отладки
   
   // Коды стран бывшего СССР
   const countryCodes = {
@@ -78,7 +81,9 @@ const normalizePhoneNumber = (phone) => {
   
   // Если номер из 10 цифр - считаем российским
   if (cleanPhone.length === 10) {
-    return '+7' + cleanPhone;
+    const result = '+7' + cleanPhone;
+    console.log('Применил российский код для 10-значного номера:', result);
+    return result;
   }
   
   // Если номер из 11 цифр без кода - добавляем +7
@@ -100,8 +105,8 @@ const normalizePhoneNumber = (phone) => {
 
 // Функция для создания WhatsApp ссылки
 const createWhatsAppLink = (phone, orderId) => {
-  // Проверяем входные данные
-  if (!phone || typeof phone !== 'string') return null;
+  // Проверяем входные данные (phone может быть числом или строкой)
+  if (!phone && phone !== 0) return null;
   if (!orderId) return null;
   
   const normalizedPhone = normalizePhoneNumber(phone);
@@ -112,7 +117,9 @@ const createWhatsAppLink = (phone, orderId) => {
   
   const message = `😊 Добрый день! Это из ресторана, по поводу Вашего заказа #${orderId} 🍕✨`;
   
-  return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+  const link = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+  console.log('Создана WhatsApp ссылка:', link);
+  return link;
 };
 
 const AdminLogin = ({ onLoginSuccess }) => {
