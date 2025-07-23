@@ -32,7 +32,8 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const steps = [
+  // Функция для получения шагов в зависимости от режима доставки
+  const getSteps = () => [
     {
       id: 'greeting',
       botMessage: '👋 Привет! Давай оформим твой заказ?\n\nКак к тебе обращаться?',
@@ -88,7 +89,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
           setIsTyping(false);
           setMessages([{
             type: 'bot',
-            text: steps[0].botMessage,
+            text: getSteps()[0].botMessage,
             timestamp: new Date()
           }]);
         }, 1500);
@@ -97,7 +98,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
   }, [isOpen, deliveryMode]);
 
   const getBotMessage = (stepIndex, updatedFormData) => {
-    const step = steps[stepIndex];
+    const step = getSteps()[stepIndex];
     
     switch(step.id) {
       case 'delivery':
@@ -125,7 +126,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
   };
 
   const handleUserInput = (value) => {
-    const currentStepData = steps[currentStep];
+    const currentStepData = getSteps()[currentStep];
     
     // Добавляем сообщение пользователя
     let userDisplayText = value;
@@ -151,7 +152,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
     // Переходим к следующему шагу
     setTimeout(() => {
       const nextStepIndex = findNextStep(currentStep, updatedFormData);
-      if (nextStepIndex < steps.length) {
+      if (nextStepIndex < getSteps().length) {
         setIsTyping(true);
         setTimeout(() => {
           setIsTyping(false);
@@ -170,10 +171,18 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
   };
 
   const findNextStep = (currentIndex, formData) => {
-    // Просто переходим к следующему шагу без пропусков
-    // Телефон всегда нужен, независимо от режима доставки
-    const nextIndex = currentIndex + 1;
-    return nextIndex < steps.length ? nextIndex : steps.length;
+    const steps = getSteps();
+    for (let i = currentIndex + 1; i < steps.length; i++) {
+      const step = steps[i];
+      
+      // Пропускаем шаг телефона если самовывоз (телефон уже введен на шаге delivery)
+      if (step.skip && deliveryMode === 'pickup') {
+        continue;
+      }
+      
+      return i;
+    }
+    return steps.length;
   };
 
   const handleSubmitOrder = async () => {
@@ -241,9 +250,9 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, deliveryMode, onOrd
   };
 
   const renderInput = () => {
-    if (currentStep >= steps.length || isTyping) return null;
+    if (currentStep >= getSteps().length || isTyping) return null;
     
-    const step = steps[currentStep];
+    const step = getSteps()[currentStep];
     
     if (step.type === 'confirmation') {
       return (
