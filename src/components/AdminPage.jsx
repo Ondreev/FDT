@@ -454,6 +454,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isTyping, setIsTyping] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -461,22 +462,73 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const loadData = async () => {
     try {
+      console.log('🔄 Загружаю заказы и статусы...');
+      
       // Загружаем заказы и статусы
       const [ordersRes, statusRes] = await Promise.all([
         fetch(`${API_URL}?action=getOrders`),
         fetch(`${API_URL}?action=getStatusLabels`)
       ]);
 
+      console.log('📦 Ответ заказов:', ordersRes.status, ordersRes.statusText);
+      console.log('🏷️ Ответ статусов:', statusRes.status, statusRes.statusText);
+
       const ordersData = await ordersRes.json();
       const statusData = await statusRes.json();
 
-      // Сортируем заказы по дате (новые сверху)
-      const sortedOrders = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
+      console.log('📋 Заказы:', ordersData);
+      console.log('🏷️ Статусы:', statusData);
 
-      setOrders(sortedOrders);
-      setStatusLabels(statusData);
+      // Проверяем что данные корректны
+      if (!Array.isArray(ordersData)) {
+        console.error('❌ Заказы не являются массивом:', ordersData);
+        
+        // Возможно API возвращает объект с ключом orders или data
+        if (ordersData && ordersData.orders && Array.isArray(ordersData.orders)) {
+          console.log('✅ Найдены заказы в ordersData.orders');
+          setOrders(ordersData.orders.sort((a, b) => new Date(b.date) - new Date(a.date)));
+        } else if (ordersData && ordersData.data && Array.isArray(ordersData.data)) {
+          console.log('✅ Найдены заказы в ordersData.data');
+          setOrders(ordersData.data.sort((a, b) => new Date(b.date) - new Date(a.date)));
+        } else {
+          console.log('❌ Заказы не найдены. API вернул:', ordersData);
+          setOrders([]); // Устанавливаем пустой массив
+        }
+      } else {
+        // Сортируем заказы по дате (новые сверху)
+        const sortedOrders = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setOrders(sortedOrders);
+      }
+
+      if (!Array.isArray(statusData)) {
+        console.error('❌ Статусы не являются массивом:', statusData);
+        
+        // Возможно API возвращает объект со статусами
+        if (statusData && statusData.statuses && Array.isArray(statusData.statuses)) {
+          setStatusLabels(statusData.statuses);
+        } else if (statusData && statusData.data && Array.isArray(statusData.data)) {
+          setStatusLabels(statusData.data);
+        } else {
+          // Устанавливаем базовые статусы если API не отвечает
+          setStatusLabels([
+            { status: 'pending', label: 'В обработке', color: '#ffa500' },
+            { status: 'cooking', label: 'Готовится', color: '#ff7f32' },
+            { status: 'delivering', label: 'Доставляется', color: '#0099ff' },
+            { status: 'done', label: 'Завершён', color: '#28a745' },
+            { status: 'archived', label: 'Архив', color: '#6c757d' }
+          ]);
+        }
+      } else {
+        setStatusLabels(statusData);
+      }
+      
+      console.log('✅ Данные загружены успешно:', {
+        orders: sortedOrders.length,
+        statuses: statusData.length
+      });
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Ошибка загрузки данных:', error);
+      setLoadError(error.message);
     } finally {
       setIsLoading(false);
       // Имитация печатания
@@ -738,7 +790,62 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
 
         {/* Список заказов */}
-        {filteredOrders.length === 0 ? (
+        {loadError ? (
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '3rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            border: '2px solid #ff5722'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#d32f2f', marginBottom: '1rem' }}>
+              Ошибка загрузки данных
+            </div>
+            <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '2rem' }}>
+              {loadError}
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => {
+                  setLoadError(null);
+                  setIsLoading(true);
+                  loadData();
+                }}
+                style={{
+                  padding: '1rem 2rem',
+                  background: '#ff5722',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '1rem'
+                }}
+              >
+                Повторить загрузку
+              </button>
+              
+              <button
+                onClick={() => {
+                  const testUrl = `${API_URL}?action=getOrders`;
+                  window.open(testUrl, '_blank');
+                }}
+                style={{
+                  padding: '1rem 2rem',
+                  background: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '1rem'
+                }}
+              >
+                Проверить API
+              </button>
+            </div>
+          </div>
+        ) : filteredOrders.length === 0 ? (
           <div style={{
             background: 'white',
             borderRadius: '16px',
