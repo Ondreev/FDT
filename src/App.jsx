@@ -648,14 +648,14 @@ const ShopPage = () => {
                 <div
                   style={{
                     position: 'absolute',
-                    top: '3rem', // Сдвинули вниз под рейтинг
+                    top: '2.2rem', // Ближе к звездочкам (было 3rem)
                     right: '1rem',
                     backgroundColor: '#e03636',
                     color: '#fff',
                     fontWeight: 'bold',
-                    padding: '0.3rem 0.7rem',
+                    padding: '0.2rem 0.45rem', // Уменьшили в 1.5 раза (было 0.3rem 0.7rem)
                     borderRadius: '999px',
-                    fontSize: '0.9rem',
+                    fontSize: '0.6rem', // Уменьшили в 1.5 раза (было 0.9rem)
                     fontFamily: settings.font || 'Fredoka',
                     zIndex: 2
                   }}
