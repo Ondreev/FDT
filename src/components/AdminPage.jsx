@@ -28,6 +28,8 @@ const normalizePhoneNumber = (phone) => {
   // Если после очистки номер пустой
   if (!cleanPhone) return null;
   
+  console.log('Обрабатываю номер:', phone, '→', cleanPhone); // Для отладки
+  
   // Коды стран бывшего СССР
   const countryCodes = {
     '7': '+7',      // Россия, Казахстан
@@ -67,24 +69,32 @@ const normalizePhoneNumber = (phone) => {
     return '+' + cleanPhone;
   }
   
-  // Проверяем на коды других стран
+  // Проверяем на коды других стран (для номеров без +)
   for (const [code, fullCode] of Object.entries(countryCodes)) {
     if (cleanPhone.startsWith(code) && cleanPhone.length >= code.length + 9) {
       return '+' + cleanPhone;
     }
   }
   
-  // Если номер из 10 цифр без кода - считаем российским
-  if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
-    return '+7' + cleanPhone;
-  }
-  
-  // Если номер из 10 цифр и не начинается с 9 - тоже считаем российским
+  // Если номер из 10 цифр - считаем российским
   if (cleanPhone.length === 10) {
     return '+7' + cleanPhone;
   }
   
+  // Если номер из 11 цифр без кода - добавляем +7
+  if (cleanPhone.length === 11 && !cleanPhone.startsWith('7') && !cleanPhone.startsWith('8')) {
+    return '+7' + cleanPhone;
+  }
+  
+  // Если длина меньше 10 но больше 7 - тоже считаем российским (на всякий случай)
+  if (cleanPhone.length >= 7 && cleanPhone.length < 10) {
+    // Дополняем до 10 цифр нулями и добавляем код России
+    const paddedPhone = cleanPhone.padStart(10, '0');
+    return '+7' + paddedPhone;
+  }
+  
   // По умолчанию считаем российским номером
+  console.log('Применяю российский код по умолчанию для:', cleanPhone);
   return '+7' + cleanPhone;
 };
 
@@ -353,8 +363,13 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                 <span><strong>Телефон:</strong></span>
                 {(() => {
                   try {
-                    const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
+                    console.log('Исходный номер телефона:', order.phone, typeof order.phone);
+                    
                     const normalizedPhone = normalizePhoneNumber(order.phone);
+                    console.log('Нормализованный номер:', normalizedPhone);
+                    
+                    const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
+                    console.log('WhatsApp ссылка:', whatsappLink);
                     
                     if (whatsappLink && normalizedPhone) {
                       return (
@@ -394,7 +409,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                           color: '#999',
                           fontStyle: 'italic'
                         }}>
-                          {order.phone || 'Не указан'}
+                          {order.phone || 'Не указан'} (не обработан)
                         </span>
                       );
                     }
