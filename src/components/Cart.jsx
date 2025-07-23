@@ -5,14 +5,27 @@ import { FreeDeliveryProgress, FreeDeliveryPopup, formatNumber } from './SimpleD
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
-const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart, deliveryMode, setDeliveryMode }) => {
+const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart, deliveryMode: propDeliveryMode, setDeliveryMode: propSetDeliveryMode }) => {
   const [discounts, setDiscounts] = useState([]);
   const [products, setProducts] = useState([]);
   const [showViolationAlert, setShowViolationAlert] = useState(false);
   const [violatingItems, setViolatingItems] = useState([]);
+  
+  // Локальное состояние как fallback если пропсы не переданы
+  const [localDeliveryMode, setLocalDeliveryMode] = useState(() => {
+    return localStorage.getItem('deliveryMode') || 'delivery';
+  });
+  
+  // Используем пропсы если они переданы, иначе локальное состояние
+  const deliveryMode = propDeliveryMode !== undefined ? propDeliveryMode : localDeliveryMode;
+  const setDeliveryMode = propSetDeliveryMode || setLocalDeliveryMode;
+  
+  // Синхронизируем с localStorage
+  useEffect(() => {
+    localStorage.setItem('deliveryMode', deliveryMode);
+  }, [deliveryMode]);
 
-  // Отладка пропсов
-  console.log('Cart props:', { deliveryMode, setDeliveryMode: typeof setDeliveryMode });
+  console.log('Cart - using deliveryMode:', deliveryMode, typeof setDeliveryMode);
 
   // Сохраняем режим доставки в localStorage и принудительно обновляем корзину
   useEffect(() => {
@@ -269,15 +282,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <button
-                onClick={() => {
-                  console.log('Delivery button clicked, current mode:', deliveryMode);
-                  console.log('setDeliveryMode function:', typeof setDeliveryMode);
-                  if (typeof setDeliveryMode === 'function') {
-                    setDeliveryMode('delivery');
-                  } else {
-                    console.error('setDeliveryMode is not a function!');
-                  }
-                }}
+                onClick={() => setDeliveryMode('delivery')}
                 style={{
                   background: deliveryMode === 'delivery' ? settings.primaryColor || '#ff7f32' : 'transparent',
                   color: deliveryMode === 'delivery' ? 'white' : '#666',
@@ -299,14 +304,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               </button>
               
               <button
-                onClick={() => {
-                  console.log('Pickup button clicked, current mode:', deliveryMode);
-                  if (typeof setDeliveryMode === 'function') {
-                    setDeliveryMode('pickup');
-                  } else {
-                    console.error('setDeliveryMode is not a function!');
-                  }
-                }}
+                onClick={() => setDeliveryMode('pickup')}
                 style={{
                   background: deliveryMode === 'pickup' ? settings.primaryColor || '#ff7f32' : 'transparent',
                   color: deliveryMode === 'pickup' ? 'white' : '#666',
