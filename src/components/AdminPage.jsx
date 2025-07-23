@@ -19,107 +19,86 @@ const formatDate = (dateStr) => {
 
 // Функция для нормализации номера телефона
 const normalizePhoneNumber = (phone) => {
-  // Проверяем, что phone существует и преобразуем в строку
   if (!phone && phone !== 0) return null;
   
-  // Преобразуем в строку (на случай если это число)
   const phoneStr = String(phone);
-  
-  // Убираем все лишние символы (пробелы, скобки, дефисы и т.д.)
   const cleanPhone = phoneStr.replace(/[^\d+]/g, '');
   
-  // Если после очистки номер пустой
   if (!cleanPhone) return null;
   
-  console.log('Обрабатываю номер:', phone, typeof phone, '→', cleanPhone); // Для отладки
-  
-  // Коды стран бывшего СССР
+  // Упрощенная версия без лишних console.log
   const countryCodes = {
-    '7': '+7',      // Россия, Казахстан
-    '375': '+375',  // Беларусь
-    '380': '+380',  // Украина
-    '994': '+994',  // Азербайджан
-    '374': '+374',  // Армения
-    '995': '+995',  // Грузия
-    '996': '+996',  // Киргизия
-    '373': '+373',  // Молдова
-    '992': '+992',  // Таджикистан
-    '993': '+993',  // Туркменистан
-    '998': '+998',  // Узбекистан
-    '371': '+371',  // Латвия
-    '372': '+372',  // Эстония
-    '370': '+370'   // Литва
+    '7': '+7', '375': '+375', '380': '+380', '994': '+994', '374': '+374',
+    '995': '+995', '996': '+996', '373': '+373', '992': '+992', '993': '+993',
+    '998': '+998', '371': '+371', '372': '+372', '370': '+370'
   };
   
-  // Если номер начинается с +
   if (cleanPhone.startsWith('+')) {
-    // Проверяем известные коды
     for (const [code, fullCode] of Object.entries(countryCodes)) {
       if (cleanPhone.startsWith(`+${code}`) && cleanPhone.length >= code.length + 10) {
         return cleanPhone;
       }
     }
-    return cleanPhone; // Возвращаем как есть, если код неизвестен
+    return cleanPhone;
   }
   
-  // Если номер начинается с 8 (российский формат)
   if (cleanPhone.startsWith('8') && cleanPhone.length === 11) {
     return '+7' + cleanPhone.substring(1);
   }
   
-  // Если номер начинается с 7 и длина 11
   if (cleanPhone.startsWith('7') && cleanPhone.length === 11) {
     return '+' + cleanPhone;
   }
   
-  // Проверяем на коды других стран (для номеров без +)
   for (const [code, fullCode] of Object.entries(countryCodes)) {
     if (cleanPhone.startsWith(code) && cleanPhone.length >= code.length + 9) {
       return '+' + cleanPhone;
     }
   }
   
-  // Если номер из 10 цифр - считаем российским
   if (cleanPhone.length === 10) {
-    const result = '+7' + cleanPhone;
-    console.log('Применил российский код для 10-значного номера:', result);
-    return result;
-  }
-  
-  // Если номер из 11 цифр без кода - добавляем +7
-  if (cleanPhone.length === 11 && !cleanPhone.startsWith('7') && !cleanPhone.startsWith('8')) {
     return '+7' + cleanPhone;
   }
   
-  // Если длина меньше 10 но больше 7 - тоже считаем российским (на всякий случай)
-  if (cleanPhone.length >= 7 && cleanPhone.length < 10) {
-    // Дополняем до 10 цифр нулями и добавляем код России
-    const paddedPhone = cleanPhone.padStart(10, '0');
-    return '+7' + paddedPhone;
-  }
-  
-  // По умолчанию считаем российским номером
-  console.log('Применяю российский код по умолчанию для:', cleanPhone);
   return '+7' + cleanPhone;
 };
 
 // Функция для создания WhatsApp ссылки
 const createWhatsAppLink = (phone, orderId) => {
-  // Проверяем входные данные (phone может быть числом или строкой)
   if (!phone && phone !== 0) return null;
   if (!orderId) return null;
   
   const normalizedPhone = normalizePhoneNumber(phone);
   if (!normalizedPhone) return null;
   
-  // Убираем + для WhatsApp API
   const whatsappPhone = normalizedPhone.replace('+', '');
-  
   const message = `😊 Добрый день! Это из ресторана, по поводу Вашего заказа #${orderId} 🍕✨`;
   
-  const link = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
-  console.log('Создана WhatsApp ссылка:', link);
-  return link;
+  return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+};
+
+// Улучшенная функция fetch для iOS
+const safeFetch = async (url, options = {}) => {
+  try {
+    // Добавляем заголовки для лучшей совместимости
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...options.headers
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error;
+  }
 };
 
 const AdminLogin = ({ onLoginSuccess }) => {
@@ -139,7 +118,7 @@ const AdminLogin = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}?action=getAdmins`);
+      const response = await safeFetch(`${API_URL}?action=getAdmins&t=${Date.now()}`);
       const admins = await response.json();
       
       const admin = admins.find(admin => 
@@ -370,13 +349,8 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                 <span><strong>Телефон:</strong></span>
                 {(() => {
                   try {
-                    console.log('Исходный номер телефона:', order.phone, typeof order.phone);
-                    
                     const normalizedPhone = normalizePhoneNumber(order.phone);
-                    console.log('Нормализованный номер:', normalizedPhone);
-                    
                     const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
-                    console.log('WhatsApp ссылка:', whatsappLink);
                     
                     if (whatsappLink && normalizedPhone) {
                       return (
@@ -397,14 +371,6 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                             cursor: 'pointer',
                             display: 'inline-block'
                           }}
-                          onMouseEnter={(e) => {
-                            e.target.style.background = '#25D366';
-                            e.target.style.color = 'white';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.background = '#f0fff0';
-                            e.target.style.color = '#25D366';
-                          }}
                           title={`Написать в WhatsApp: ${normalizedPhone}`}
                         >
                           📱 {normalizedPhone}
@@ -416,18 +382,17 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                           color: '#999',
                           fontStyle: 'italic'
                         }}>
-                          {order.phone || 'Не указан'} (не обработан)
+                          {order.phone || 'Не указан'}
                         </span>
                       );
                     }
                   } catch (error) {
-                    console.error('Ошибка при обработке номера телефона:', error);
                     return (
                       <span style={{ 
                         color: '#999',
                         fontStyle: 'italic'
                       }}>
-                        {order.phone || 'Не указан'} (ошибка обработки)
+                        {order.phone || 'Не указан'} (ошибка)
                       </span>
                     );
                   }
@@ -575,36 +540,21 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const [statusLabels, setStatusLabels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [isTyping, setIsTyping] = useState(true);
   const [lastOrderCount, setLastOrderCount] = useState(0);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     loadData();
-    
-    // Запрашиваем разрешение на уведомления
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        setNotificationsEnabled(permission === 'granted');
-        if (permission === 'granted') {
-          console.log('✅ Разрешение на уведомления получено');
-        }
-      });
-    } else if (Notification.permission === 'granted') {
-      setNotificationsEnabled(true);
-    }
   }, []);
 
-  // Автообновление каждые 30 секунд
   useEffect(() => {
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      console.log('🔄 Автообновление заказов...');
-      loadData(true); // true = это автообновление
-    }, 30000); // 30 секунд
+      loadData(true);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [autoRefresh]);
@@ -613,11 +563,13 @@ const AdminDashboard = ({ admin, onLogout }) => {
     try {
       if (!isAutoRefresh) {
         setIsLoading(true);
+        setLoadError(null);
       }
 
+      // Используем улучшенную функцию fetch
       const [ordersRes, statusRes] = await Promise.all([
-        fetch(`${API_URL}?action=getOrders&cache=${Date.now()}`),
-        fetch(`${API_URL}?action=getStatusLabels&cache=${Date.now()}`)
+        safeFetch(`${API_URL}?action=getOrders&t=${Date.now()}`),
+        safeFetch(`${API_URL}?action=getStatusLabels&t=${Date.now()}`)
       ]);
 
       const ordersData = await ordersRes.json();
@@ -626,10 +578,13 @@ const AdminDashboard = ({ admin, onLogout }) => {
       if (Array.isArray(ordersData)) {
         const sorted = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        // Проверяем на новые заказы (только при автообновлении)
+        // Упрощенная проверка новых заказов без уведомлений на iOS
         if (isAutoRefresh && lastOrderCount > 0 && sorted.length > lastOrderCount) {
-          const newOrdersCount = sorted.length - lastOrderCount;
-          showNewOrderNotification(newOrdersCount, sorted[0]);
+          // Просто обновляем данные без звука и уведомлений на мобильных
+          if (window.innerWidth > 768) {
+            // Показываем уведомления только на десктопе
+            console.log(`🔔 Новых заказов: ${sorted.length - lastOrderCount}`);
+          }
         }
         
         setOrders(sorted);
@@ -653,56 +608,19 @@ const AdminDashboard = ({ admin, onLogout }) => {
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
+      if (!isAutoRefresh) {
+        setLoadError(error.message);
+      }
     } finally {
       if (!isAutoRefresh) {
         setIsLoading(false);
-        setTimeout(() => setIsTyping(false), 2000);
       }
-    }
-  };
-
-  // Функция показа уведомления о новых заказах
-  const showNewOrderNotification = (count, latestOrder) => {
-    if (!notificationsEnabled) return;
-
-    // Звуковой сигнал
-    try {
-      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dr0X0vBClRuvHUfywFJHfH8N2QQAoUXrTp66hVFApGn+Dr0X0vBCgxGK45kGVJAAFmMGBbdF1fnNTKcBdSP1WCwHGgzS19TQT2a6T5u3w0Cgpd');
-      audio.play().catch(e => console.log('Не удалось воспроизвести звук'));
-    } catch (e) {
-      console.log('Аудио не поддерживается');
-    }
-
-    // Push уведомление
-    new Notification('🍕 Новый заказ!', {
-      body: count === 1 
-        ? `Заказ #${latestOrder.orderId} от ${latestOrder.customerName}\nСумма: ${formatNumber(latestOrder.total)} ₽`
-        : `Поступило ${count} новых заказов!\nПоследний: #${latestOrder.orderId}`,
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      tag: 'new-order',
-      requireInteraction: true, // Уведомление не исчезает автоматически
-      actions: [
-        { action: 'view', title: 'Посмотреть заказы' }
-      ]
-    });
-
-    console.log(`🔔 Показано уведомление о ${count} новых заказах`);
-  };
-
-  // Переключение автообновления
-  const toggleAutoRefresh = () => {
-    setAutoRefresh(!autoRefresh);
-    if (!autoRefresh) {
-      console.log('✅ Автообновление включено');
-    } else {
-      console.log('⏸️ Автообновление отключено');
     }
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`);
+      const response = await safeFetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`);
       
       if (response.ok) {
         setOrders(prev => prev.map(order => 
@@ -783,11 +701,58 @@ const AdminDashboard = ({ admin, onLogout }) => {
     );
   }
 
+  if (loadError) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem'
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '2rem',
+          borderRadius: '20px',
+          textAlign: 'center',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+          maxWidth: '400px'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            Ошибка загрузки
+          </div>
+          <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '2rem' }}>
+            {loadError}
+          </div>
+          <button
+            onClick={() => {
+              setLoadError(null);
+              loadData();
+            }}
+            style={{
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              padding: '1rem 2rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '1rem'
+            }}
+          >
+            Попробовать снова
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
-      fontFamily: 'Fredoka, sans-serif'
+      fontFamily: 'system-ui, -apple-system, sans-serif' // Более безопасный шрифт для iOS
     }}>
       <style>
         {`
@@ -806,6 +771,12 @@ const AdminDashboard = ({ admin, onLogout }) => {
               padding: 0.5rem 0.8rem !important;
               font-size: 0.8rem !important;
               flex: 1 !important;
+            }
+            
+            .header-controls {
+              flex-direction: column !important;
+              width: 100% !important;
+              gap: 0.5rem !important;
             }
           }
         `}
@@ -841,7 +812,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className="header-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{
             background: '#e8f5e8',
             color: '#2e7d32',
@@ -853,9 +824,8 @@ const AdminDashboard = ({ admin, onLogout }) => {
             Сегодня: {formatNumber(totalToday)} ₽
           </div>
           
-          {/* Кнопка автообновления */}
           <button
-            onClick={toggleAutoRefresh}
+            onClick={() => setAutoRefresh(!autoRefresh)}
             style={{
               background: autoRefresh ? '#4caf50' : '#757575',
               color: 'white',
@@ -868,7 +838,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
               alignItems: 'center',
               gap: '0.5rem'
             }}
-            title={autoRefresh ? 'Автообновление включено (каждые 30 сек)' : 'Автообновление отключено'}
+            title={autoRefresh ? 'Автообновление включено' : 'Автообновление отключено'}
           >
             {autoRefresh ? '🔄' : '⏸️'} 
             <span style={{ fontSize: '0.8rem' }}>
@@ -876,24 +846,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
             </span>
           </button>
 
-          {/* Индикатор уведомлений */}
-          <div style={{
-            background: notificationsEnabled ? '#e8f5e8' : '#ffebee',
-            color: notificationsEnabled ? '#2e7d32' : '#c62828',
-            padding: '0.5rem 1rem',
-            borderRadius: '8px',
-            fontSize: '0.8rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-          title={notificationsEnabled ? 'Уведомления включены' : 'Уведомления отключены'}
-          >
-            {notificationsEnabled ? '🔔' : '🔕'}
-            <span>{notificationsEnabled ? 'Звук' : 'Тихо'}</span>
-          </div>
-
-          {/* Кнопка ручного обновления */}
           <button
             onClick={() => loadData()}
             style={{
@@ -905,7 +857,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
               cursor: 'pointer',
               fontSize: '0.9rem'
             }}
-            title="Обновить заказы вручную"
+            title="Обновить заказы"
           >
             ↻
           </button>
