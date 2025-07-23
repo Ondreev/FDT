@@ -22,35 +22,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     localStorage.setItem('deliveryMode', deliveryMode);
   }, [deliveryMode]);
 
-  // Управление доставкой при переключении режима
-  useEffect(() => {
-    const DELIVERY_ID = 'delivery_service';
-    const deliveryItem = cart.find(item => item.id === DELIVERY_ID);
-    const hasProducts = cart.filter(item => !item.isDelivery).length > 0;
-
-    if (deliveryMode === 'pickup') {
-      // Самовывоз - убираем доставку
-      if (deliveryItem) {
-        setCart(prev => prev.filter(item => item.id !== DELIVERY_ID));
-      }
-    } else {
-      // Доставка - добавляем если есть товары и нет доставки
-      if (hasProducts && !deliveryItem) {
-        const deliveryService = {
-          id: DELIVERY_ID,
-          name: 'Доставка',
-          price: 250,
-          quantity: 1,
-          imageUrl: '🛵',
-          isDelivery: true,
-          description: 'Доставка по городу',
-          weight: ''
-        };
-        setCart(prev => [...prev, deliveryService]);
-      }
-    }
-  }, [deliveryMode, cart, setCart]);
-
   useEffect(() => {
     if (isOpen) {
       // Загружаем скидки
