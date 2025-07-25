@@ -28,8 +28,13 @@ const calculateAverageTime = (orders) => {
   })();
 
   const completedToday = orders.filter(order => {
-    const orderDate = new Date(order.truedate).toISOString().split('T')[0];
-    return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
+    if (!order.truedate) return false;
+    try {
+      const orderDate = new Date(order.truedate).toISOString().split('T')[0];
+      return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
+    } catch (error) {
+      return false;
+    }
   });
 
   if (completedToday.length === 0) return null;
@@ -451,13 +456,13 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             flexWrap: 'wrap'
           }}>
             <span>Заказ #{order.orderId}</span>
-            <OrderTimer orderDate={order.truedate} status={order.status} />
+            {order.truedate ? <OrderTimer orderDate={order.truedate} status={order.status} /> : null}
           </div>
           <div style={{
             fontSize: '0.9rem',
             color: '#666'
           }}>
-            {formatDate(order.truedate)} • {order.customerName}
+            {order.truedate ? formatDate(order.truedate) : 'Нет времени'} • {order.customerName}
           </div>
         </div>
         <div style={{
@@ -740,7 +745,12 @@ const AdminDashboard = ({ admin, onLogout }) => {
       const statusData = await statusRes.json();
 
       if (Array.isArray(ordersData)) {
-        const sorted = ordersData.sort((a, b) => new Date(b.truedate) - new Date(a.truedate));
+        const sorted = ordersData.sort((a, b) => {
+          if (!a.truedate && !b.truedate) return 0;
+          if (!a.truedate) return 1;
+          if (!b.truedate) return -1;
+          return new Date(b.truedate) - new Date(a.truedate);
+        });
         
         // Упрощенная проверка новых заказов без уведомлений на iOS
         if (isAutoRefresh && lastOrderCount > 0 && sorted.length > lastOrderCount) {
@@ -831,8 +841,13 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const todayMoscow = getMoscowDate();
   const totalToday = orders
     .filter(order => {
-      const orderDate = new Date(order.truedate).toISOString().split('T')[0];
-      return orderDate === todayMoscow;
+      if (!order.truedate) return false;
+      try {
+        const orderDate = new Date(order.truedate).toISOString().split('T')[0];
+        return orderDate === todayMoscow;
+      } catch (error) {
+        return false;
+      }
     })
     .reduce((sum, order) => sum + parseInt(order.total || 0), 0);
 
