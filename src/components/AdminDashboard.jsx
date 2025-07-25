@@ -102,7 +102,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             fontSize: '0.9rem',
             color: '#666'
           }}>
-            {formatDate(order.date)} • {order.customerName}
+            {formatDate(order.truedate)} • {order.customerName}
           </div>
         </div>
         <div style={{
@@ -342,7 +342,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
       const statusData = await statusRes.json();
 
       // Сортируем заказы по дате (новые сверху)
-      const sortedOrders = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const sortedOrders = ordersData.sort((a, b) => new Date(b.truedate) - new Date(a.truedate));
 
       setOrders(sortedOrders);
       setStatusLabels(statusData);
@@ -387,7 +387,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const filteredOrders = filterOrders(orders, activeFilter);
   const pendingCount = orders.filter(order => order.status === 'pending').length;
   const totalToday = orders
-    .filter(order => new Date(order.date).toDateString() === new Date().toDateString())
+    .filter(order => new Date(order.truedate).toDateString() === new Date().toDateString())
     .reduce((sum, order) => sum + parseInt(order.total), 0);
 
   const getBotMessage = () => {
