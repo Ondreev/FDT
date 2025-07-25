@@ -28,7 +28,7 @@ const calculateAverageTime = (orders) => {
   })();
 
   const completedToday = orders.filter(order => {
-    const orderDate = new Date(order.date).toISOString().split('T')[0];
+    const orderDate = new Date(order.truedate).toISOString().split('T')[0];
     return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
   });
 
@@ -37,7 +37,7 @@ const calculateAverageTime = (orders) => {
   // Симуляция времени завершения (в реальности нужно сохранять время завершения в БД)
   const totalMinutes = completedToday.reduce((sum, order) => {
     // Предполагаем среднее время 25-35 минут для демонстрации
-    const orderTime = new Date(order.date).getTime();
+    const orderTime = new Date(order.truedate).getTime();
     const estimatedCompletionTime = orderTime + (Math.random() * 10 + 25) * 60 * 1000;
     const actualTime = Math.floor((estimatedCompletionTime - orderTime) / (1000 * 60));
     return sum + actualTime;
@@ -46,6 +46,7 @@ const calculateAverageTime = (orders) => {
   const averageMinutes = Math.round(totalMinutes / completedToday.length);
   return { averageMinutes, completedCount: completedToday.length };
 };
+
 const OrderTimer = ({ orderDate, status }) => {
   const [elapsed, setElapsed] = useState(0);
   const [isRunning, setIsRunning] = useState(!['done', 'archived'].includes(status));
@@ -450,13 +451,13 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             flexWrap: 'wrap'
           }}>
             <span>Заказ #{order.orderId}</span>
-            <OrderTimer orderDate={order.date} status={order.status} />
+            <OrderTimer orderDate={order.truedate} status={order.status} />
           </div>
           <div style={{
             fontSize: '0.9rem',
             color: '#666'
           }}>
-            {formatDate(order.date)} • {order.customerName}
+            {formatDate(order.truedate)} • {order.customerName}
           </div>
         </div>
         <div style={{
@@ -739,7 +740,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
       const statusData = await statusRes.json();
 
       if (Array.isArray(ordersData)) {
-        const sorted = ordersData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        const sorted = ordersData.sort((a, b) => new Date(b.truedate) - new Date(a.truedate));
         
         // Упрощенная проверка новых заказов без уведомлений на iOS
         if (isAutoRefresh && lastOrderCount > 0 && sorted.length > lastOrderCount) {
@@ -830,7 +831,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const todayMoscow = getMoscowDate();
   const totalToday = orders
     .filter(order => {
-      const orderDate = new Date(order.date).toISOString().split('T')[0];
+      const orderDate = new Date(order.truedate).toISOString().split('T')[0];
       return orderDate === todayMoscow;
     })
     .reduce((sum, order) => sum + parseInt(order.total || 0), 0);
