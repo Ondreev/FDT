@@ -496,39 +496,16 @@ const ShopPage = () => {
             }
           }
 
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
           .product-grid {
             display: grid;
             gap: 1rem;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            will-change: transform;
-          }
-
-          .product-grid.swiping {
-            transition: none;
           }
 
           @media (max-width: 400px) {
             .product-grid {
               grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
             }
-          }
-
-          /* Оптимизация для лучшей производительности */
-          .product-card {
-            backface-visibility: hidden;
-            transform: translateZ(0);
           }
         `}
       </style>
@@ -675,17 +652,10 @@ const ShopPage = () => {
           </div>
         )}
 
-        <div 
-          className={`product-grid ${isSwiping && !isAnimating ? 'swiping' : ''}`}
-          style={{
-            transform: `translateX(${swipeOffset}px)`,
-            opacity: isAnimating ? 0.5 : 1,
-          }}
-        >
+        <div className="product-grid">
           {filteredProducts.map((product, index) => (
             <div
               key={product.id}
-              className="product-card"
               style={{
                 position: 'relative',
                 background: '#fff7ed',
@@ -695,10 +665,6 @@ const ShopPage = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                transform: `scale(${isSwiping ? 0.98 : 1})`,
-                transition: 'transform 0.2s ease',
-                animationDelay: isAnimating ? `${index * 0.05}s` : '0s',
-                animation: isAnimating ? 'fadeInUp 0.4s ease forwards' : 'none',
               }}
             >
               {/* Рейтинг справа вверху */}
