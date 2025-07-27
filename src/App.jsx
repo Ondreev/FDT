@@ -302,7 +302,6 @@ const ShopPage = () => {
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [swipeDirection, setSwipeDirection] = useState(null);
 
   // Сохраняем режим доставки в localStorage
   useEffect(() => {
@@ -441,11 +440,6 @@ const ShopPage = () => {
       if (newIndex !== currentIndex) {
         // Плавная смена категории
         setIsAnimating(true);
-        
-        // Запоминаем направление для правильной анимации появления
-        const direction = deltaX > 0 ? 'right' : 'left';
-        setSwipeDirection(direction);
-        
         setActiveCategory(allCategories[newIndex]);
         
         // Сбрасываем смещение через короткую задержку
@@ -453,8 +447,7 @@ const ShopPage = () => {
           setSwipeOffset(0);
           setTimeout(() => {
             setIsAnimating(false);
-            setSwipeDirection(null);
-          }, 400);
+          }, 600); // Увеличили время для тетрис-анимации
         }, 50);
       } else {
         // Возвращаем на место
@@ -541,7 +534,7 @@ const ShopPage = () => {
             display: grid;
             gap: 1rem;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             will-change: transform, opacity;
           }
 
@@ -550,7 +543,7 @@ const ShopPage = () => {
           }
 
           .product-grid.animating {
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
           }
 
           @media (max-width: 400px) {
@@ -710,173 +703,177 @@ const ShopPage = () => {
           </div>
         )}
 
-        {/* Простая элегантная карусель */}
+        {/* Тетрис-карусель */}
         <div 
           className={`product-grid ${isSwiping && !isAnimating ? 'swiping' : ''} ${isAnimating ? 'animating' : ''}`}
           style={{
             transform: `translateX(${swipeOffset}px)`,
-            opacity: isAnimating ? 0.3 : 1,
+            opacity: isAnimating ? 0.2 : 1,
           }}
         >
-          {filteredProducts.map((product, index) => (
-            <div
-              key={product.id}
-              className="product-card"
-              style={{
-                position: 'relative',
-                background: '#fff7ed',
-                borderRadius: '20px',
-                padding: '1rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                transform: `scale(${isSwiping ? 0.98 : 1})`,
-                transition: 'transform 0.2s ease',
-                animationDelay: isAnimating ? `${index * 0.05}s` : '0s',
-                animation: isAnimating 
-                  ? swipeDirection === 'right' 
-                    ? 'fadeInScaleLeft 0.6s ease forwards'  // Свайп вправо = карточки появляются слева
-                    : 'fadeInScaleRight 0.6s ease forwards' // Свайп влево = карточки появляются справа
-                  : 'none',
-              }}
-            >
-              {/* Рейтинг справа вверху */}
-              {product.rating && (
-                <div style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  zIndex: 3
-                }}>
-                  <StarRating 
-                    rating={parseFloat(product.rating)} 
-                    size={12} 
-                    onClick={() => openRatingPopup(product)}
-                    isClickable={true}
-                  />
-                </div>
-              )}
+          {filteredProducts.map((product, index) => {
+            // Определяем откуда появляется карточка по индексу (тетрис-эффект)
+            const getAnimationDirection = (i) => {
+              const directions = ['tetrisFromLeft', 'tetrisFromTop', 'tetrisFromRight', 'tetrisFromBottom'];
+              return directions[i % 4];
+            };
 
-              {/* Плашка ОСТРОЕ - под рейтингом */}
-              {String(product.id).includes('H') && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '2.2rem',
-                    right: '1rem',
-                    backgroundColor: '#e03636',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.2rem 0.45rem',
-                    borderRadius: '999px',
-                    fontSize: '0.6rem',
-                    fontFamily: settings.font || 'Fredoka',
-                    zIndex: 2
-                  }}
-                >
-                  ОСТРОЕ
-                </div>
-              )}
-              
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                style={{ 
-                  width: '100%', 
-                  maxWidth: '160px', 
-                  borderRadius: '12px', 
-                  marginBottom: '0.5rem'
-                }}
-              />
-              
-              <h2
+            return (
+              <div
+                key={product.id}
+                className="product-card"
                 style={{
-                  fontSize: '1.4rem',
-                  fontWeight: 'bold',
-                  color: '#4b2e12',
-                  margin: '0.5rem 0 0.25rem 0',
-                  textAlign: 'center',
+                  position: 'relative',
+                  background: '#fff7ed',
+                  borderRadius: '20px',
+                  padding: '1rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  transform: `scale(${isSwiping ? 0.98 : 1})`,
+                  transition: 'transform 0.2s ease',
+                  animationDelay: isAnimating ? `${index * 0.08}s` : '0s',
+                  animation: isAnimating ? `${getAnimationDirection(index)} 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards` : 'none',
                 }}
               >
-                {product.name}
-              </h2>
-              <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
-              <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
-              
-              {/* Нижняя часть карточки */}
-              <div style={{ 
-                marginTop: 'auto',
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center',
-                gap: '0.5rem',
-                width: '100%'
-              }}>
-                <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0', color: '#2c1e0f' }}>
-                  {product.price} {settings.currency || '₽'}
-                </p>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '0.25rem',
-                    alignItems: 'center',
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      const existing = cart.find(item => item.id === product.id);
-                      if (existing && existing.quantity > 1) {
-                        updateQuantity(product.id, existing.quantity - 1);
-                      } else {
-                        removeFromCart(product.id);
-                      }
-                    }}
-                    style={{
-                      backgroundColor: settings.primaryColor || '#ff7f32',
-                      color: '#fff',
-                      fontSize: '1.25rem',
-                      padding: '0.2rem 0.7rem',
-                      border: 'none',
-                      borderRadius: '12px 0 0 12px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    −
-                  </button>
+                {/* Рейтинг справа вверху */}
+                {product.rating && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    zIndex: 3
+                  }}>
+                    <StarRating 
+                      rating={parseFloat(product.rating)} 
+                      size={12} 
+                      onClick={() => openRatingPopup(product)}
+                      isClickable={true}
+                    />
+                  </div>
+                )}
+
+                {/* Плашка ОСТРОЕ - под рейтингом */}
+                {String(product.id).includes('H') && (
                   <div
                     style={{
-                      background: '#fff1dd',
-                      padding: '0.2rem 1rem',
-                      border: 'none',
-                      fontWeight: 'bold',
-                      borderRadius: '4px',
-                      minWidth: '40px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {cart.find(item => item.id === product.id)?.quantity || 0}
-                  </div>
-                  <button
-                    onClick={() => addToCart(product)}
-                    style={{
-                      backgroundColor: settings.primaryColor || '#ff7f32',
+                      position: 'absolute',
+                      top: '2.2rem',
+                      right: '1rem',
+                      backgroundColor: '#e03636',
                       color: '#fff',
-                      fontSize: '1.25rem',
-                      padding: '0.2rem 0.7rem',
-                      border: 'none',
-                      borderRadius: '0 12px 12px 0',
                       fontWeight: 'bold',
-                      cursor: 'pointer',
+                      padding: '0.2rem 0.45rem',
+                      borderRadius: '999px',
+                      fontSize: '0.6rem',
+                      fontFamily: settings.font || 'Fredoka',
+                      zIndex: 2
                     }}
                   >
-                    +
-                  </button>
+                    ОСТРОЕ
+                  </div>
+                )}
+                
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  style={{ 
+                    width: '100%', 
+                    maxWidth: '160px', 
+                    borderRadius: '12px', 
+                    marginBottom: '0.5rem'
+                  }}
+                />
+                
+                <h2
+                  style={{
+                    fontSize: '1.4rem',
+                    fontWeight: 'bold',
+                    color: '#4b2e12',
+                    margin: '0.5rem 0 0.25rem 0',
+                    textAlign: 'center',
+                  }}
+                >
+                  {product.name}
+                </h2>
+                <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
+                <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
+                
+                {/* Нижняя часть карточки */}
+                <div style={{ 
+                  marginTop: 'auto',
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  width: '100%'
+                }}>
+                  <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0', color: '#2c1e0f' }}>
+                    {product.price} {settings.currency || '₽'}
+                  </p>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '0.25rem',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        const existing = cart.find(item => item.id === product.id);
+                        if (existing && existing.quantity > 1) {
+                          updateQuantity(product.id, existing.quantity - 1);
+                        } else {
+                          removeFromCart(product.id);
+                        }
+                      }}
+                      style={{
+                        backgroundColor: settings.primaryColor || '#ff7f32',
+                        color: '#fff',
+                        fontSize: '1.25rem',
+                        padding: '0.2rem 0.7rem',
+                        border: 'none',
+                        borderRadius: '12px 0 0 12px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      −
+                    </button>
+                    <div
+                      style={{
+                        background: '#fff1dd',
+                        padding: '0.2rem 1rem',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        borderRadius: '4px',
+                        minWidth: '40px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {cart.find(item => item.id === product.id)?.quantity || 0}
+                    </div>
+                    <button
+                      onClick={() => addToCart(product)}
+                      style={{
+                        backgroundColor: settings.primaryColor || '#ff7f32',
+                        color: '#fff',
+                        fontSize: '1.25rem',
+                        padding: '0.2rem 0.7rem',
+                        border: 'none',
+                        borderRadius: '0 12px 12px 0',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Менеджеры компонентов */}
