@@ -277,7 +277,7 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   return null; // Этот компонент ничего не рендерит
 };
 
-// Основной компонент магазина (ваш существующий код)
+// Основной компонент магазина
 const ShopPage = () => {
   const [settings, setSettings] = useState({});
   const [products, setProducts] = useState([]);
@@ -289,9 +289,9 @@ const ShopPage = () => {
   
   // Состояния для рейтинга
   const [ratingPopup, setRatingPopup] = useState({ isOpen: false, product: null });
-  const [userRatings, setUserRatings] = useState({}); // Локальное хранение оценок
+  const [userRatings, setUserRatings] = useState({});
   
-  // Состояние для режима доставки (перенесено из Cart в App)
+  // Состояние для режима доставки
   const [deliveryMode, setDeliveryMode] = useState(() => {
     return localStorage.getItem('deliveryMode') || 'delivery';
   });
@@ -372,7 +372,6 @@ const ShopPage = () => {
     setIsAnimating(true);
     setActiveCategory(newCategoryId);
     
-    // Сбрасываем смещение через короткую задержку
     setTimeout(() => {
       setSwipeOffset(0);
       setTimeout(() => {
@@ -398,10 +397,12 @@ const ShopPage = () => {
       }));
     }
   };
+
   // Функции для плавного свайпа
   const handleTouchStart = (e) => {
     if (categories.length === 0 || isAnimating) return;
     setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
     setIsSwiping(true);
     setSwipeOffset(0);
   };
@@ -456,7 +457,6 @@ const ShopPage = () => {
         setIsAnimating(true);
         setActiveCategory(allCategories[newIndex]);
         
-        // Сбрасываем смещение через короткую задержку
         setTimeout(() => {
           setSwipeOffset(0);
           setTimeout(() => {
@@ -511,36 +511,14 @@ const ShopPage = () => {
             }
           }
 
-          @keyframes fadeInScale {
-            0% {
+          @keyframes fadeInUp {
+            from {
               opacity: 0;
-              transform: scale(0.8) translateX(var(--enter-direction, 0)) translateY(20px);
+              transform: translateY(20px);
             }
-            100% {
+            to {
               opacity: 1;
-              transform: scale(1) translateX(0) translateY(0);
-            }
-          }
-
-          @keyframes fadeInScaleLeft {
-            0% {
-              opacity: 0;
-              transform: scale(0.8) translateX(-30px) translateY(20px);
-            }
-            100% {
-              opacity: 1;
-              transform: scale(1) translateX(0) translateY(0);
-            }
-          }
-
-          @keyframes fadeInScaleRight {
-            0% {
-              opacity: 0;
-              transform: scale(0.8) translateX(30px) translateY(20px);
-            }
-            100% {
-              opacity: 1;
-              transform: scale(1) translateX(0) translateY(0);
+              transform: translateY(0);
             }
           }
 
@@ -548,22 +526,12 @@ const ShopPage = () => {
             display: grid;
             gap: 1rem;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            transition: all 0.2s ease-out;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             will-change: transform;
           }
 
           .product-grid.swiping {
             transition: none;
-          }
-
-          .product-grid.animating {
-            transition: all 0.2s ease-out;
-          }
-
-          @media (max-width: 400px) {
-            .product-grid {
-              grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-            }
           }
 
           @media (max-width: 400px) {
@@ -587,7 +555,6 @@ const ShopPage = () => {
           backgroundColor: settings.backgroundColor || '#fdf0e2',
           padding: '1rem',
           minHeight: '100vh',
-          overflow: 'hidden' // Предотвращаем горизонтальный скролл при свайпе
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -727,9 +694,8 @@ const ShopPage = () => {
           </div>
         )}
 
-        {/* Простая карусель без тетриса */}
         <div 
-          className={`product-grid ${isSwiping && !isAnimating ? 'swiping' : ''} ${isAnimating ? 'animating' : ''}`}
+          className={`product-grid ${isSwiping && !isAnimating ? 'swiping' : ''}`}
           style={{
             transform: `translateX(${swipeOffset}px)`,
             opacity: isAnimating ? 0.5 : 1,
@@ -837,41 +803,6 @@ const ShopPage = () => {
                   }}
                 >
                   <button
-                    onClick={() => {
-                      const existing = cart.find(item => item.id === product.id);
-                      if (existing && existing.quantity > 1) {
-                        updateQuantity(product.id, existing.quantity - 1);
-                      } else {
-                        removeFromCart(product.id);
-                      }
-                    }}
-                    style={{
-                      backgroundColor: settings.primaryColor || '#ff7f32',
-                      color: '#fff',
-                      fontSize: '1.25rem',
-                      padding: '0.2rem 0.7rem',
-                      border: 'none',
-                      borderRadius: '12px 0 0 12px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    −
-                  </button>
-                  <div
-                    style={{
-                      background: '#fff1dd',
-                      padding: '0.2rem 1rem',
-                      border: 'none',
-                      fontWeight: 'bold',
-                      borderRadius: '4px',
-                      minWidth: '40px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {cart.find(item => item.id === product.id)?.quantity || 0}
-                  </div>
-                  <button
                     onClick={() => addToCart(product)}
                     style={{
                       backgroundColor: settings.primaryColor || '#ff7f32',
@@ -890,144 +821,6 @@ const ShopPage = () => {
               </div>
             </div>
           ))}
-        </div>
-                {/* Рейтинг справа вверху */}
-                {product.rating && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    zIndex: 3
-                  }}>
-                    <StarRating 
-                      rating={parseFloat(product.rating)} 
-                      size={12} 
-                      onClick={() => openRatingPopup(product)}
-                      isClickable={true}
-                    />
-                  </div>
-                )}
-
-                {/* Плашка ОСТРОЕ - под рейтингом */}
-                {String(product.id).includes('H') && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '2.2rem',
-                      right: '1rem',
-                      backgroundColor: '#e03636',
-                      color: '#fff',
-                      fontWeight: 'bold',
-                      padding: '0.2rem 0.45rem',
-                      borderRadius: '999px',
-                      fontSize: '0.6rem',
-                      fontFamily: settings.font || 'Fredoka',
-                      zIndex: 2
-                    }}
-                  >
-                    ОСТРОЕ
-                  </div>
-                )}
-                
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  style={{ 
-                    width: '100%', 
-                    maxWidth: '160px', 
-                    borderRadius: '12px', 
-                    marginBottom: '0.5rem'
-                  }}
-                />
-                
-                <h2
-                  style={{
-                    fontSize: '1.4rem',
-                    fontWeight: 'bold',
-                    color: '#4b2e12',
-                    margin: '0.5rem 0 0.25rem 0',
-                    textAlign: 'center',
-                  }}
-                >
-                  {product.name}
-                </h2>
-                <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
-                <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
-                
-                {/* Нижняя часть карточки */}
-                <div style={{ 
-                  marginTop: 'auto',
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  width: '100%'
-                }}>
-                  <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0', color: '#2c1e0f' }}>
-                    {product.price} {settings.currency || '₽'}
-                  </p>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '0.25rem',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <button
-                      onClick={() => {
-                        const existing = cart.find(item => item.id === product.id);
-                        if (existing && existing.quantity > 1) {
-                          updateQuantity(product.id, existing.quantity - 1);
-                        } else {
-                          removeFromCart(product.id);
-                        }
-                      }}
-                      style={{
-                        backgroundColor: settings.primaryColor || '#ff7f32',
-                        color: '#fff',
-                        fontSize: '1.25rem',
-                        padding: '0.2rem 0.7rem',
-                        border: 'none',
-                        borderRadius: '12px 0 0 12px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      −
-                    </button>
-                    <div
-                      style={{
-                        background: '#fff1dd',
-                        padding: '0.2rem 1rem',
-                        border: 'none',
-                        fontWeight: 'bold',
-                        borderRadius: '4px',
-                        minWidth: '40px',
-                        textAlign: 'center',
-                      }}
-                    >
-                      {cart.find(item => item.id === product.id)?.quantity || 0}
-                    </div>
-                    <button
-                      onClick={() => addToCart(product)}
-                      style={{
-                        backgroundColor: settings.primaryColor || '#ff7f32',
-                        color: '#fff',
-                        fontSize: '1.25rem',
-                        padding: '0.2rem 0.7rem',
-                        border: 'none',
-                        borderRadius: '0 12px 12px 0',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
         </div>
 
         {/* Менеджеры компонентов */}
@@ -1094,4 +887,39 @@ export default function App() {
       </Routes>
     </Router>
   );
-}
+}={() => {
+                      const existing = cart.find(item => item.id === product.id);
+                      if (existing && existing.quantity > 1) {
+                        updateQuantity(product.id, existing.quantity - 1);
+                      } else {
+                        removeFromCart(product.id);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: settings.primaryColor || '#ff7f32',
+                      color: '#fff',
+                      fontSize: '1.25rem',
+                      padding: '0.2rem 0.7rem',
+                      border: 'none',
+                      borderRadius: '12px 0 0 12px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    −
+                  </button>
+                  <div
+                    style={{
+                      background: '#fff1dd',
+                      padding: '0.2rem 1rem',
+                      border: 'none',
+                      fontWeight: 'bold',
+                      borderRadius: '4px',
+                      minWidth: '40px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {cart.find(item => item.id === product.id)?.quantity || 0}
+                  </div>
+                  <button
+                    onClick
