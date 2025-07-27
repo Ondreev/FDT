@@ -1232,7 +1232,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
                 } catch (error) {
                   return false;
                 }
-              }).length} заказов
+              }).length}
             </div>
           </div>
 
@@ -1250,7 +1250,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
               marginBottom: '0.3rem',
               fontWeight: '500'
             }}>
-              СРЕДНИЙ ЧЕК
+              СР. ЧЕК
             </div>
             <div style={{
               fontSize: '1.1rem',
@@ -1335,7 +1335,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
             onClick={() => setAutoRefresh(!autoRefresh)}
             style={{
               flex: '1',
-              minWidth: '120px',
+              minWidth: '100px',
               background: autoRefresh 
                 ? 'linear-gradient(135deg, #4caf50, #45a049)' 
                 : 'linear-gradient(135deg, #757575, #616161)',
