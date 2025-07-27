@@ -296,10 +296,12 @@ const ShopPage = () => {
     return localStorage.getItem('deliveryMode') || 'delivery';
   });
   
-  // Состояния для свайпа
+  // Состояния для плавного свайпа
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // Сохраняем режим доставки в localStorage
   useEffect(() => {
@@ -381,29 +383,38 @@ const ShopPage = () => {
     }
   };
 
-  // Функции для свайпа
+  // Функции для плавного свайпа
   const handleTouchStart = (e) => {
-    if (categories.length === 0) return;
+    if (categories.length === 0 || isAnimating) return;
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
     setIsSwiping(true);
+    setSwipeOffset(0);
   };
 
   const handleTouchMove = (e) => {
-    if (!isSwiping) return;
+    if (!isSwiping || isAnimating) return;
     
-    // Предотвращаем скролл если это горизонтальный свайп
-    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = currentX - touchStartX;
+    const deltaY = currentY - touchStartY;
     
-    if (deltaX > deltaY && deltaX > 10) {
+    // Проверяем что это горизонтальный свайп
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
       e.preventDefault();
+      
+      // Ограничиваем смещение для более естественного ощущения
+      const maxOffset = window.innerWidth * 0.3;
+      const limitedDelta = Math.max(-maxOffset, Math.min(maxOffset, deltaX));
+      setSwipeOffset(limitedDelta);
     }
   };
 
   const handleTouchEnd = (e) => {
-    if (!isSwiping || categories.length === 0) {
+    if (!isSwiping || categories.length === 0 || isAnimating) {
       setIsSwiping(false);
+      setSwipeOffset(0);
       return;
     }
 
@@ -412,18 +423,50 @@ const ShopPage = () => {
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
 
-    // Проверяем что это горизонтальный свайп
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+    // Проверяем что это горизонтальный свайп с достаточным расстоянием
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 80) {
       const allCategories = [null, ...categories.map(cat => cat.id)];
       const currentIndex = allCategories.indexOf(activeCategory);
+      let newIndex = currentIndex;
 
       if (deltaX > 0 && currentIndex > 0) {
         // Свайп вправо - предыдущая категория
-        setActiveCategory(allCategories[currentIndex - 1]);
+        newIndex = currentIndex - 1;
       } else if (deltaX < 0 && currentIndex < allCategories.length - 1) {
         // Свайп влево - следующая категория
-        setActiveCategory(allCategories[currentIndex + 1]);
+        newIndex = currentIndex + 1;
       }
+
+      if (newIndex !== currentIndex) {
+        // Запускаем анимацию смены категории
+        setIsAnimating(true);
+        
+        // Анимируем уход текущих карточек
+        const direction = deltaX > 0 ? 'right' : 'left';
+        const finalOffset = direction === 'right' ? window.innerWidth : -window.innerWidth;
+        setSwipeOffset(finalOffset);
+        
+        // Меняем категорию через небольшую задержку
+        setTimeout(() => {
+          setActiveCategory(allCategories[newIndex]);
+          setSwipeOffset(-finalOffset); // Новые карточки появляются с противоположной стороны
+          
+          // Анимируем появление новых карточек
+          setTimeout(() => {
+            setSwipeOffset(0);
+            setTimeout(() => {
+              setIsAnimating(false);
+            }, 300);
+          }, 50);
+        }, 250);
+      } else {
+        // Возвращаем карточки на место
+        setSwipeOffset(0);
+        setTimeout(() => setIsAnimating(false), 300);
+      }
+    } else {
+      // Возвращаем карточки на место
+      setSwipeOffset(0);
     }
 
     setIsSwiping(false);
@@ -469,12 +512,24 @@ const ShopPage = () => {
             display: grid;
             gap: 1rem;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+          }
+
+          .product-grid.swiping {
+            transition: none;
           }
 
           @media (max-width: 400px) {
             .product-grid {
               grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
             }
+          }
+
+          /* Оптимизация для лучшей производительности */
+          .product-card {
+            backface-visibility: hidden;
+            transform: translateZ(0);
           }
         `}
       </style>
@@ -486,6 +541,7 @@ const ShopPage = () => {
           backgroundColor: settings.backgroundColor || '#fdf0e2',
           padding: '1rem',
           minHeight: '100vh',
+          overflow: 'hidden' // Предотвращаем горизонтальный скролл при свайпе
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -621,10 +677,16 @@ const ShopPage = () => {
           </div>
         )}
 
-        <div className="product-grid">
+        <div 
+          className={`product-grid ${isSwiping && !isAnimating ? 'swiping' : ''}`}
+          style={{
+            transform: `translateX(${swipeOffset}px)`,
+          }}
+        >
           {filteredProducts.map((product) => (
             <div
               key={product.id}
+              className="product-card"
               style={{
                 position: 'relative',
                 background: '#fff7ed',
