@@ -66,46 +66,23 @@ export const OrderTimer = ({ orderDate, status }) => {
   const isCritical = elapsed > 2700 && isRunning;
 
   return (
-    <>
-      <div style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        padding: '0.3rem 0.7rem',
-        borderRadius: '12px',
-        fontSize: '0.9rem',
-        fontWeight: 'bold',
-        fontFamily: 'monospace',
-        background: isCritical 
-          ? '#ff1744' 
-          : isOverdue 
-          ? '#ff9800' 
-          : isRunning 
-          ? '#4caf50' 
-          : '#9e9e9e',
-        color: 'white',
-        animation: isOverdue && isRunning ? 'pulse 1.5s infinite' : 'none',
-        boxShadow: isOverdue ? '0 0 10px rgba(255, 87, 34, 0.5)' : 'none'
-      }}>
-        <span>{isRunning ? '⏱️' : '⏹️'}</span>
-        <span>{formatTime(elapsed)}</span>
-      </div>
-      
-      <style>
-        {`
-          @keyframes pulse {
-            0%, 100% { 
-              transform: scale(1); 
-              box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
-            }
-            50% { 
-              transform: scale(1.05); 
-              box-shadow: 0 0 20px rgba(255, 87, 34, 0.8);
-            }
-          }
-        `}
-      </style>
-    </>
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      padding: '0.3rem 0.7rem',
+      borderRadius: '12px',
+      fontSize: '0.9rem',
+      fontWeight: 'bold',
+      fontFamily: 'monospace',
+      background: isCritical ? '#ff1744' : isOverdue ? '#ff9800' : isRunning ? '#4caf50' : '#9e9e9e',
+      color: 'white',
+      animation: isOverdue && isRunning ? 'pulse 1.5s infinite' : 'none',
+      boxShadow: isOverdue ? '0 0 10px rgba(255, 87, 34, 0.5)' : 'none'
+    }}>
+      <span>{isRunning ? '⏱️' : '⏹️'}</span>
+      <span>{formatTime(elapsed)}</span>
+    </div>
   );
 };
 
@@ -301,9 +278,7 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             flexWrap: 'wrap'
           }}>
             <span>Заказ #{order.orderId}</span>
-            {order.date ? (
-              <OrderTimer orderDate={order.date} status={order.status} />
-            ) : null}
+            {order.date && <OrderTimer orderDate={order.date} status={order.status} />}
           </div>
           <div style={{
             fontSize: '0.9rem',
