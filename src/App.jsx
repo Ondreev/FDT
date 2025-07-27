@@ -365,6 +365,22 @@ const ShopPage = () => {
     setCart([]);
   };
 
+  // Функция для смены категории с анимацией
+  const changeCategoryWithAnimation = (newCategoryId) => {
+    if (newCategoryId === activeCategory || isAnimating) return;
+    
+    setIsAnimating(true);
+    setActiveCategory(newCategoryId);
+    
+    // Сбрасываем смещение через короткую задержку
+    setTimeout(() => {
+      setSwipeOffset(0);
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, window.innerWidth <= 768 ? 400 : 600);
+    }, 50);
+  };
+
   // Функции для рейтинга
   const openRatingPopup = (product) => {
     setRatingPopup({ isOpen: true, product });
@@ -382,11 +398,9 @@ const ShopPage = () => {
       }));
     }
   };
-
   // Функции для плавного свайпа
   const handleTouchStart = (e) => {
     if (categories.length === 0 || isAnimating) return;
-    setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
     setIsSwiping(true);
     setSwipeOffset(0);
@@ -678,7 +692,7 @@ const ShopPage = () => {
             }}
           >
             <button
-              onClick={() => setActiveCategory(null)}
+              onClick={() => changeCategoryWithAnimation(null)}
               style={{
                 padding: '0.5rem 1.5rem',
                 background: activeCategory === null ? settings.primaryColor || '#ff7f32' : '#fff5e6',
@@ -689,6 +703,8 @@ const ShopPage = () => {
                 fontSize: '1rem',
                 cursor: 'pointer',
                 flexShrink: 0,
+                transition: 'all 0.2s ease',
+                transform: isAnimating && activeCategory === null ? 'scale(1.05)' : 'scale(1)',
               }}
             >
               Все
@@ -696,7 +712,7 @@ const ShopPage = () => {
             {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
+                onClick={() => changeCategoryWithAnimation(cat.id)}
                 style={{
                   padding: '0.5rem 1.5rem',
                   background: activeCategory === cat.id ? settings.primaryColor || '#ff7f32' : '#fff5e6',
@@ -707,6 +723,8 @@ const ShopPage = () => {
                   fontSize: '1rem',
                   cursor: 'pointer',
                   flexShrink: 0,
+                  transition: 'all 0.2s ease',
+                  transform: isAnimating && activeCategory === cat.id ? 'scale(1.05)' : 'scale(1)',
                 }}
               >
                 {cat.name}
@@ -736,7 +754,7 @@ const ShopPage = () => {
 
             return (
               <div
-                key={product.id}
+                key={`${activeCategory || 'all'}-${product.id}`} // Добавляем ключ категории для принудительного ре-рендера
                 className="product-card"
                 style={{
                   position: 'relative',
