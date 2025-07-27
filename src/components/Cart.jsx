@@ -508,41 +508,73 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                           {!item.isDelivery ? (
-                            // Обычные товары и flash-товары
-                            <>
-                              <button
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                style={{
-                                  background: '#f0f0f0',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  width: '28px',
-                                  height: '28px',
-                                  fontSize: '16px',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                −
-                              </button>
-                              <span style={{ fontWeight: 'bold', fontSize: '1rem', minWidth: '20px', textAlign: 'center' }}>
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                style={{
-                                  background: settings.primaryColor || '#ff7f32',
+                            // Проверяем, является ли товар flash-предложением
+                            item.isFlashOffer ? (
+                              // Для flash-товаров показываем только количество без возможности изменения
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                background: '#ffe6e6',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '6px',
+                                border: '1px solid #ff0844',
+                              }}>
+                                <span style={{ 
+                                  fontWeight: 'bold', 
+                                  fontSize: '0.9rem',
+                                  color: '#ff0844'
+                                }}>
+                                  Количество: {item.quantity}
+                                </span>
+                                <span style={{
+                                  background: '#ff0844',
                                   color: 'white',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  width: '28px',
-                                  height: '28px',
-                                  fontSize: '16px',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                +
-                              </button>
-                            </>
+                                  fontSize: '0.7rem',
+                                  padding: '0.2rem 0.4rem',
+                                  borderRadius: '4px',
+                                  fontWeight: 'bold'
+                                }}>
+                                  ТОЛЬКО 1 ШТ
+                                </span>
+                              </div>
+                            ) : (
+                              // Обычные товары - показываем кнопки +/-
+                              <>
+                                <button
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  style={{
+                                    background: '#f0f0f0',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    width: '28px',
+                                    height: '28px',
+                                    fontSize: '16px',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  −
+                                </button>
+                                <span style={{ fontWeight: 'bold', fontSize: '1rem', minWidth: '20px', textAlign: 'center' }}>
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  style={{
+                                    background: settings.primaryColor || '#ff7f32',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    width: '28px',
+                                    height: '28px',
+                                    fontSize: '16px',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  +
+                                </button>
+                              </>
+                            )
                           ) : (
                             // Доставка - авто
                             <div style={{
