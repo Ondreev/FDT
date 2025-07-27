@@ -154,11 +154,15 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const pendingCount = orders.filter(order => order.status === 'pending').length;
   const averageTimeStats = calculateAverageTime(orders);
   
-  // Правильный расчет трафика и среднего чека
+  // Правильный расчет трафика и среднего чека с московским временем
   const todayOrders = orders.filter(order => {
     if (!order.date) return false;
     try {
-      const today = new Date().toISOString().split('T')[0];
+      // Правильный расчет московского времени
+      const now = new Date();
+      const moscowTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
+      const today = moscowTime.toISOString().split('T')[0];
+      
       let orderDate;
       
       if (typeof order.date === 'string' && order.date.includes('.') && !order.date.includes('T')) {
@@ -265,7 +269,9 @@ const AdminDashboard = ({ admin, onLogout }) => {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       <style>
         {`
@@ -288,7 +294,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
         background: 'white',
         padding: '1.5rem',
         boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-        borderBottom: '1px solid #f0f0f0'
+        borderBottom: '1px solid #f0f0f0',
+        width: '100%',
+        maxWidth: '800px',
+        margin: '0 auto'
       }}>
         {/* Заголовок */}
         <div style={{
@@ -438,9 +447,9 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
         {/* Кнопки управления */}
         <div className="admin-buttons" style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto auto',
+          display: 'flex',
           gap: '0.8rem',
+          justifyContent: 'center',
           alignItems: 'center'
         }}>
           <button
