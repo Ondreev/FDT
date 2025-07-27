@@ -1338,10 +1338,11 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
       </div>
 
+      {/* Контент вне sticky-контейнера */}
       <div style={{
         maxWidth: '800px',
         margin: '0 auto',
-        padding: '2rem'
+        padding: '2rem 2rem 0 2rem'
       }}>
         <div style={{
           background: 'white',
@@ -1378,19 +1379,25 @@ const AdminDashboard = ({ admin, onLogout }) => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* ✅ ДОБАВЛЕНО: Закрепленные категории (sticky) как в App.jsx */}
+      {/* ✅ ИСПРАВЛЕНО: Закрепленные категории (sticky) вынесены из контейнера */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 900,
+        background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
+        padding: '1rem 0',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        borderBottom: '1px solid rgba(255,255,255,0.2)'
+      }}>
         <div style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 900,
-          background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '0 2rem',
           display: 'flex',
           gap: '0.5rem',
-          marginBottom: '2rem',
-          flexWrap: 'wrap',
-          paddingTop: '1rem',
-          paddingBottom: '1rem'
+          flexWrap: 'wrap'
         }}>
           {[
             { key: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
@@ -1428,6 +1435,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
             transform: `translateX(${swipeOffset}px)`,
             opacity: isAnimating ? 0.6 : 1,
           }}
+        >
         >
           {filteredOrders.length === 0 ? (
             <div style={{
