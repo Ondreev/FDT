@@ -2,13 +2,21 @@ import { useState, useEffect } from 'react';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
 
-// Функция для форматирования числа с пробелами так
+// Функция для форматирования числа с пробелами
 const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
 
-// Функция для форматирования даты
+// ✅ ИСПРАВЛЕННАЯ функция для форматирования даты
 const formatDate = (dateStr) => {
+  // Если это уже строка в нужном формате (25.07.2025 19:51:45), просто возвращаем
+  if (!dateStr) return 'Нет времени';
+  
+  if (typeof dateStr === 'string' && dateStr.includes('.') && dateStr.includes(':')) {
+    return dateStr;
+  }
+  
+  // Иначе пытаемся парсить как дату
   const date = new Date(dateStr);
   return date.toLocaleDateString('ru-RU', {
     day: '2-digit',
@@ -102,7 +110,8 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             fontSize: '0.9rem',
             color: '#666'
           }}>
-            {formatDate(order.truedate)} • {order.customerName}
+            {/* ✅ ИЗМЕНЕНО: Используем поле date вместо truedate */}
+            {formatDate(order.date)} • {order.customerName}
           </div>
         </div>
         <div style={{
@@ -341,8 +350,27 @@ const AdminDashboard = ({ admin, onLogout }) => {
       const ordersData = await ordersRes.json();
       const statusData = await statusRes.json();
 
-      // Сортируем заказы по дате (новые сверху)
-      const sortedOrders = ordersData.sort((a, b) => new Date(b.truedate) - new Date(a.truedate));
+      // ✅ ИСПРАВЛЕНО: Сортируем заказы по полю date (новые сверху)
+      const sortedOrders = ordersData.sort((a, b) => {
+        if (!a.date && !b.date) return 0;
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        
+        // Парсим даты из формата "25.07.2025 19:51:45"
+        const parseCustomDate = (dateStr) => {
+          if (!dateStr) return 0;
+          try {
+            const [datePart, timePart] = dateStr.split(' ');
+            const [day, month, year] = datePart.split('.');
+            const [hours, minutes, seconds] = timePart.split(':');
+            return new Date(year, month - 1, day, hours, minutes, seconds).getTime();
+          } catch (error) {
+            return 0;
+          }
+        };
+        
+        return parseCustomDate(b.date) - parseCustomDate(a.date);
+      });
 
       setOrders(sortedOrders);
       setStatusLabels(statusData);
@@ -357,17 +385,22 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      // Обновляем статус заказа (здесь нужно добавить API метод)
-      // const response = await fetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`);
+      // Обновляем статус заказа
+      const response = await fetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`);
       
-      // Пока просто обновляем локально
-      setOrders(prev => prev.map(order => 
-        order.orderId === orderId 
-          ? { ...order, status: newStatus }
-          : order
-      ));
+      if (response.ok) {
+        // Обновляем локально
+        setOrders(prev => prev.map(order => 
+          order.orderId === orderId 
+            ? { ...order, status: newStatus }
+            : order
+        ));
+      } else {
+        alert('Ошибка обновления статуса. Попробуйте еще раз.');
+      }
     } catch (error) {
       console.error('Error updating status:', error);
+      alert('Ошибка соединения. Проверьте интернет.');
     }
   };
 
@@ -386,9 +419,24 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const filteredOrders = filterOrders(orders, activeFilter);
   const pendingCount = orders.filter(order => order.status === 'pending').length;
+  
+  // ✅ ИСПРАВЛЕНО: Считаем доходы за сегодня по полю date
   const totalToday = orders
-    .filter(order => new Date(order.truedate).toDateString() === new Date().toDateString())
-    .reduce((sum, order) => sum + parseInt(order.total), 0);
+    .filter(order => {
+      if (!order.date) return false;
+      try {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateParts = order.date.split(' ')[0].split('.'); // "25.07.2025"
+        if (dateParts.length === 3) {
+          const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Конвертируем в YYYY-MM-DD
+          return orderDate === today;
+        }
+        return false;
+      } catch (error) {
+        return false;
+      }
+    })
+    .reduce((sum, order) => sum + parseInt(order.total || 0), 0);
 
   const getBotMessage = () => {
     if (pendingCount === 0) {
