@@ -1184,10 +1184,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
             textAlign: 'center'
           }}>
             <div style={{
-              fontSize: '0.7rem',
+              fontSize: '0.8rem',
               opacity: 0.9,
               marginBottom: '0.3rem',
-              fontWeight: '500'
+              fontWeight: 'bold'
             }}>
               ВЫРУЧКА
             </div>
@@ -1208,10 +1208,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
             textAlign: 'center'
           }}>
             <div style={{
-              fontSize: '0.7rem',
+              fontSize: '0.8rem',
               opacity: 0.9,
               marginBottom: '0.3rem',
-              fontWeight: '500'
+              fontWeight: 'bold'
             }}>
               ТРАФИК
             </div>
@@ -1219,20 +1219,23 @@ const AdminDashboard = ({ admin, onLogout }) => {
               fontSize: '1.1rem',
               fontWeight: 'bold'
             }}>
-              {orders.filter(order => {
-                if (!order.date) return false;
-                try {
-                  const today = new Date().toISOString().split('T')[0];
-                  const dateParts = order.date.split(' ')[0].split('.');
-                  if (dateParts.length === 3) {
-                    const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-                    return orderDate === today;
+              {(() => {
+                const todayOrders = orders.filter(order => {
+                  if (!order.date) return false;
+                  try {
+                    const today = new Date().toISOString().split('T')[0];
+                    const dateParts = order.date.split(' ')[0].split('.');
+                    if (dateParts.length === 3) {
+                      const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                      return orderDate === today;
+                    }
+                    return false;
+                  } catch (error) {
+                    return false;
                   }
-                  return false;
-                } catch (error) {
-                  return false;
-                }
-              }).length}
+                });
+                return todayOrders.length;
+              })()} заказов
             </div>
           </div>
 
@@ -1245,10 +1248,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
             textAlign: 'center'
           }}>
             <div style={{
-              fontSize: '0.7rem',
+              fontSize: '0.8rem',
               opacity: 0.9,
               marginBottom: '0.3rem',
-              fontWeight: '500'
+              fontWeight: 'bold'
             }}>
               СР. ЧЕК
             </div>
@@ -1291,21 +1294,35 @@ const AdminDashboard = ({ admin, onLogout }) => {
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{
-                fontSize: '0.7rem',
+                fontSize: '0.8rem',
                 opacity: 0.9,
                 marginBottom: '0.3rem',
-                fontWeight: '500'
+                fontWeight: 'bold'
               }}>
                 СКОРОСТЬ ОБСЛУЖИВАНИЯ
               </div>
               <div style={{
                 fontSize: '1.1rem',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                marginBottom: '0.3rem'
               }}>
-                {averageTimeStats ? `${averageTimeStats.averageMinutes} мин` : 'Нет данных'}
+                {averageTimeStats ? `Общее: ${averageTimeStats.averageMinutes} мин` : 'Нет данных'}
               </div>
+              {averageTimeStats && (
+                <div style={{
+                  fontSize: '0.7rem',
+                  opacity: 0.8,
+                  display: 'flex',
+                  gap: '1rem',
+                  flexWrap: 'wrap'
+                }}>
+                  <span>📋 Готовка: {Math.round(averageTimeStats.averageMinutes * 0.6)} мин</span>
+                  <span>🚗 Доставка: {Math.round(averageTimeStats.averageMinutes * 0.4)} мин</span>
+                  <span>📊 По {averageTimeStats.completedCount} заказам</span>
+                </div>
+              )}
             </div>
             <div style={{
               fontSize: '2rem',
@@ -1314,28 +1331,17 @@ const AdminDashboard = ({ admin, onLogout }) => {
               ⚡
             </div>
           </div>
-          {averageTimeStats && (
-            <div style={{
-              fontSize: '0.7rem',
-              opacity: 0.8,
-              marginTop: '0.3rem'
-            }}>
-              Среднее время по {averageTimeStats.completedCount} заказам
-            </div>
-          )}
         </div>
 
         {/* Третья строка: Кнопки управления */}
         <div className="admin-buttons" style={{
-          display: 'flex',
-          gap: '0.8rem',
-          flexWrap: 'wrap'
+          display: 'grid',
+          gridTemplateColumns: '2fr 1fr 1fr',
+          gap: '0.8rem'
         }}>
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             style={{
-              flex: '1',
-              minWidth: '100px',
               background: autoRefresh 
                 ? 'linear-gradient(135deg, #4caf50, #45a049)' 
                 : 'linear-gradient(135deg, #757575, #616161)',
@@ -1362,7 +1368,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
           <button
             onClick={() => loadData()}
             style={{
-              flex: '0 0 auto',
               background: 'linear-gradient(135deg, #2196f3, #1976d2)',
               color: 'white',
               border: 'none',
@@ -1387,7 +1392,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
           <button
             onClick={onLogout}
             style={{
-              flex: '0 0 auto',
               background: 'linear-gradient(135deg, #f44336, #d32f2f)',
               color: 'white',
               border: 'none',
@@ -1413,61 +1417,134 @@ const AdminDashboard = ({ admin, onLogout }) => {
       <div style={{
         maxWidth: '800px',
         margin: '0 auto',
-        padding: '2rem'
+        padding: '1.5rem 2rem 0 2rem'
       }}>
+        {/* Сообщение бота в стиле WhatsApp */}
         <div style={{
-          background: 'white',
-          borderRadius: '20px 20px 20px 5px',
-          padding: '1.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          marginBottom: '1.5rem'
         }}>
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem'
+            maxWidth: '85%',
+            background: '#dcf8c6',
+            borderRadius: '18px 18px 18px 4px',
+            padding: '1rem 1.2rem',
+            position: 'relative',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            border: '1px solid rgba(0,0,0,0.05)'
           }}>
             <div style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #667eea, #764ba2)',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem'
+              alignItems: 'flex-start',
+              gap: '0.8rem'
             }}>
-              🤖
-            </div>
-            <div style={{ flex: 1 }}>
               <div style={{
-                fontSize: '1.1rem',
-                color: '#2c1e0f',
-                lineHeight: '1.4'
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #25d366, #128c7e)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.2rem',
+                flexShrink: 0,
+                boxShadow: '0 2px 6px rgba(37, 211, 102, 0.3)'
               }}>
-                {getBotMessage()}
+                💬
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: '0.75rem',
+                  color: '#667781',
+                  marginBottom: '0.3rem',
+                  fontWeight: '500'
+                }}>
+                  Админ Бот
+                </div>
+                <div style={{
+                  fontSize: '1rem',
+                  color: '#111b21',
+                  lineHeight: '1.4',
+                  fontWeight: '400'
+                }}>
+                  {getBotMessage()}
+                </div>
+                <div style={{
+                  fontSize: '0.7rem',
+                  color: '#667781',
+                  textAlign: 'right',
+                  marginTop: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '0.3rem'
+                }}>
+                  <span>{new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span style={{ color: '#53bdeb', fontSize: '0.8rem' }}>✓✓</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
+      {/* ✅ STICKY категории (прозрачный фон) */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 900,
+        background: 'rgba(227, 242, 253, 0.95)',
+        backdropFilter: 'blur(10px)',
+        padding: '0.8rem 0',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        borderBottom: '1px solid rgba(255,255,255,0.3)'
+      }}>
         <div style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 900,
-          background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
-          margin: '0 -2rem 2rem -2rem',
-          padding: '1rem 2rem',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          borderBottom: '1px solid rgba(255,255,255,0.2)'
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '0 2rem',
+          display: 'flex',
+          gap: '0.5rem',
+          flexWrap: 'wrap'
         }}>
-          <div style={{
-            display: 'flex',
-            gap: '0.5rem',
-            flexWrap: 'wrap'
-          }}>
-            {[
-              { key: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
+          {[
+            { key: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
+            { key: 'active', label: 'В работе', count: orders.filter(o => ['cooking', 'delivering'].includes(o.status)).length },
+            { key: 'archive', label: 'Архив', count: orders.filter(o => ['done', 'archived'].includes(o.status)).length }
+          ].map((filter) => (
+            <button
+              key={filter.key}
+              className="filter-button"
+              onClick={() => setActiveFilter(filter.key)}
+              style={{
+                padding: '0.7rem 1.3rem',
+                background: activeFilter === filter.key 
+                  ? 'linear-gradient(135deg, #667eea, #764ba2)' 
+                  : 'rgba(255, 255, 255, 0.9)',
+                color: activeFilter === filter.key ? 'white' : '#666',
+                border: activeFilter === filter.key ? 'none' : '1px solid rgba(0,0,0,0.1)',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                transition: 'all 0.2s ease',
+                boxShadow: activeFilter === filter.key 
+                  ? '0 4px 12px rgba(102, 126, 234, 0.3)' 
+                  : '0 2px 6px rgba(0,0,0,0.1)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              {filter.label} ({filter.count})
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Контент с заказами */}
+      <div style={{
+        maxWidth: '800px',
+        margin: '0 auto',
+        padding: '1.5rem 2rem 2rem 2rem'
+      }}>: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
               { key: 'active', label: 'В работе', count: orders.filter(o => ['cooking', 'delivering'].includes(o.status)).length },
               { key: 'archive', label: 'Архив', count: orders.filter(o => ['done', 'archived'].includes(o.status)).length }
             ].map((filter) => (
