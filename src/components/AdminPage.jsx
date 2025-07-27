@@ -1133,112 +1133,279 @@ const AdminDashboard = ({ admin, onLogout }) => {
         `}
       </style>
       
-      <div className="admin-header" style={{
+      <div style={{
         background: 'white',
-        padding: '1rem 2rem',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
+        padding: '1.5rem',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+        borderBottom: '1px solid #f0f0f0'
       }}>
-        <div>
+        {/* Заголовок */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1.5rem'
+        }}>
           <h1 style={{
-            fontSize: '1.8rem',
+            fontSize: '1.5rem',
             fontWeight: 'bold',
             color: '#2c1e0f',
-            margin: 0
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
           }}>
             👑 Админ панель
           </h1>
           <div style={{
-            fontSize: '0.9rem',
-            color: '#666'
+            fontSize: '0.8rem',
+            color: '#999',
+            background: '#f8f9fa',
+            padding: '0.3rem 0.8rem',
+            borderRadius: '12px'
           }}>
-            Добро пожаловать, {admin.login}
-            {lastUpdateTime && (
-              <div style={{ fontSize: '0.7rem', color: '#999' }}>
-                Обновлено: {lastUpdateTime.toLocaleTimeString('ru-RU')}
-              </div>
-            )}
+            {admin.login}
           </div>
         </div>
-        
-        <div className="header-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <div className="today-sum" style={{
-            background: '#e8f5e8',
-            color: '#2e7d32',
-            padding: '0.5rem 1rem',
-            borderRadius: '20px',
-            fontSize: '0.9rem',
-            fontWeight: 'bold'
-          }}>
-            Сегодня: {formatNumber(totalToday)} ₽
-          </div>
 
-          {averageTimeStats && (
+        {/* Первая строка: Выручка, Трафик, Средний чек */}
+        <div className="admin-metrics-row" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '1rem',
+          marginBottom: '1rem'
+        }}>
+          {/* Выручка */}
+          <div className="admin-metrics-item" style={{
+            background: 'linear-gradient(135deg, #4caf50, #45a049)',
+            borderRadius: '12px',
+            padding: '1rem',
+            color: 'white',
+            textAlign: 'center'
+          }}>
             <div style={{
-              background: '#e3f2fd',
-              color: '#1976d2',
-              padding: '0.5rem 1rem',
-              borderRadius: '20px',
-              fontSize: '0.9rem',
+              fontSize: '0.7rem',
+              opacity: 0.9,
+              marginBottom: '0.3rem',
+              fontWeight: '500'
+            }}>
+              ВЫРУЧКА
+            </div>
+            <div style={{
+              fontSize: '1.1rem',
               fontWeight: 'bold'
             }}>
-              ⏱️ Среднее: {averageTimeStats.averageMinutes} мин ({averageTimeStats.completedCount})
+              {formatNumber(totalToday)} ₽
+            </div>
+          </div>
+
+          {/* Трафик */}
+          <div className="admin-metrics-item" style={{
+            background: 'linear-gradient(135deg, #2196f3, #1976d2)',
+            borderRadius: '12px',
+            padding: '1rem',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              fontSize: '0.7rem',
+              opacity: 0.9,
+              marginBottom: '0.3rem',
+              fontWeight: '500'
+            }}>
+              ТРАФИК
+            </div>
+            <div style={{
+              fontSize: '1.1rem',
+              fontWeight: 'bold'
+            }}>
+              {orders.filter(order => {
+                if (!order.date) return false;
+                try {
+                  const today = new Date().toISOString().split('T')[0];
+                  const dateParts = order.date.split(' ')[0].split('.');
+                  if (dateParts.length === 3) {
+                    const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                    return orderDate === today;
+                  }
+                  return false;
+                } catch (error) {
+                  return false;
+                }
+              }).length} заказов
+            </div>
+          </div>
+
+          {/* Средний чек */}
+          <div className="admin-metrics-item" style={{
+            background: 'linear-gradient(135deg, #ff9800, #f57c00)',
+            borderRadius: '12px',
+            padding: '1rem',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              fontSize: '0.7rem',
+              opacity: 0.9,
+              marginBottom: '0.3rem',
+              fontWeight: '500'
+            }}>
+              СРЕДНИЙ ЧЕК
+            </div>
+            <div style={{
+              fontSize: '1.1rem',
+              fontWeight: 'bold'
+            }}>
+              {(() => {
+                const todayOrders = orders.filter(order => {
+                  if (!order.date) return false;
+                  try {
+                    const today = new Date().toISOString().split('T')[0];
+                    const dateParts = order.date.split(' ')[0].split('.');
+                    if (dateParts.length === 3) {
+                      const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                      return orderDate === today;
+                    }
+                    return false;
+                  } catch (error) {
+                    return false;
+                  }
+                });
+                const avg = todayOrders.length > 0 ? totalToday / todayOrders.length : 0;
+                return formatNumber(Math.round(avg));
+              })()} ₽
+            </div>
+          </div>
+        </div>
+
+        {/* Вторая строка: Скорость обслуживания */}
+        <div style={{
+          background: 'linear-gradient(135deg, #9c27b0, #7b1fa2)',
+          borderRadius: '12px',
+          padding: '1rem',
+          color: 'white',
+          marginBottom: '1rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <div>
+              <div style={{
+                fontSize: '0.7rem',
+                opacity: 0.9,
+                marginBottom: '0.3rem',
+                fontWeight: '500'
+              }}>
+                СКОРОСТЬ ОБСЛУЖИВАНИЯ
+              </div>
+              <div style={{
+                fontSize: '1.1rem',
+                fontWeight: 'bold'
+              }}>
+                {averageTimeStats ? `${averageTimeStats.averageMinutes} мин` : 'Нет данных'}
+              </div>
+            </div>
+            <div style={{
+              fontSize: '2rem',
+              opacity: 0.8
+            }}>
+              ⚡
+            </div>
+          </div>
+          {averageTimeStats && (
+            <div style={{
+              fontSize: '0.7rem',
+              opacity: 0.8,
+              marginTop: '0.3rem'
+            }}>
+              Среднее время по {averageTimeStats.completedCount} заказам
             </div>
           )}
-          
+        </div>
+
+        {/* Третья строка: Кнопки управления */}
+        <div className="admin-buttons" style={{
+          display: 'flex',
+          gap: '0.8rem',
+          flexWrap: 'wrap'
+        }}>
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             style={{
-              background: autoRefresh ? '#4caf50' : '#757575',
+              flex: '1',
+              minWidth: '120px',
+              background: autoRefresh 
+                ? 'linear-gradient(135deg, #4caf50, #45a049)' 
+                : 'linear-gradient(135deg, #757575, #616161)',
               color: 'white',
               border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
+              padding: '0.8rem 1rem',
+              borderRadius: '10px',
               cursor: 'pointer',
-              fontSize: '0.9rem',
+              fontSize: '0.8rem',
+              fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              justifyContent: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
             }}
             title={autoRefresh ? 'Автообновление включено' : 'Автообновление отключено'}
           >
-            {autoRefresh ? '🔄' : '⏸️'} 
-            <span style={{ fontSize: '0.8rem' }}>
-              {autoRefresh ? 'Авто' : 'Выкл'}
-            </span>
+            <span style={{ fontSize: '1rem' }}>{autoRefresh ? '🔄' : '⏸️'}</span>
+            <span>{autoRefresh ? 'АВТО' : 'ПАУЗА'}</span>
           </button>
 
           <button
             onClick={() => loadData()}
             style={{
-              background: '#2196f3',
+              flex: '0 0 auto',
+              background: 'linear-gradient(135deg, #2196f3, #1976d2)',
               color: 'white',
               border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
+              padding: '0.8rem 1rem',
+              borderRadius: '10px',
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
             }}
-            title="Обновить заказы"
+            title="Обновить данные"
           >
-            ↻
+            <span style={{ fontSize: '1rem' }}>↻</span>
+            <span>ОБНОВИТЬ</span>
           </button>
           
           <button
             onClick={onLogout}
             style={{
-              background: '#ff5722',
+              flex: '0 0 auto',
+              background: 'linear-gradient(135deg, #f44336, #d32f2f)',
               color: 'white',
               border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
+              padding: '0.8rem 1rem',
+              borderRadius: '10px',
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
             }}
           >
-            Выйти
+            <span style={{ fontSize: '1rem' }}>🚪</span>
+            <span>ВЫХОД</span>
           </button>
         </div>
       </div>
