@@ -365,21 +365,6 @@ const ShopPage = () => {
     setCart([]);
   };
 
-  // Функция для смены категории с анимацией
-  const changeCategoryWithAnimation = (newCategoryId) => {
-    if (newCategoryId === activeCategory || isAnimating) return;
-    
-    setIsAnimating(true);
-    setActiveCategory(newCategoryId);
-    
-    setTimeout(() => {
-      setSwipeOffset(0);
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 400);
-    }, 50);
-  };
-
   // Функции для рейтинга
   const openRatingPopup = (product) => {
     setRatingPopup({ isOpen: true, product });
@@ -653,7 +638,7 @@ const ShopPage = () => {
             }}
           >
             <button
-              onClick={() => changeCategoryWithAnimation(null)}
+              onClick={() => setActiveCategory(null)}
               style={{
                 padding: '0.5rem 1.5rem',
                 background: activeCategory === null ? settings.primaryColor || '#ff7f32' : '#fff5e6',
@@ -664,8 +649,6 @@ const ShopPage = () => {
                 fontSize: '1rem',
                 cursor: 'pointer',
                 flexShrink: 0,
-                transition: 'all 0.2s ease',
-                transform: isAnimating && activeCategory === null ? 'scale(1.05)' : 'scale(1)',
               }}
             >
               Все
@@ -673,7 +656,7 @@ const ShopPage = () => {
             {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => changeCategoryWithAnimation(cat.id)}
+                onClick={() => setActiveCategory(cat.id)}
                 style={{
                   padding: '0.5rem 1.5rem',
                   background: activeCategory === cat.id ? settings.primaryColor || '#ff7f32' : '#fff5e6',
@@ -684,8 +667,6 @@ const ShopPage = () => {
                   fontSize: '1rem',
                   cursor: 'pointer',
                   flexShrink: 0,
-                  transition: 'all 0.2s ease',
-                  transform: isAnimating && activeCategory === cat.id ? 'scale(1.05)' : 'scale(1)',
                 }}
               >
                 {cat.name}
@@ -803,6 +784,41 @@ const ShopPage = () => {
                   }}
                 >
                   <button
+                    onClick={() => {
+                      const existing = cart.find(item => item.id === product.id);
+                      if (existing && existing.quantity > 1) {
+                        updateQuantity(product.id, existing.quantity - 1);
+                      } else {
+                        removeFromCart(product.id);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: settings.primaryColor || '#ff7f32',
+                      color: '#fff',
+                      fontSize: '1.25rem',
+                      padding: '0.2rem 0.7rem',
+                      border: 'none',
+                      borderRadius: '12px 0 0 12px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    −
+                  </button>
+                  <div
+                    style={{
+                      background: '#fff1dd',
+                      padding: '0.2rem 1rem',
+                      border: 'none',
+                      fontWeight: 'bold',
+                      borderRadius: '4px',
+                      minWidth: '40px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {cart.find(item => item.id === product.id)?.quantity || 0}
+                  </div>
+                  <button
                     onClick={() => addToCart(product)}
                     style={{
                       backgroundColor: settings.primaryColor || '#ff7f32',
@@ -887,39 +903,4 @@ export default function App() {
       </Routes>
     </Router>
   );
-}={() => {
-                      const existing = cart.find(item => item.id === product.id);
-                      if (existing && existing.quantity > 1) {
-                        updateQuantity(product.id, existing.quantity - 1);
-                      } else {
-                        removeFromCart(product.id);
-                      }
-                    }}
-                    style={{
-                      backgroundColor: settings.primaryColor || '#ff7f32',
-                      color: '#fff',
-                      fontSize: '1.25rem',
-                      padding: '0.2rem 0.7rem',
-                      border: 'none',
-                      borderRadius: '12px 0 0 12px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    −
-                  </button>
-                  <div
-                    style={{
-                      background: '#fff1dd',
-                      padding: '0.2rem 1rem',
-                      border: 'none',
-                      fontWeight: 'bold',
-                      borderRadius: '4px',
-                      minWidth: '40px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {cart.find(item => item.id === product.id)?.quantity || 0}
-                  </div>
-                  <button
-                    onClick
+}
