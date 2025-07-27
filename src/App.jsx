@@ -377,7 +377,7 @@ const ShopPage = () => {
       setSwipeOffset(0);
       setTimeout(() => {
         setIsAnimating(false);
-      }, window.innerWidth <= 768 ? 400 : 600);
+      }, 400);
     }, 50);
   };
 
@@ -401,7 +401,7 @@ const ShopPage = () => {
   // Функции для плавного свайпа
   const handleTouchStart = (e) => {
     if (categories.length === 0 || isAnimating) return;
-    setTouchStartY(e.touches[0].clientY);
+    setTouchStartX(e.touches[0].clientX);
     setIsSwiping(true);
     setSwipeOffset(0);
   };
@@ -461,7 +461,7 @@ const ShopPage = () => {
           setSwipeOffset(0);
           setTimeout(() => {
             setIsAnimating(false);
-          }, window.innerWidth <= 768 ? 400 : 600); // Быстрее на мобильных
+          }, 400);
         }, 50);
       } else {
         // Возвращаем на место
@@ -560,15 +560,9 @@ const ShopPage = () => {
             transition: all 0.2s ease-out;
           }
 
-          /* Оптимизированные анимации для мобильных */
-          @media (max-width: 768px) {
+          @media (max-width: 400px) {
             .product-grid {
-              transition: all 0.15s ease-out;
-            }
-            
-            .product-card {
-              backface-visibility: hidden;
-              transform: translateZ(0);
+              grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
             }
           }
 
@@ -733,46 +727,33 @@ const ShopPage = () => {
           </div>
         )}
 
-        {/* Оптимизированная карусель */}
+        {/* Простая карусель без тетриса */}
         <div 
           className={`product-grid ${isSwiping && !isAnimating ? 'swiping' : ''} ${isAnimating ? 'animating' : ''}`}
           style={{
             transform: `translateX(${swipeOffset}px)`,
-            opacity: isAnimating ? 0.4 : 1,
+            opacity: isAnimating ? 0.5 : 1,
           }}
         >
-          {filteredProducts.map((product, index) => {
-            // Определяем анимацию в зависимости от размера экрана
-            const isMobile = window.innerWidth <= 768;
-            const getAnimation = (i) => {
-              if (isMobile) {
-                return 'mobileSlideIn 0.3s ease forwards';
-              }
-              const directions = ['tetrisFromLeft', 'tetrisFromTop', 'tetrisFromRight', 'tetrisFromBottom'];
-              return `${directions[i % 4]} 0.5s ease forwards`;
-            };
-
-            return (
-              <div
-                key={`${activeCategory || 'all'}-${product.id}`} // Добавляем ключ категории для принудительного ре-рендера
-                className="product-card"
-                style={{
-                  position: 'relative',
-                  background: '#fff7ed',
-                  borderRadius: '20px',
-                  padding: '1rem',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  transform: `scale(${isSwiping ? 0.99 : 1})`,
-                  transition: 'transform 0.15s ease',
-                  animationDelay: isAnimating ? `${index * (isMobile ? 0.05 : 0.08)}s` : '0s',
-                  animation: isAnimating ? getAnimation(index) : 'none',
-                  backfaceVisibility: 'hidden',
-                  WebkitBackfaceVisibility: 'hidden',
-                }}
-              >
+          {filteredProducts.map((product, index) => (
+            <div
+              key={product.id}
+              className="product-card"
+              style={{
+                position: 'relative',
+                background: '#fff7ed',
+                borderRadius: '20px',
+                padding: '1rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                transform: `scale(${isSwiping ? 0.98 : 1})`,
+                transition: 'transform 0.2s ease',
+                animationDelay: isAnimating ? `${index * 0.05}s` : '0s',
+                animation: isAnimating ? 'fadeInUp 0.4s ease forwards' : 'none',
+              }}
+            >
                 {/* Рейтинг справа вверху */}
                 {product.rating && (
                   <div style={{
