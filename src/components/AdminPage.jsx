@@ -6,27 +6,41 @@ const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
 
-// ✅ ИСПРАВЛЕННАЯ функция форматирования даты
+// ✅ УНИВЕРСАЛЬНАЯ функция форматирования даты
 const formatDate = (dateStr) => {
-  // Если это уже строка в нужном формате (25.07.2025 19:51:45), просто возвращаем
   if (!dateStr) return 'Нет времени';
   
-  if (typeof dateStr === 'string' && dateStr.includes('.') && dateStr.includes(':')) {
-    return dateStr;
+  try {
+    // Если это уже строка в нужном формате (25.07.2025 19:51:45), просто возвращаем
+    if (typeof dateStr === 'string' && dateStr.includes('.') && dateStr.includes(':') && !dateStr.includes('T')) {
+      return dateStr;
+    }
+    
+    // Если это ISO формат (2025-07-27T12:26:03.000Z) или Date объект, парсим
+    const date = new Date(dateStr);
+    
+    // Проверяем, что дата валидна
+    if (isNaN(date.getTime())) {
+      return String(dateStr); // Возвращаем как есть, если не можем распарсить
+    }
+    
+    // Форматируем в нужный формат
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+    
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return String(dateStr);
   }
-  
-  // Иначе пытаемся парсить как дату
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
 };
 
-// ✅ ИСПРАВЛЕННАЯ функция для расчета среднего времени выполнения заказов
+// ✅ УНИВЕРСАЛЬНАЯ функция для расчета среднего времени выполнения заказов
 const calculateAverageTime = (orders) => {
   const todayMoscow = (() => {
     const now = new Date();
@@ -37,16 +51,24 @@ const calculateAverageTime = (orders) => {
   })();
 
   const completedToday = orders.filter(order => {
-    // ✅ ИЗМЕНЕНО: Используем поле date вместо truedate
     if (!order.date) return false;
     try {
-      // Парсим дату из строки формата "25.07.2025 19:51:45"
-      const dateParts = order.date.split(' ')[0].split('.');
-      if (dateParts.length === 3) {
-        const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Конвертируем в YYYY-MM-DD
-        return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
+      let orderDate;
+      
+      // Обрабатываем разные форматы даты
+      if (typeof order.date === 'string' && order.date.includes('.') && !order.date.includes('T')) {
+        // Формат: "25.07.2025 19:51:45"
+        const dateParts = order.date.split(' ')[0].split('.');
+        if (dateParts.length === 3) {
+          orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Конвертируем в YYYY-MM-DD
+        }
+      } else {
+        // ISO формат или Date объект
+        const dateObj = new Date(order.date);
+        orderDate = dateObj.toISOString().split('T')[0];
       }
-      return false;
+      
+      return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
     } catch (error) {
       return false;
     }
@@ -65,7 +87,7 @@ const calculateAverageTime = (orders) => {
   return { averageMinutes, completedCount: completedToday.length };
 };
 
-// ✅ ИСПРАВЛЕННЫЙ компонент OrderTimer
+// ✅ УНИВЕРСАЛЬНЫЙ компонент OrderTimer
 const OrderTimer = ({ orderDate, status }) => {
   const [elapsed, setElapsed] = useState(0);
   const [isRunning, setIsRunning] = useState(!['done', 'archived'].includes(status));
@@ -73,17 +95,23 @@ const OrderTimer = ({ orderDate, status }) => {
   useEffect(() => {
     if (!orderDate) return;
     
-    // ✅ ИСПРАВЛЕНО: Парсим дату из строки формата "25.07.2025 19:51:45"
     let startTime;
     try {
-      if (typeof orderDate === 'string' && orderDate.includes('.') && orderDate.includes(':')) {
+      if (typeof orderDate === 'string' && orderDate.includes('.') && orderDate.includes(':') && !orderDate.includes('T')) {
         // Формат: "25.07.2025 19:51:45"
         const [datePart, timePart] = orderDate.split(' ');
         const [day, month, year] = datePart.split('.');
         const [hours, minutes, seconds] = timePart.split(':');
         startTime = new Date(year, month - 1, day, hours, minutes, seconds).getTime();
       } else {
+        // ISO формат (2025-07-27T12:26:03.000Z) или Date объект
         startTime = new Date(orderDate).getTime();
+      }
+      
+      // Проверяем валидность времени
+      if (isNaN(startTime)) {
+        console.error('Invalid date:', orderDate);
+        return;
       }
     } catch (error) {
       console.error('Error parsing date:', error);
@@ -780,26 +808,33 @@ const AdminDashboard = ({ admin, onLogout }) => {
       const statusData = await statusRes.json();
 
       if (Array.isArray(ordersData)) {
-        // ✅ ИЗМЕНЕНО: Сортируем по полю date вместо truedate
+        // ✅ УНИВЕРСАЛЬНАЯ сортировка по полю date
         const sorted = ordersData.sort((a, b) => {
           if (!a.date && !b.date) return 0;
           if (!a.date) return 1;
           if (!b.date) return -1;
           
-          // Парсим даты из формата "25.07.2025 19:51:45"
-          const parseCustomDate = (dateStr) => {
+          // Универсальная функция парсинга даты
+          const parseDate = (dateStr) => {
             if (!dateStr) return 0;
             try {
-              const [datePart, timePart] = dateStr.split(' ');
-              const [day, month, year] = datePart.split('.');
-              const [hours, minutes, seconds] = timePart.split(':');
-              return new Date(year, month - 1, day, hours, minutes, seconds).getTime();
+              if (typeof dateStr === 'string' && dateStr.includes('.') && dateStr.includes(':') && !dateStr.includes('T')) {
+                // Формат: "25.07.2025 19:51:45"
+                const [datePart, timePart] = dateStr.split(' ');
+                const [day, month, year] = datePart.split('.');
+                const [hours, minutes, seconds] = timePart.split(':');
+                return new Date(year, month - 1, day, hours, minutes, seconds).getTime();
+              } else {
+                // ISO формат или Date объект
+                return new Date(dateStr).getTime();
+              }
             } catch (error) {
+              console.error('Error parsing date for sorting:', error);
               return 0;
             }
           };
           
-          return parseCustomDate(b.date) - parseCustomDate(a.date);
+          return parseDate(b.date) - parseDate(a.date);
         });
         
         // Упрощенная проверка новых заказов без уведомлений на iOS
@@ -890,17 +925,27 @@ const AdminDashboard = ({ admin, onLogout }) => {
   
   const todayMoscow = getMoscowDate();
   
-  // ✅ ИЗМЕНЕНО: Считаем доходы за сегодня по полю date
+  // ✅ УНИВЕРСАЛЬНЫЙ подсчет доходов за сегодня по полю date
   const totalToday = orders
     .filter(order => {
       if (!order.date) return false;
       try {
-        const dateParts = order.date.split(' ')[0].split('.');
-        if (dateParts.length === 3) {
-          const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Конвертируем в YYYY-MM-DD
-          return orderDate === todayMoscow;
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        let orderDate;
+        
+        if (typeof order.date === 'string' && order.date.includes('.') && !order.date.includes('T')) {
+          // Формат: "25.07.2025 19:51:45"
+          const dateParts = order.date.split(' ')[0].split('.');
+          if (dateParts.length === 3) {
+            orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Конвертируем в YYYY-MM-DD
+          }
+        } else {
+          // ISO формат или Date объект
+          const dateObj = new Date(order.date);
+          orderDate = dateObj.toISOString().split('T')[0];
         }
-        return false;
+        
+        return orderDate === today;
       } catch (error) {
         return false;
       }
