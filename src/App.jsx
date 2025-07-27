@@ -441,16 +441,23 @@ const ShopPage = () => {
         // Запускаем анимацию смены категории
         setIsAnimating(true);
         
-        // Анимируем уход текущих карточек в направлении свайпа
+        // Определяем направления правильно:
+        // Свайп влево (deltaX < 0) = следующая категория = новые карточки въезжают справа
+        // Свайп вправо (deltaX > 0) = предыдущая категория = новые карточки въезжают слева
         const swipeDirection = deltaX > 0 ? 'right' : 'left';
+        
+        // Текущие карточки уезжают в направлении свайпа
         const exitOffset = swipeDirection === 'right' ? window.innerWidth : -window.innerWidth;
         setSwipeOffset(exitOffset);
         
         // Меняем категорию через небольшую задержку
         setTimeout(() => {
           setActiveCategory(allCategories[newIndex]);
-          // Новые карточки появляются с той же стороны, куда ушли старые
-          const enterOffset = swipeDirection === 'right' ? -window.innerWidth : window.innerWidth;
+          
+          // Новые карточки появляются с противоположной стороны от направления свайпа
+          // Если свайп влево (left) - новые карточки въезжают справа (+)
+          // Если свайп вправо (right) - новые карточки въезжают слева (-)
+          const enterOffset = swipeDirection === 'left' ? window.innerWidth : -window.innerWidth;
           setSwipeOffset(enterOffset);
           
           // Анимируем появление новых карточек
