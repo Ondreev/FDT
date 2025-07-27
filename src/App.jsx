@@ -302,6 +302,7 @@ const ShopPage = () => {
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState(null);
 
   // Сохраняем режим доставки в localStorage
   useEffect(() => {
@@ -440,12 +441,20 @@ const ShopPage = () => {
       if (newIndex !== currentIndex) {
         // Плавная смена категории
         setIsAnimating(true);
+        
+        // Запоминаем направление для правильной анимации появления
+        const direction = deltaX > 0 ? 'right' : 'left';
+        setSwipeDirection(direction);
+        
         setActiveCategory(allCategories[newIndex]);
         
         // Сбрасываем смещение через короткую задержку
         setTimeout(() => {
           setSwipeOffset(0);
-          setTimeout(() => setIsAnimating(false), 300);
+          setTimeout(() => {
+            setIsAnimating(false);
+            setSwipeDirection(null);
+          }, 400);
         }, 50);
       } else {
         // Возвращаем на место
@@ -498,11 +507,33 @@ const ShopPage = () => {
           @keyframes fadeInScale {
             0% {
               opacity: 0;
-              transform: scale(0.8) translateY(20px);
+              transform: scale(0.8) translateX(var(--enter-direction, 0)) translateY(20px);
             }
             100% {
               opacity: 1;
-              transform: scale(1) translateY(0);
+              transform: scale(1) translateX(0) translateY(0);
+            }
+          }
+
+          @keyframes fadeInScaleLeft {
+            0% {
+              opacity: 0;
+              transform: scale(0.8) translateX(-30px) translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: scale(1) translateX(0) translateY(0);
+            }
+          }
+
+          @keyframes fadeInScaleRight {
+            0% {
+              opacity: 0;
+              transform: scale(0.8) translateX(30px) translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: scale(1) translateX(0) translateY(0);
             }
           }
 
@@ -703,7 +734,11 @@ const ShopPage = () => {
                 transform: `scale(${isSwiping ? 0.98 : 1})`,
                 transition: 'transform 0.2s ease',
                 animationDelay: isAnimating ? `${index * 0.05}s` : '0s',
-                animation: isAnimating ? 'fadeInScale 0.6s ease forwards' : 'none',
+                animation: isAnimating 
+                  ? swipeDirection === 'right' 
+                    ? 'fadeInScaleLeft 0.6s ease forwards'  // Свайп вправо = карточки появляются слева
+                    : 'fadeInScaleRight 0.6s ease forwards' // Свайп влево = карточки появляются справа
+                  : 'none',
               }}
             >
               {/* Рейтинг справа вверху */}
