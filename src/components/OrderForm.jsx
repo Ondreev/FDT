@@ -201,10 +201,23 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     return steps.length;
   };
 
+  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ЗАКАЗА
   const handleSubmitOrder = async () => {
     setIsSubmitting(true);
     
     try {
+      // ✅ СОЗДАЕМ ПРАВИЛЬНУЮ ДАТУ С ВРЕМЕНЕМ В НУЖНОМ ФОРМАТЕ
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      
+      // Формат: 25.07.2025 19:51:45
+      const formattedDateTime = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+
       // Создаем данные заказа
       const orderData = {
         action: 'createOrder',
@@ -221,7 +234,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
         }))),
         total: total.toString(),
         status: 'pending',
-        date: new Date().toISOString().split('T')[0]
+        date: formattedDateTime  // ✅ ДОБАВЛЯЕМ ДАТУ С ВРЕМЕНЕМ В ПРАВИЛЬНОМ ФОРМАТЕ
       };
 
       // Формируем URL параметры
