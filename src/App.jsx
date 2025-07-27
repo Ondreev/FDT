@@ -447,7 +447,7 @@ const ShopPage = () => {
           setSwipeOffset(0);
           setTimeout(() => {
             setIsAnimating(false);
-          }, 600); // Увеличили время для тетрис-анимации
+          }, window.innerWidth <= 768 ? 400 : 600); // Быстрее на мобильных
         }, 50);
       } else {
         // Возвращаем на место
@@ -534,8 +534,8 @@ const ShopPage = () => {
             display: grid;
             gap: 1rem;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            will-change: transform, opacity;
+            transition: all 0.2s ease-out;
+            will-change: transform;
           }
 
           .product-grid.swiping {
@@ -543,7 +543,19 @@ const ShopPage = () => {
           }
 
           .product-grid.animating {
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease-out;
+          }
+
+          /* Оптимизированные анимации для мобильных */
+          @media (max-width: 768px) {
+            .product-grid {
+              transition: all 0.15s ease-out;
+            }
+            
+            .product-card {
+              backface-visibility: hidden;
+              transform: translateZ(0);
+            }
           }
 
           @media (max-width: 400px) {
@@ -703,19 +715,23 @@ const ShopPage = () => {
           </div>
         )}
 
-        {/* Тетрис-карусель */}
+        {/* Оптимизированная карусель */}
         <div 
           className={`product-grid ${isSwiping && !isAnimating ? 'swiping' : ''} ${isAnimating ? 'animating' : ''}`}
           style={{
             transform: `translateX(${swipeOffset}px)`,
-            opacity: isAnimating ? 0.2 : 1,
+            opacity: isAnimating ? 0.4 : 1,
           }}
         >
           {filteredProducts.map((product, index) => {
-            // Определяем откуда появляется карточка по индексу (тетрис-эффект)
-            const getAnimationDirection = (i) => {
+            // Определяем анимацию в зависимости от размера экрана
+            const isMobile = window.innerWidth <= 768;
+            const getAnimation = (i) => {
+              if (isMobile) {
+                return 'mobileSlideIn 0.3s ease forwards';
+              }
               const directions = ['tetrisFromLeft', 'tetrisFromTop', 'tetrisFromRight', 'tetrisFromBottom'];
-              return directions[i % 4];
+              return `${directions[i % 4]} 0.5s ease forwards`;
             };
 
             return (
@@ -731,10 +747,12 @@ const ShopPage = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  transform: `scale(${isSwiping ? 0.98 : 1})`,
-                  transition: 'transform 0.2s ease',
-                  animationDelay: isAnimating ? `${index * 0.08}s` : '0s',
-                  animation: isAnimating ? `${getAnimationDirection(index)} 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards` : 'none',
+                  transform: `scale(${isSwiping ? 0.99 : 1})`,
+                  transition: 'transform 0.15s ease',
+                  animationDelay: isAnimating ? `${index * (isMobile ? 0.05 : 0.08)}s` : '0s',
+                  animation: isAnimating ? getAnimation(index) : 'none',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
                 }}
               >
                 {/* Рейтинг справа вверху */}
