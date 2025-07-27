@@ -66,28 +66,30 @@ export const OrderTimer = ({ orderDate, status }) => {
   const isCritical = elapsed > 2700 && isRunning;
 
   return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      padding: '0.3rem 0.7rem',
-      borderRadius: '12px',
-      fontSize: '0.9rem',
-      fontWeight: 'bold',
-      fontFamily: 'monospace',
-      background: isCritical 
-        ? '#ff1744' 
-        : isOverdue 
-        ? '#ff9800' 
-        : isRunning 
-        ? '#4caf50' 
-        : '#9e9e9e',
-      color: 'white',
-      animation: isOverdue && isRunning ? 'pulse 1.5s infinite' : 'none',
-      boxShadow: isOverdue ? '0 0 10px rgba(255, 87, 34, 0.5)' : 'none'
-    }}>
-      <span>{isRunning ? '⏱️' : '⏹️'}</span>
-      <span>{formatTime(elapsed)}</span>
+    <>
+      <div style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        padding: '0.3rem 0.7rem',
+        borderRadius: '12px',
+        fontSize: '0.9rem',
+        fontWeight: 'bold',
+        fontFamily: 'monospace',
+        background: isCritical 
+          ? '#ff1744' 
+          : isOverdue 
+          ? '#ff9800' 
+          : isRunning 
+          ? '#4caf50' 
+          : '#9e9e9e',
+        color: 'white',
+        animation: isOverdue && isRunning ? 'pulse 1.5s infinite' : 'none',
+        boxShadow: isOverdue ? '0 0 10px rgba(255, 87, 34, 0.5)' : 'none'
+      }}>
+        <span>{isRunning ? '⏱️' : '⏹️'}</span>
+        <span>{formatTime(elapsed)}</span>
+      </div>
       
       <style>
         {`
@@ -103,7 +105,7 @@ export const OrderTimer = ({ orderDate, status }) => {
           }
         `}
       </style>
-    </div>
+    </>
   );
 };
 
