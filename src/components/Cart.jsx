@@ -524,32 +524,35 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                           {!item.isDelivery ? (
                             // Проверяем, является ли товар flash-предложением
                             item.isFlashOffer ? (
-                              // Для flash-товаров показываем только количество без возможности изменения
+                              // Для flash-товаров показываем компактный блок
                               <div style={{
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
-                                gap: '0.5rem',
+                                gap: '0.2rem',
                                 background: '#ffe6e6',
-                                padding: '0.3rem 0.6rem',
+                                padding: '0.3rem 0.4rem',
                                 borderRadius: '6px',
                                 border: '1px solid #ff0844',
+                                minWidth: '60px'
                               }}>
                                 <span style={{ 
                                   fontWeight: 'bold', 
-                                  fontSize: '0.9rem',
+                                  fontSize: '1rem',
                                   color: '#ff0844'
                                 }}>
-                                  Количество: {item.quantity}
+                                  {item.quantity}
                                 </span>
                                 <span style={{
                                   background: '#ff0844',
                                   color: 'white',
-                                  fontSize: '0.7rem',
-                                  padding: '0.2rem 0.4rem',
-                                  borderRadius: '4px',
-                                  fontWeight: 'bold'
+                                  fontSize: '0.6rem',
+                                  padding: '0.1rem 0.3rem',
+                                  borderRadius: '3px',
+                                  fontWeight: 'bold',
+                                  whiteSpace: 'nowrap'
                                 }}>
-                                  ТОЛЬКО 1 ШТ
+                                  ФИКС
                                 </span>
                               </div>
                             ) : (
