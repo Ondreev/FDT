@@ -6,7 +6,16 @@ const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
 
+// ✅ ИСПРАВЛЕННАЯ функция форматирования даты
 const formatDate = (dateStr) => {
+  // Если это уже строка в нужном формате (25.07.2025 19:51:45), просто возвращаем
+  if (!dateStr) return 'Нет времени';
+  
+  if (typeof dateStr === 'string' && dateStr.includes('.') && dateStr.includes(':')) {
+    return dateStr;
+  }
+  
+  // Иначе пытаемся парсить как дату
   const date = new Date(dateStr);
   return date.toLocaleDateString('ru-RU', {
     day: '2-digit',
@@ -17,7 +26,7 @@ const formatDate = (dateStr) => {
   });
 };
 
-// Функция для расчета среднего времени выполнения заказов
+// ✅ ИСПРАВЛЕННАЯ функция для расчета среднего времени выполнения заказов
 const calculateAverageTime = (orders) => {
   const todayMoscow = (() => {
     const now = new Date();
@@ -28,10 +37,16 @@ const calculateAverageTime = (orders) => {
   })();
 
   const completedToday = orders.filter(order => {
-    if (!order.truedate) return false;
+    // ✅ ИЗМЕНЕНО: Используем поле date вместо truedate
+    if (!order.date) return false;
     try {
-      const orderDate = new Date(order.truedate).toISOString().split('T')[0];
-      return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
+      // Парсим дату из строки формата "25.07.2025 19:51:45"
+      const dateParts = order.date.split(' ')[0].split('.');
+      if (dateParts.length === 3) {
+        const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Конвертируем в YYYY-MM-DD
+        return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
+      }
+      return false;
     } catch (error) {
       return false;
     }
@@ -42,22 +57,38 @@ const calculateAverageTime = (orders) => {
   // Симуляция времени завершения (в реальности нужно сохранять время завершения в БД)
   const totalMinutes = completedToday.reduce((sum, order) => {
     // Предполагаем среднее время 25-35 минут для демонстрации
-    const orderTime = new Date(order.truedate).getTime();
-    const estimatedCompletionTime = orderTime + (Math.random() * 10 + 25) * 60 * 1000;
-    const actualTime = Math.floor((estimatedCompletionTime - orderTime) / (1000 * 60));
-    return sum + actualTime;
+    const estimatedMinutes = Math.random() * 10 + 25;
+    return sum + estimatedMinutes;
   }, 0);
 
   const averageMinutes = Math.round(totalMinutes / completedToday.length);
   return { averageMinutes, completedCount: completedToday.length };
 };
 
+// ✅ ИСПРАВЛЕННЫЙ компонент OrderTimer
 const OrderTimer = ({ orderDate, status }) => {
   const [elapsed, setElapsed] = useState(0);
   const [isRunning, setIsRunning] = useState(!['done', 'archived'].includes(status));
 
   useEffect(() => {
-    const startTime = new Date(orderDate).getTime();
+    if (!orderDate) return;
+    
+    // ✅ ИСПРАВЛЕНО: Парсим дату из строки формата "25.07.2025 19:51:45"
+    let startTime;
+    try {
+      if (typeof orderDate === 'string' && orderDate.includes('.') && orderDate.includes(':')) {
+        // Формат: "25.07.2025 19:51:45"
+        const [datePart, timePart] = orderDate.split(' ');
+        const [day, month, year] = datePart.split('.');
+        const [hours, minutes, seconds] = timePart.split(':');
+        startTime = new Date(year, month - 1, day, hours, minutes, seconds).getTime();
+      } else {
+        startTime = new Date(orderDate).getTime();
+      }
+    } catch (error) {
+      console.error('Error parsing date:', error);
+      return;
+    }
     
     const updateTimer = () => {
       const now = Date.now();
@@ -388,6 +419,7 @@ const AdminLogin = ({ onLoginSuccess }) => {
   );
 };
 
+// ✅ ИСПРАВЛЕННЫЙ компонент OrderCard
 const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -456,13 +488,15 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             flexWrap: 'wrap'
           }}>
             <span>Заказ #{order.orderId}</span>
-            {order.truedate ? <OrderTimer orderDate={order.truedate} status={order.status} /> : null}
+            {/* ✅ ИЗМЕНЕНО: Используем поле date вместо truedate */}
+            {order.date ? <OrderTimer orderDate={order.date} status={order.status} /> : null}
           </div>
           <div style={{
             fontSize: '0.9rem',
             color: '#666'
           }}>
-            {order.truedate ? formatDate(order.truedate) : 'Нет времени'} • {order.customerName}
+            {/* ✅ ИЗМЕНЕНО: Используем поле date вместо truedate */}
+            {order.date ? formatDate(order.date) : 'Нет времени'} • {order.customerName}
           </div>
         </div>
         <div style={{
@@ -704,6 +738,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   );
 };
 
+// ✅ ИСПРАВЛЕННЫЙ компонент AdminDashboard
 const AdminDashboard = ({ admin, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [statusLabels, setStatusLabels] = useState([]);
@@ -745,11 +780,26 @@ const AdminDashboard = ({ admin, onLogout }) => {
       const statusData = await statusRes.json();
 
       if (Array.isArray(ordersData)) {
+        // ✅ ИЗМЕНЕНО: Сортируем по полю date вместо truedate
         const sorted = ordersData.sort((a, b) => {
-          if (!a.truedate && !b.truedate) return 0;
-          if (!a.truedate) return 1;
-          if (!b.truedate) return -1;
-          return new Date(b.truedate) - new Date(a.truedate);
+          if (!a.date && !b.date) return 0;
+          if (!a.date) return 1;
+          if (!b.date) return -1;
+          
+          // Парсим даты из формата "25.07.2025 19:51:45"
+          const parseCustomDate = (dateStr) => {
+            if (!dateStr) return 0;
+            try {
+              const [datePart, timePart] = dateStr.split(' ');
+              const [day, month, year] = datePart.split('.');
+              const [hours, minutes, seconds] = timePart.split(':');
+              return new Date(year, month - 1, day, hours, minutes, seconds).getTime();
+            } catch (error) {
+              return 0;
+            }
+          };
+          
+          return parseCustomDate(b.date) - parseCustomDate(a.date);
         });
         
         // Упрощенная проверка новых заказов без уведомлений на iOS
@@ -839,12 +889,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
   };
   
   const todayMoscow = getMoscowDate();
+  
+  // ✅ ИЗМЕНЕНО: Считаем доходы за сегодня по полю date
   const totalToday = orders
     .filter(order => {
-      if (!order.truedate) return false;
+      if (!order.date) return false;
       try {
-        const orderDate = new Date(order.truedate).toISOString().split('T')[0];
-        return orderDate === todayMoscow;
+        const dateParts = order.date.split(' ')[0].split('.');
+        if (dateParts.length === 3) {
+          const orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Конвертируем в YYYY-MM-DD
+          return orderDate === todayMoscow;
+        }
+        return false;
       } catch (error) {
         return false;
       }
