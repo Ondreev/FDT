@@ -302,6 +302,7 @@ const ShopPage = () => {
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [nextCategoryProducts, setNextCategoryProducts] = useState([]);
 
   // Сохраняем режим доставки в localStorage
   useEffect(() => {
@@ -441,10 +442,16 @@ const ShopPage = () => {
         // Запускаем анимацию смены категории
         setIsAnimating(true);
         
-        // Определяем направления правильно:
-        // Свайп влево (deltaX < 0) = следующая категория = новые карточки въезжают справа
-        // Свайп вправо (deltaX > 0) = предыдущая категория = новые карточки въезжают слева
+        // МЕНЯЕМ ЛОГИКУ НА ПРОТИВОПОЛОЖНУЮ:
+        // Свайп влево (deltaX < 0) = новые карточки въезжают СЛЕВА
+        // Свайп вправо (deltaX > 0) = новые карточки въезжают СПРАВА
         const swipeDirection = deltaX > 0 ? 'right' : 'left';
+        
+        // Подготавливаем карточки следующей категории
+        const nextProducts = allCategories[newIndex] === null 
+          ? products 
+          : products.filter(p => p.category === allCategories[newIndex]);
+        setNextCategoryProducts(nextProducts);
         
         // Текущие карточки уезжают в направлении свайпа
         const exitOffset = swipeDirection === 'right' ? window.innerWidth : -window.innerWidth;
@@ -454,10 +461,10 @@ const ShopPage = () => {
         setTimeout(() => {
           setActiveCategory(allCategories[newIndex]);
           
-          // Новые карточки появляются с противоположной стороны от направления свайпа
-          // Если свайп влево (left) - новые карточки въезжают справа (+)
-          // Если свайп вправо (right) - новые карточки въезжают слева (-)
-          const enterOffset = swipeDirection === 'left' ? window.innerWidth : -window.innerWidth;
+          // ИСПРАВЛЕННАЯ ЛОГИКА: новые карточки въезжают С ТОЙ ЖЕ СТОРОНЫ
+          // Если свайп влево - новые карточки въезжают слева (-)
+          // Если свайп вправо - новые карточки въезжают справа (+)
+          const enterOffset = swipeDirection === 'right' ? window.innerWidth : -window.innerWidth;
           setSwipeOffset(enterOffset);
           
           // Анимируем появление новых карточек
@@ -465,6 +472,7 @@ const ShopPage = () => {
             setSwipeOffset(0);
             setTimeout(() => {
               setIsAnimating(false);
+              setNextCategoryProducts([]); // Очищаем после анимации
             }, 300);
           }, 50);
         }, 250);
@@ -729,14 +737,14 @@ const ShopPage = () => {
                 <div
                   style={{
                     position: 'absolute',
-                    top: '2.2rem', // Ближе к звездочкам (было 3rem)
+                    top: '2.2rem',
                     right: '1rem',
                     backgroundColor: '#e03636',
                     color: '#fff',
                     fontWeight: 'bold',
-                    padding: '0.2rem 0.45rem', // Уменьшили в 1.5 раза (было 0.3rem 0.7rem)
+                    padding: '0.2rem 0.45rem',
                     borderRadius: '999px',
-                    fontSize: '0.6rem', // Уменьшили в 1.5 раза (было 0.9rem)
+                    fontSize: '0.6rem',
                     fontFamily: settings.font || 'Fredoka',
                     zIndex: 2
                   }}
@@ -844,6 +852,63 @@ const ShopPage = () => {
             </div>
           ))}
         </div>
+
+        {/* Предварительно загруженные карточки следующей категории (скрыты) */}
+        {nextCategoryProducts.length > 0 && (
+          <div 
+            className="product-grid"
+            style={{
+              position: 'absolute',
+              top: categories.length > 0 ? '140px' : '80px', // Учитываем высоту заголовка и категорий
+              left: '1rem',
+              right: '1rem',
+              transform: `translateX(${swipeOffset > 0 ? swipeOffset - window.innerWidth : swipeOffset + window.innerWidth}px)`,
+              transition: isAnimating ? 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+              opacity: isAnimating ? 1 : 0,
+              pointerEvents: 'none', // Отключаем взаимодействие с предзагруженными карточками
+            }}
+          >
+            {nextCategoryProducts.map((product) => (
+              <div
+                key={`next-${product.id}`}
+                className="product-card"
+                style={{
+                  position: 'relative',
+                  background: '#fff7ed',
+                  borderRadius: '20px',
+                  padding: '1rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  style={{ 
+                    width: '100%', 
+                    maxWidth: '160px', 
+                    borderRadius: '12px', 
+                    marginBottom: '0.5rem'
+                  }}
+                />
+                <h2 style={{
+                  fontSize: '1.4rem',
+                  fontWeight: 'bold',
+                  color: '#4b2e12',
+                  margin: '0.5rem 0 0.25rem 0',
+                  textAlign: 'center',
+                }}>
+                  {product.name}
+                </h2>
+                <p style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: '0', color: '#2c1e0f' }}>
+                  {product.price} {settings.currency || '₽'}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Менеджеры компонентов */}
         <SimpleDeliveryManager cart={cart} setCart={setCart} />
