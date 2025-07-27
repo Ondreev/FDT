@@ -79,6 +79,20 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     addToCart(product);
   };
 
+  // Обертка для updateQuantity с защитой flash-товаров
+  const safeUpdateQuantity = (id, newQuantity) => {
+    // Найдем товар в корзине
+    const item = cart.find(cartItem => cartItem.id === id);
+    
+    // Запрещаем изменение количества для flash-товаров
+    if (item && item.isFlashOffer && newQuantity !== 1) {
+      return; // Просто выходим, не изменяя количество
+    }
+    
+    // Для обычных товаров вызываем оригинальную функцию
+    updateQuantity(id, newQuantity);
+  };
+
   // Функция проверки flash-товаров так
   const checkFlashViolations = () => {
     const violations = [];
@@ -542,7 +556,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                               // Обычные товары - показываем кнопки +/-
                               <>
                                 <button
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  onClick={() => safeUpdateQuantity(item.id, item.quantity - 1)}
                                   style={{
                                     background: '#f0f0f0',
                                     border: 'none',
@@ -559,7 +573,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                                   {item.quantity}
                                 </span>
                                 <button
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  onClick={() => safeUpdateQuantity(item.id, item.quantity + 1)}
                                   style={{
                                     background: settings.primaryColor || '#ff7f32',
                                     color: 'white',
