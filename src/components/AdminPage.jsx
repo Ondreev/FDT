@@ -766,7 +766,7 @@ const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   );
 };
 
-// ✅ ИСПРАВЛЕННЫЙ компонент AdminDashboard
+// ✅ ИСПРАВЛЕННЫЙ компонент AdminDashboard с добавлением свайпа и закрепленных категорий
 const AdminDashboard = ({ admin, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [statusLabels, setStatusLabels] = useState([]);
@@ -776,6 +776,13 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  
+  // ✅ НОВЫЕ состояния для свайпа (перенесены из App.jsx)
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -875,6 +882,84 @@ const AdminDashboard = ({ admin, onLogout }) => {
         setIsLoading(false);
       }
     }
+  };
+
+  // ✅ НОВЫЕ функции для свайпа (адаптированные из App.jsx)
+  const handleTouchStart = (e) => {
+    if (isAnimating) return;
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+    setIsSwiping(true);
+    setSwipeOffset(0);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isSwiping || isAnimating) return;
+    
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = currentX - touchStartX;
+    const deltaY = currentY - touchStartY;
+    
+    // Проверяем что это горизонтальный свайп
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault();
+      
+      // Ограничиваем смещение для более естественного ощущения
+      const maxOffset = window.innerWidth * 0.3;
+      const limitedDelta = Math.max(-maxOffset, Math.min(maxOffset, deltaX));
+      setSwipeOffset(limitedDelta);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!isSwiping || isAnimating) {
+      setIsSwiping(false);
+      setSwipeOffset(0);
+      return;
+    }
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    // Проверяем что это горизонтальный свайп с достаточным расстоянием
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 80) {
+      const filterCategories = ['pending', 'active', 'archive'];
+      const currentIndex = filterCategories.indexOf(activeFilter);
+      let newIndex = currentIndex;
+
+      if (deltaX > 0 && currentIndex > 0) {
+        // Свайп вправо - предыдущая категория
+        newIndex = currentIndex - 1;
+      } else if (deltaX < 0 && currentIndex < filterCategories.length - 1) {
+        // Свайп влево - следующая категория
+        newIndex = currentIndex + 1;
+      }
+
+      if (newIndex !== currentIndex) {
+        // Плавная смена категории
+        setIsAnimating(true);
+        setActiveFilter(filterCategories[newIndex]);
+        
+        // Сбрасываем смещение через короткую задержку
+        setTimeout(() => {
+          setSwipeOffset(0);
+          setTimeout(() => {
+            setIsAnimating(false);
+          }, window.innerWidth <= 768 ? 300 : 400); // Быстрее на мобильных
+        }, 50);
+      } else {
+        // Возвращаем на место
+        setSwipeOffset(0);
+      }
+    } else {
+      // Возвращаем на место
+      setSwipeOffset(0);
+    }
+
+    setIsSwiping(false);
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
@@ -1033,14 +1118,78 @@ const AdminDashboard = ({ admin, onLogout }) => {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
-      fontFamily: 'system-ui, -apple-system, sans-serif' // Более безопасный шрифт для iOS
-    }}>
+    <div 
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
+        fontFamily: 'system-ui, -apple-system, sans-serif', // Более безопасный шрифт для iOS
+        overflow: 'hidden' // ✅ ДОБАВЛЕНО: Предотвращаем горизонтальный скролл при свайпе
+      }}
+      // ✅ ДОБАВЛЕНЫ обработчики свайпа
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* ✅ ДОБАВЛЕНЫ стили для анимаций */}
       <style>
         {`
+          @keyframes fadeInScale {
+            0% {
+              opacity: 0;
+              transform: scale(0.8) translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+
+          @keyframes slideInRight {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+
+          @keyframes slideInLeft {
+            from {
+              transform: translateX(-100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+
+          .orders-container {
+            transition: all 0.2s ease-out;
+            will-change: transform;
+          }
+
+          .orders-container.swiping {
+            transition: none;
+          }
+
+          .orders-container.animating {
+            transition: all 0.3s ease-out;
+          }
+
+          /* Оптимизация для мобильных */
           @media (max-width: 768px) {
+            .orders-container {
+              transition: all 0.15s ease-out;
+            }
+            
+            .order-card {
+              backface-visibility: hidden;
+              transform: translateZ(0);
+            }
+            
             .admin-header {
               flex-direction: column !important;
               gap: 1rem !important;
@@ -1230,11 +1379,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
           </div>
         </div>
 
+        {/* ✅ ДОБАВЛЕНО: Закрепленные категории (sticky) как в App.jsx */}
         <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 900,
+          background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
           display: 'flex',
           gap: '0.5rem',
           marginBottom: '2rem',
-          flexWrap: 'wrap'
+          flexWrap: 'wrap',
+          paddingTop: '1rem',
+          paddingBottom: '1rem'
         }}>
           {[
             { key: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
@@ -1265,37 +1421,56 @@ const AdminDashboard = ({ admin, onLogout }) => {
           ))}
         </div>
 
-        {filteredOrders.length === 0 ? (
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '3rem',
-            textAlign: 'center',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📭</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#2c1e0f' }}>
-              Заказов нет
+        {/* ✅ ДОБАВЛЕН контейнер с поддержкой свайпа и анимаций */}
+        <div 
+          className={`orders-container ${isSwiping && !isAnimating ? 'swiping' : ''} ${isAnimating ? 'animating' : ''}`}
+          style={{
+            transform: `translateX(${swipeOffset}px)`,
+            opacity: isAnimating ? 0.6 : 1,
+          }}
+        >
+          {filteredOrders.length === 0 ? (
+            <div style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '3rem',
+              textAlign: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📭</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#2c1e0f' }}>
+                Заказов нет
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+                {activeFilter === 'pending' 
+                  ? 'Новых заказов пока нет'
+                  : activeFilter === 'active'
+                  ? 'Нет заказов в работе'  
+                  : 'Архив пуст'
+                }
+              </div>
             </div>
-            <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-              {activeFilter === 'pending' 
-                ? 'Новых заказов пока нет'
-                : activeFilter === 'active'
-                ? 'Нет заказов в работе'  
-                : 'Архив пуст'
-              }
-            </div>
-          </div>
-        ) : (
-          filteredOrders.map((order) => (
-            <OrderCard
-              key={order.orderId}
-              order={order}
-              statusLabels={statusLabels}
-              onStatusChange={handleStatusChange}
-            />
-          ))
-        )}
+          ) : (
+            filteredOrders.map((order, index) => (
+              <div
+                key={order.orderId}
+                className="order-card"
+                style={{
+                  animationDelay: isAnimating ? `${index * 0.05}s` : '0s',
+                  animation: isAnimating ? 'fadeInScale 0.3s ease forwards' : 'none',
+                  backfaceVisibility: 'hidden',
+                  transform: 'translateZ(0)'
+                }}
+              >
+                <OrderCard
+                  order={order}
+                  statusLabels={statusLabels}
+                  onStatusChange={handleStatusChange}
+                />
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
