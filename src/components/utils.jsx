@@ -35,6 +35,48 @@ export const formatDate = (dateStr) => {
   }
 };
 
+export const saveStatusChange = async (orderId, newStatus, oldStatus) => {
+  try {
+    const timestamp = new Date().toISOString();
+    const changeData = {
+      orderId,
+      newStatus,
+      oldStatus,
+      timestamp,
+      changeTime: formatDate(timestamp)
+    };
+    
+    // Сохраняем в localStorage для отслеживания времени изменения статусов
+    const existingChanges = JSON.parse(localStorage.getItem('statusChanges') || '[]');
+    existingChanges.push(changeData);
+    
+    // Оставляем только последние 1000 записей
+    if (existingChanges.length > 1000) {
+      existingChanges.splice(0, existingChanges.length - 1000);
+    }
+    
+    localStorage.setItem('statusChanges', JSON.stringify(existingChanges));
+    
+    // Опционально: отправляем на сервер для логирования
+    try {
+      await safeFetch(`${API_URL}?action=logStatusChange`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(changeData)
+      });
+    } catch (error) {
+      console.warn('Failed to log status change to server:', error);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving status change:', error);
+    return false;
+  }
+};
+
 export const calculateAverageTime = (orders) => {
   const getMoscowToday = () => {
     const now = new Date();
