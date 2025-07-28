@@ -37,13 +37,16 @@ export const formatDate = (dateStr) => {
 
 export const saveStatusChange = async (orderId, newStatus, oldStatus) => {
   try {
-    const timestamp = new Date().toISOString();
+    const now = new Date();
+    const moscowTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
+    const timestamp = moscowTime.toISOString();
+    
     const changeData = {
       orderId,
       newStatus,
       oldStatus,
       timestamp,
-      changeTime: formatDate(timestamp)
+      changeTime: formatDate(moscowTime)
     };
     
     // Сохраняем в localStorage для отслеживания времени изменения статусов
@@ -57,15 +60,10 @@ export const saveStatusChange = async (orderId, newStatus, oldStatus) => {
     
     localStorage.setItem('statusChanges', JSON.stringify(existingChanges));
     
-    // Опционально: отправляем на сервер для логирования
+    // Отправляем на сервер в StatusHistory таблицу
     try {
-      await safeFetch(`${API_URL}?action=logStatusChange`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(changeData)
-      });
+      const url = `${API_URL}?action=addStatusHistory&orderId=${encodeURIComponent(orderId)}&oldStatus=${encodeURIComponent(oldStatus || '')}&newStatus=${encodeURIComponent(newStatus)}&timestamp=${encodeURIComponent(timestamp)}&date=${encodeURIComponent(formatDate(moscowTime))}`;
+      await safeFetch(url);
     } catch (error) {
       console.warn('Failed to log status change to server:', error);
     }
