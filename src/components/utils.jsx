@@ -45,7 +45,8 @@ export const calculateAverageTime = (orders) => {
 
   const todayMoscow = getMoscowToday();
 
-  const completedToday = orders.filter(order => {
+  // Фильтруем заказы только за сегодня
+  const todayOrders = orders.filter(order => {
     if (!order.date) return false;
     try {
       let orderDate;
@@ -60,43 +61,93 @@ export const calculateAverageTime = (orders) => {
         orderDate = dateObj.toISOString().split('T')[0];
       }
       
-      return orderDate === todayMoscow && ['done', 'archived'].includes(order.status);
+      return orderDate === todayMoscow;
     } catch (error) {
       return false;
     }
   });
 
-  if (completedToday.length === 0) return null;
+  if (todayOrders.length === 0) return null;
 
-  // Реальный расчет времени на основе статусов и времени заказа
-  const calculateRealTime = (order) => {
-    // Если нет информации о времени смены статусов, используем среднее время
-    // В реальном приложении здесь должны быть timestamps смены статусов
+  // Парсим дату заказа в timestamp
+  const parseOrderDate = (dateStr) => {
+    if (!dateStr) return null;
+    try {
+      if (typeof dateStr === 'string' && dateStr.includes('.') && dateStr.includes(':') && !dateStr.includes('T')) {
+        const [datePart, timePart] = dateStr.split(' ');
+        const [day, month, year] = datePart.split('.');
+        const [hours, minutes, seconds] = timePart.split(':');
+        return new Date(year, month - 1, day, hours, minutes, seconds || 0).getTime();
+      } else {
+        return new Date(dateStr).getTime();
+      }
+    } catch (error) {
+      console.error('Error parsing order date:', error);
+      return null;
+    }
+  };
+
+  // Рассчитываем времена для завершенных заказов
+  const completedOrders = todayOrders.filter(order => 
+    ['done', 'archived'].includes(order.status)
+  );
+
+  if (completedOrders.length === 0) {
+    // Если нет завершенных заказов, возвращаем данные по текущим заказам
+    const activeOrders = todayOrders.filter(order => 
+      ['pending', 'cooking', 'delivering'].includes(order.status)
+    );
     
-    // Готовка: от "pending" до "cooking" -> "delivering" (примерно 20-30 мин)
-    const cookingTime = Math.random() * 10 + 20; // 20-30 мин
-    
-    // Доставка: от "delivering" до "done" (примерно 15-25 мин)  
-    const deliveryTime = Math.random() * 10 + 15; // 15-25 мин
+    if (activeOrders.length === 0) return null;
     
     return {
-      total: cookingTime + deliveryTime,
+      averageMinutes: null,
+      completedCount: 0,
+      avgCookingTime: null,
+      avgDeliveryTime: null,
+      activeCount: activeOrders.length,
+      note: 'Пока нет завершенных заказов за сегодня'
+    };
+  }
+
+  // В реальном приложении здесь должны быть timestamps изменения статусов
+  // Пока используем имитацию на основе времени создания заказа
+  const calculateTimesForOrder = (order) => {
+    const startTime = parseOrderDate(order.date);
+    if (!startTime) return null;
+
+    // Имитация: добавляем случайное время для каждого этапа
+    // В реальном приложении здесь должны быть реальные timestamps статусов
+    const cookingTime = Math.random() * 20 + 15; // 15-35 минут готовка
+    const deliveryTime = Math.random() * 15 + 10; // 10-25 минут доставка
+    const totalTime = cookingTime + deliveryTime;
+
+    return {
       cooking: cookingTime,
-      delivery: deliveryTime
+      delivery: deliveryTime,
+      total: totalTime
     };
   };
 
-  const times = completedToday.map(order => calculateRealTime(order));
-  
-  const avgTotal = Math.round(times.reduce((sum, t) => sum + t.total, 0) / times.length);
-  const avgCooking = Math.round(times.reduce((sum, t) => sum + t.cooking, 0) / times.length);
-  const avgDelivery = Math.round(times.reduce((sum, t) => sum + t.delivery, 0) / times.length);
-  
-  return { 
-    averageMinutes: avgTotal,
-    completedCount: completedToday.length,
-    avgCookingTime: avgCooking,
-    avgDeliveryTime: avgDelivery
+  const orderTimes = completedOrders
+    .map(order => calculateTimesForOrder(order))
+    .filter(times => times !== null);
+
+  if (orderTimes.length === 0) return null;
+
+  // Вычисляем средние значения
+  const avgCooking = orderTimes.reduce((sum, times) => sum + times.cooking, 0) / orderTimes.length;
+  const avgDelivery = orderTimes.reduce((sum, times) => sum + times.delivery, 0) / orderTimes.length;
+  const avgTotal = orderTimes.reduce((sum, times) => sum + times.total, 0) / orderTimes.length;
+
+  return {
+    averageMinutes: Math.round(avgTotal),
+    completedCount: completedOrders.length,
+    avgCookingTime: Math.round(avgCooking),
+    avgDeliveryTime: Math.round(avgDelivery),
+    activeCount: todayOrders.filter(order => 
+      ['pending', 'cooking', 'delivering'].includes(order.status)
+    ).length
   };
 };
 
