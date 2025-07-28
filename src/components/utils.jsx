@@ -246,40 +246,23 @@ export const safeFetch = async (url, options = {}) => {
   console.log('🚀 Отправляю запрос:', url);
   
   try {
-    // Пробуем обычный fetch
+    // Пробуем обычный fetch с CORS
     const response = await fetch(url, {
       ...options,
       mode: 'cors'
     });
     
     if (response.ok) {
-      console.log('✅ Fetch успешен:', response.status);
+      console.log('✅ CORS Fetch успешен:', response.status);
       return response;
     }
     throw new Error(`HTTP ${response.status}`);
   } catch (error) {
-    console.warn('❌ Fetch failed, trying direct request:', error.message);
+    console.warn('❌ CORS failed, using JSONP:', error.message);
     
-    // Если обычный fetch не работает, используем более простой подход
+    // Если CORS не работает, используем только JSONP для GET-запросов
     if (!options.method || options.method === 'GET') {
-      try {
-        // Создаем простой GET-запрос без CORS ограничений
-        const response = await fetch(url, {
-          method: 'GET',
-          mode: 'no-cors'
-        });
-        console.log('✅ No-cors request sent');
-        
-        // Возвращаем mock response для no-cors
-        return {
-          ok: true,
-          status: 200,
-          json: () => Promise.resolve({ success: true })
-        };
-      } catch (nocorsError) {
-        console.warn('❌ No-cors failed, using JSONP fallback');
-        return await fetchViaJSONP(url);
-      }
+      return await fetchViaJSONP(url);
     }
     
     throw new Error('Request failed. Check your internet connection.');
