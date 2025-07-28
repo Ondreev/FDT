@@ -568,16 +568,21 @@ const AdminDashboard = ({ admin, onLogout }) => {
                 marginBottom: '0.3rem',
                 opacity: 0.9
               }}>
-                СКОРОСТЬ ОБСЛУЖИВАНИЯ
+                СКОРОСТЬ ОБСЛУЖИВАНИЯ (СЕГОДНЯ)
               </div>
               <div className="speed-service-value" style={{
                 fontSize: '1.1rem',
                 fontWeight: 'bold',
                 marginBottom: '0.5rem'
               }}>
-                {averageTimeStats ? `${averageTimeStats.averageMinutes} мин` : 'Нет данных'}
+                {averageTimeStats 
+                  ? averageTimeStats.averageMinutes 
+                    ? `${averageTimeStats.averageMinutes} мин`
+                    : averageTimeStats.note || 'Нет завершенных заказов'
+                  : 'Нет данных за сегодня'
+                }
               </div>
-              {averageTimeStats && (
+              {averageTimeStats && averageTimeStats.averageMinutes && (
                 <div className="speed-details" style={{
                   display: 'flex',
                   gap: '1rem',
@@ -587,7 +592,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
                 }}>
                   <span>🍳 Готовка: {averageTimeStats.avgCookingTime} мин</span>
                   <span>🚗 Доставка: {averageTimeStats.avgDeliveryTime} мин</span>
-                  <span>📊 По {averageTimeStats.completedCount} заказам</span>
+                  <span>✅ Завершено: {averageTimeStats.completedCount}</span>
+                  {averageTimeStats.activeCount > 0 && (
+                    <span>⏳ В работе: {averageTimeStats.activeCount}</span>
+                  )}
+                </div>
+              )}
+              {averageTimeStats && !averageTimeStats.averageMinutes && averageTimeStats.activeCount > 0 && (
+                <div className="speed-details" style={{
+                  fontSize: '0.7rem',
+                  opacity: 0.9
+                }}>
+                  ⏳ В работе сейчас: {averageTimeStats.activeCount} заказов
                 </div>
               )}
             </div>
