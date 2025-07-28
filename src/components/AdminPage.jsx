@@ -6,7 +6,8 @@ import {
   formatNumber, 
   calculateAverageTime, 
   safeFetch,
-  saveStatusChange
+  saveStatusChange,
+  updateOrderStatusRequest
 } from './utils';
 
 const AdminDashboard = ({ admin, onLogout }) => {
@@ -199,31 +200,35 @@ const AdminDashboard = ({ admin, onLogout }) => {
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
-    try {
-      // Сначала получаем текущий статус заказа
-      const currentOrder = orders.find(order => order.orderId === orderId);
-      const oldStatus = currentOrder ? currentOrder.status : null;
-      
-      const response = await safeFetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`);
-      
-      if (response.ok) {
-        // Сохраняем время изменения статуса
-        if (oldStatus !== newStatus) {
-          await saveStatusChange(orderId, newStatus, oldStatus);
-        }
-        
-        setOrders(prev => prev.map(order => 
-          order.orderId === orderId 
-            ? { ...order, status: newStatus }
-            : order
-        ));
-      } else {
-        alert('Ошибка обновления статуса. Попробуйте еще раз.');
+  try {
+    console.log('=== handleStatusChange START ===');
+    console.log('orderId:', orderId, 'newStatus:', newStatus);
+    
+    const currentOrder = orders.find(order => order.orderId === orderId);
+    const oldStatus = currentOrder ? currentOrder.status : null;
+    
+    // Используем специальную JSONP функцию
+    const response = await updateOrderStatusRequest(orderId, newStatus);
+    console.log('Response received:', response);
+    
+    if (response.ok) {
+      if (oldStatus !== newStatus) {
+        await saveStatusChange(orderId, newStatus, oldStatus);
       }
-    } catch (error) {
-      alert('Ошибка соединения. Проверьте интернет.');
+      
+      setOrders(prev => prev.map(order => 
+        order.orderId === orderId 
+          ? { ...order, status: newStatus }
+          : order
+      ));
+    } else {
+      alert('Ошибка обновления статуса. Попробуйте еще раз.');
     }
-  };
+  } catch (error) {
+    console.error('Error in handleStatusChange:', error);
+    alert('Ошибка соединения. Проверьте интернет.');
+  }
+};
 
   const filterOrders = (orders, filter) => {
     const activeOrders = orders.filter(order => !['done', 'archived'].includes(order.status));
