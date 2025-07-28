@@ -6,7 +6,10 @@ import OrderingNowBanner from './components/OrderingNowBanner';
 import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 
-import { API_URL, CONFIG } from './config.js';
+import { API_URL, CONFIG } from './config';
+
+// И везде в коде использовать API_URL вместо прямой ссылки
+fetch(API_URL + '?action=something')
 
 // Компонент для отображения звездного рейтинга
 const StarRating = ({ rating, size = 16, onClick, isClickable = false }) => {
