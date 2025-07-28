@@ -6,7 +6,7 @@ import OrderingNowBanner from './components/OrderingNowBanner';
 import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
+import { API_URL, CONFIG } from './config.js';
 
 // Компонент для отображения звездного рейтинга
 const StarRating = ({ rating, size = 16, onClick, isClickable = false }) => {
