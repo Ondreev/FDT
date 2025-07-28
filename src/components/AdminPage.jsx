@@ -345,38 +345,44 @@ const AdminDashboard = ({ admin, onLogout }) => {
       <style>
         {`
           @media (max-width: 768px) {
-            .admin-metrics-row {
-              grid-template-columns: 1fr !important;
-              gap: 0.8rem !important;
+            .admin-header h1 {
+              font-size: 1.4rem !important;
             }
             
             .admin-metrics-item {
               padding: 0.8rem !important;
             }
             
-            .admin-buttons {
-              flex-direction: column !important;
-              gap: 0.8rem !important;
+            .admin-metrics-item div:first-child {
+              font-size: 0.7rem !important;
             }
             
-            .admin-buttons button {
-              width: 100% !important;
-              justify-content: center !important;
+            .admin-metrics-item div:last-child {
+              font-size: 1rem !important;
+            }
+            
+            .speed-service {
+              padding: 0.8rem !important;
+            }
+            
+            .speed-service-title {
+              font-size: 0.7rem !important;
+            }
+            
+            .speed-service-value {
+              font-size: 1rem !important;
             }
             
             .speed-details {
-              flex-direction: column !important;
-              gap: 0.3rem !important;
-              align-items: flex-start !important;
+              font-size: 0.6rem !important;
             }
             
-            .filter-buttons {
-              justify-content: center !important;
+            .admin-buttons button {
+              padding: 0.6rem 0.8rem !important;
+              font-size: 0.7rem !important;
             }
             
             .filter-button {
-              flex: 1 !important;
-              min-width: 0 !important;
               padding: 0.6rem 0.8rem !important;
               font-size: 0.8rem !important;
             }
@@ -398,7 +404,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
         borderBottom: '1px solid #f0f0f0'
       }}>
         {/* Заголовок */}
-        <div style={{
+        <div className="admin-header" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -423,8 +429,8 @@ const AdminDashboard = ({ admin, onLogout }) => {
           </div>
         </div>
 
-        {/* Метрики */}
-        <div className="admin-metrics-row" style={{
+        {/* Первая строка: Метрики */}
+        <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '1rem',
@@ -500,8 +506,8 @@ const AdminDashboard = ({ admin, onLogout }) => {
           </div>
         </div>
 
-        {/* Скорость обслуживания */}
-        <div style={{
+        {/* Вторая строка: Скорость обслуживания */}
+        <div className="speed-service" style={{
           background: 'linear-gradient(135deg, #9c27b0, #7b1fa2)',
           borderRadius: '12px',
           padding: '1rem',
@@ -514,7 +520,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
             alignItems: 'center'
           }}>
             <div style={{ flex: 1 }}>
-              <div style={{
+              <div className="speed-service-title" style={{
                 fontSize: '0.8rem',
                 fontWeight: 'bold',
                 marginBottom: '0.3rem',
@@ -522,7 +528,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
               }}>
                 СКОРОСТЬ ОБСЛУЖИВАНИЯ
               </div>
-              <div style={{
+              <div className="speed-service-value" style={{
                 fontSize: '1.1rem',
                 fontWeight: 'bold',
                 marginBottom: '0.5rem'
@@ -547,12 +553,11 @@ const AdminDashboard = ({ admin, onLogout }) => {
           </div>
         </div>
 
-        {/* Кнопки управления */}
+        {/* Третья строка: Кнопки управления */}
         <div className="admin-buttons" style={{
-          display: 'flex',
-          gap: '0.8rem',
-          justifyContent: 'center',
-          alignItems: 'center'
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '0.8rem'
         }}>
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
@@ -570,8 +575,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem',
-              minWidth: '100px'
+              gap: '0.5rem'
             }}
           >
             <span>{autoRefresh ? '🔄' : '⏸️'}</span>
@@ -592,8 +596,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem',
-              minWidth: '100px'
+              gap: '0.5rem'
             }}
           >
             <span>↻</span>
@@ -614,8 +617,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem',
-              minWidth: '100px'
+              gap: '0.5rem'
             }}
           >
             <span>🚪</span>
