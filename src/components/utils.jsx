@@ -79,25 +79,7 @@ export const calculateAverageTime = (orders) => {
 
   if (todayOrders.length === 0) return null;
 
-  // Парсим дату заказа в timestamp
-  const parseOrderDate = (dateStr) => {
-    if (!dateStr) return null;
-    try {
-      if (typeof dateStr === 'string' && dateStr.includes('.') && dateStr.includes(':') && !dateStr.includes('T')) {
-        const [datePart, timePart] = dateStr.split(' ');
-        const [day, month, year] = datePart.split('.');
-        const [hours, minutes, seconds] = timePart.split(':');
-        return new Date(year, month - 1, day, hours, minutes, seconds || 0).getTime();
-      } else {
-        return new Date(dateStr).getTime();
-      }
-    } catch (error) {
-      console.error('Error parsing order date:', error);
-      return null;
-    }
-  };
-
-  // Рассчитываем времена для завершенных заказов
+  // Рассчитываем времена для завершенных заказов используя НОВЫЕ СТОЛБЦЫ
   const completedOrders = todayOrders.filter(order => 
     ['done', 'archived'].includes(order.status)
   );
@@ -120,28 +102,70 @@ export const calculateAverageTime = (orders) => {
     };
   }
 
-  // В реальном приложении здесь должны быть timestamps изменения статусов
-  // Пока используем имитацию на основе времени создания заказа
-  const calculateTimesForOrder = (order) => {
-    const startTime = parseOrderDate(order.date);
-    if (!startTime) return null;
+  // Парсим время из столбцов времени
+  const parseTimeString = (timeStr) => {
+    if (!timeStr) return null;
+    try {
+      if (typeof timeStr === 'string' && timeStr.includes('.') && timeStr.includes(':')) {
+        const [datePart, timePart] = timeStr.split(' ');
+        const [day, month, year] = datePart.split('.');
+        const [hours, minutes, seconds] = timePart.split(':');
+        return new Date(year, month - 1, day, hours, minutes, seconds || 0).getTime();
+      }
+      return new Date(timeStr).getTime();
+    } catch (error) {
+      return null;
+    }
+  };
 
-    // Имитация: добавляем случайное время для каждого этапа
-    // В реальном приложении здесь должны быть реальные timestamps статусов
-    const cookingTime = Math.random() * 20 + 15; // 15-35 минут готовка
-    const deliveryTime = Math.random() * 15 + 10; // 10-25 минут доставка
-    const totalTime = cookingTime + deliveryTime;
+  // Рассчитываем времена используя реальные данные из столбцов времени
+  const calculateTimesForOrder = (order) => {
+    const pendingTime = parseTimeString(order.pendingTime);
+    const cookingTime = parseTimeString(order.cookingTime);
+    const deliveringTime = parseTimeString(order.deliveringTime);
+    const doneTime = parseTimeString(order.doneTime) || parseTimeString(order.archivedTime);
+
+    if (!pendingTime || !doneTime) return null;
+
+    let cookingDuration = 0;
+    let deliveryDuration = 0;
+    let totalTime = 0;
+
+    // Время готовки: от pending до cooking (или если cooking нет, то до delivering)
+    if (cookingTime) {
+      cookingDuration = Math.round((cookingTime - pendingTime) / 60000); // в минутах
+      
+      // Время доставки: от cooking до done
+      if (deliveringTime) {
+        deliveryDuration = Math.round((doneTime - deliveringTime) / 60000);
+      } else {
+        deliveryDuration = Math.round((doneTime - cookingTime) / 60000);
+      }
+    } else if (deliveringTime) {
+      // Если нет cooking, но есть delivering
+      cookingDuration = Math.round((deliveringTime - pendingTime) / 60000);
+      deliveryDuration = Math.round((doneTime - deliveringTime) / 60000);
+    } else {
+      // Если нет промежуточных статусов
+      totalTime = Math.round((doneTime - pendingTime) / 60000);
+      cookingDuration = Math.round(totalTime * 0.6); // примерно 60% на готовку
+      deliveryDuration = Math.round(totalTime * 0.4); // 40% на доставку
+    }
+
+    if (!totalTime) {
+      totalTime = cookingDuration + deliveryDuration;
+    }
 
     return {
-      cooking: cookingTime,
-      delivery: deliveryTime,
-      total: totalTime
+      cooking: Math.max(0, cookingDuration),
+      delivery: Math.max(0, deliveryDuration),
+      total: Math.max(0, totalTime)
     };
   };
 
   const orderTimes = completedOrders
     .map(order => calculateTimesForOrder(order))
-    .filter(times => times !== null);
+    .filter(times => times !== null && times.total > 0);
 
   if (orderTimes.length === 0) return null;
 
