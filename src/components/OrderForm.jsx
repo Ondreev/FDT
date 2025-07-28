@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbxAQF0sfNYonRjjH3zFBW58gkXZ3u5mKZWUtDyspY3uyHxFc-WnZB13Hz8IH1w-h3bG2Q/exec';
+import { API_URL } from '../config'; // или './config' в зависимости от расположения
 
+// И использовать API_URL вместо прямой ссылки
 const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
