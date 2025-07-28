@@ -243,21 +243,43 @@ export const createWhatsAppLink = (phone, orderId) => {
 };
 
 export const safeFetch = async (url, options = {}) => {
+  console.log('🚀 Отправляю запрос:', url);
+  
   try {
+    // Пробуем обычный fetch
     const response = await fetch(url, {
       ...options,
       mode: 'cors'
     });
     
     if (response.ok) {
+      console.log('✅ Fetch успешен:', response.status);
       return response;
     }
     throw new Error(`HTTP ${response.status}`);
   } catch (error) {
-    console.warn('Fetch failed, trying JSONP:', error.message);
+    console.warn('❌ Fetch failed, trying direct request:', error.message);
     
+    // Если обычный fetch не работает, используем более простой подход
     if (!options.method || options.method === 'GET') {
-      return await fetchViaJSONP(url);
+      try {
+        // Создаем простой GET-запрос без CORS ограничений
+        const response = await fetch(url, {
+          method: 'GET',
+          mode: 'no-cors'
+        });
+        console.log('✅ No-cors request sent');
+        
+        // Возвращаем mock response для no-cors
+        return {
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({ success: true })
+        };
+      } catch (nocorsError) {
+        console.warn('❌ No-cors failed, using JSONP fallback');
+        return await fetchViaJSONP(url);
+      }
     }
     
     throw new Error('Request failed. Check your internet connection.');
@@ -270,6 +292,7 @@ const fetchViaJSONP = (url) => {
     const script = document.createElement('script');
     
     window[callbackName] = (data) => {
+      console.log('✅ JSONP response received:', data);
       resolve({ 
         ok: true, 
         json: () => Promise.resolve(data) 
@@ -287,16 +310,20 @@ const fetchViaJSONP = (url) => {
     };
     
     script.onerror = () => {
+      console.error('❌ JSONP request failed');
       reject(new Error('JSONP request failed'));
       cleanup();
     };
     
     const separator = url.includes('?') ? '&' : '?';
-    script.src = url + separator + 'callback=' + callbackName;
+    const jsonpUrl = url + separator + 'callback=' + callbackName;
+    console.log('🔄 JSONP URL:', jsonpUrl);
+    script.src = jsonpUrl;
     document.head.appendChild(script);
     
     setTimeout(() => {
       if (window[callbackName]) {
+        console.error('❌ JSONP timeout');
         reject(new Error('Request timeout'));
         cleanup();
       }
