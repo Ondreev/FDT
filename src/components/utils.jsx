@@ -242,6 +242,14 @@ export const createWhatsAppLink = (phone, orderId) => {
   return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
 };
 
+export const updateOrderStatusRequest = async (orderId, status) => {
+  const url = `${API_URL}?action=updateOrderStatus&orderId=${encodeURIComponent(orderId)}&status=${encodeURIComponent(status)}`;
+  console.log('🚀 updateOrderStatus запрос:', url);
+  
+  // Для updateOrderStatus ВСЕГДА используем JSONP
+  return await fetchViaJSONP(url);
+};
+
 export const safeFetch = async (url, options = {}) => {
   console.log('🚀 Отправляю запрос:', url);
   
