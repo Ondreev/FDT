@@ -36,38 +36,8 @@ export const formatDate = (dateStr) => {
 };
 
 export const saveStatusChange = async (orderId, newStatus, oldStatus) => {
+  // Простая функция - больше ничего не делаем, так как время записывается в Google Apps Script
   try {
-    const now = new Date();
-    const moscowTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
-    const timestamp = moscowTime.toISOString();
-    
-    const changeData = {
-      orderId,
-      newStatus,
-      oldStatus,
-      timestamp,
-      changeTime: formatDate(moscowTime)
-    };
-    
-    // Сохраняем в localStorage для отслеживания времени изменения статусов
-    const existingChanges = JSON.parse(localStorage.getItem('statusChanges') || '[]');
-    existingChanges.push(changeData);
-    
-    // Оставляем только последние 1000 записей
-    if (existingChanges.length > 1000) {
-      existingChanges.splice(0, existingChanges.length - 1000);
-    }
-    
-    localStorage.setItem('statusChanges', JSON.stringify(existingChanges));
-    
-    // Отправляем на сервер в StatusHistory таблицу
-    try {
-      const url = `${API_URL}?action=addStatusHistory&orderId=${encodeURIComponent(orderId)}&oldStatus=${encodeURIComponent(oldStatus || '')}&newStatus=${encodeURIComponent(newStatus)}&timestamp=${encodeURIComponent(timestamp)}&date=${encodeURIComponent(formatDate(moscowTime))}`;
-      await safeFetch(url);
-    } catch (error) {
-      console.warn('Failed to log status change to server:', error);
-    }
-    
     return true;
   } catch (error) {
     console.error('Error saving status change:', error);
