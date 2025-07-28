@@ -321,3 +321,6 @@ const fetchViaJSONP = (url) => {
     }, 10000);
   });
 };
+
+// И в конце файла:
+export { API_URL };
