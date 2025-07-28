@@ -18,6 +18,11 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
   const [loadError, setLoadError] = useState(null);
   
+  // Состояния для анимации бота
+  const [isTyping, setIsTyping] = useState(false);
+  const [botMessage, setBotMessage] = useState('');
+  const [hasNewOrders, setHasNewOrders] = useState(false);
+  
   // Состояния для свайпа
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
@@ -81,9 +86,17 @@ const AdminDashboard = ({ admin, onLogout }) => {
         });
         
         if (isAutoRefresh && lastOrderCount > 0 && sorted.length > lastOrderCount) {
+          const newOrdersCount = sorted.length - lastOrderCount;
+          setHasNewOrders(true);
+          simulateTyping(newOrdersCount);
+          
           if (window.innerWidth > 768) {
-            console.log(`🔔 Новых заказов: ${sorted.length - lastOrderCount}`);
+            console.log(`🔔 Новых заказов: ${newOrdersCount}`);
           }
+        } else if (!isAutoRefresh) {
+          // При первой загрузке или ручном обновлении
+          const pendingCount = sorted.filter(order => order.status === 'pending').length;
+          simulateTyping(pendingCount, true);
         }
         
         setOrders(sorted);
@@ -260,6 +273,35 @@ const AdminDashboard = ({ admin, onLogout }) => {
     } else {
       return `Привет Босс! У нас тут ${pendingCount} новых заказов поступило 🔥`;
     }
+  };
+
+  const simulateTyping = (orderCount, isInitial = false) => {
+    setIsTyping(true);
+    setBotMessage('');
+    
+    const message = isInitial 
+      ? (orderCount === 0 
+          ? "Босс, пока заказов нет, нужно улучшить рекламу 📈"
+          : orderCount === 1
+          ? "Привет Босс! У нас тут 1 новый заказ поступил 🔔"
+          : `Привет Босс! У нас тут ${orderCount} новых заказов поступило 🔥`)
+      : `🎉 Поступило еще ${orderCount} ${orderCount === 1 ? 'заказ' : 'заказов'}! Всего новых: ${pendingCount} 🔥`;
+    
+    let currentIndex = 0;
+    const typingSpeed = 50;
+    
+    const typeChar = () => {
+      if (currentIndex < message.length) {
+        setBotMessage(message.slice(0, currentIndex + 1));
+        currentIndex++;
+        setTimeout(typeChar, typingSpeed);
+      } else {
+        setIsTyping(false);
+        setTimeout(() => setHasNewOrders(false), 3000);
+      }
+    };
+    
+    setTimeout(typeChar, 500);
   };
 
   if (isLoading) {
@@ -636,36 +678,64 @@ const AdminDashboard = ({ admin, onLogout }) => {
           display: 'flex',
           gap: '0.75rem',
           marginBottom: '1.5rem',
-          alignItems: 'flex-start'
+          alignItems: 'flex-start',
+          background: hasNewOrders ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(33, 150, 243, 0.1))' : 'transparent',
+          borderRadius: hasNewOrders ? '20px' : '0',
+          padding: hasNewOrders ? '1rem' : '0',
+          transition: 'all 0.5s ease',
+          animation: hasNewOrders ? 'pulse-bg 2s infinite' : 'none'
         }}>
           <div style={{
-            width: '45px',
-            height: '45px',
+            width: '50px',
+            height: '50px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            background: 'linear-gradient(135deg, #00D4AA, #00A693)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.3rem',
-            boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
-            flexShrink: 0
+            fontSize: '1.5rem',
+            boxShadow: '0 4px 20px rgba(0, 212, 170, 0.4)',
+            flexShrink: 0,
+            position: 'relative',
+            animation: isTyping ? 'bot-pulse 1s infinite' : 'none'
           }}>
             🤖
+            {isTyping && (
+              <div style={{
+                position: 'absolute',
+                bottom: '-5px',
+                right: '-5px',
+                width: '15px',
+                height: '15px',
+                background: '#4CAF50',
+                borderRadius: '50%',
+                animation: 'typing-indicator 1.5s infinite'
+              }}></div>
+            )}
           </div>
           <div style={{
             background: 'white',
             borderRadius: '18px 18px 18px 4px',
             padding: '1rem 1.25rem',
             maxWidth: '85%',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e0e0e0'
+            boxShadow: hasNewOrders ? '0 8px 32px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.1)',
+            border: hasNewOrders ? '2px solid #4CAF50' : '1px solid #e0e0e0',
+            transition: 'all 0.3s ease'
           }}>
             <div style={{
               fontSize: '1rem',
               color: '#2c1e0f',
-              lineHeight: '1.4'
+              lineHeight: '1.4',
+              minHeight: '1.4em'
             }}>
-              {getBotMessage()}
+              {botMessage || getBotMessage()}
+              {isTyping && (
+                <span style={{
+                  animation: 'cursor-blink 1s infinite',
+                  fontSize: '1.2em',
+                  color: '#4CAF50'
+                }}>|</span>
+              )}
             </div>
             <div style={{
               fontSize: '0.7rem',
@@ -677,6 +747,30 @@ const AdminDashboard = ({ admin, onLogout }) => {
             </div>
           </div>
         </div>
+
+        <style>
+          {`
+            @keyframes bot-pulse {
+              0%, 100% { transform: scale(1); }
+              50% { transform: scale(1.05); }
+            }
+            
+            @keyframes typing-indicator {
+              0%, 100% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.5; transform: scale(0.8); }
+            }
+            
+            @keyframes cursor-blink {
+              0%, 50% { opacity: 1; }
+              51%, 100% { opacity: 0; }
+            }
+            
+            @keyframes pulse-bg {
+              0%, 100% { background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(33, 150, 243, 0.1)); }
+              50% { background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(33, 150, 243, 0.2)); }
+            }
+          `}
+        </style>
 
         {/* Навигация */}
         <div style={{
@@ -719,7 +813,11 @@ const AdminDashboard = ({ admin, onLogout }) => {
                   whiteSpace: 'nowrap'
                 }}
               >
-                {filter.label} ({filter.count})
+                {filter.label} (<span style={{
+                fontWeight: '900',
+                fontSize: '1.1em',
+                textShadow: activeFilter === filter.key ? '0 0 8px rgba(255,255,255,0.5)' : 'none'
+              }}>{filter.count}</span>)
               </button>
             ))}
           </div>
