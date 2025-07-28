@@ -117,6 +117,73 @@ const AdminDashboard = ({ admin, onLogout }) => {
     }
   };
 
+  const handleTouchStart = (e) => {
+    if (isAnimating) return;
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+    setIsSwiping(true);
+    setSwipeOffset(0);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isSwiping || isAnimating) return;
+    
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = currentX - touchStartX;
+    const deltaY = currentY - touchStartY;
+    
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault();
+      const maxOffset = window.innerWidth * 0.3;
+      const limitedDelta = Math.max(-maxOffset, Math.min(maxOffset, deltaX));
+      setSwipeOffset(limitedDelta);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!isSwiping || isAnimating) {
+      setIsSwiping(false);
+      setSwipeOffset(0);
+      return;
+    }
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 80) {
+      const filterCategories = ['pending', 'active', 'archive'];
+      const currentIndex = filterCategories.indexOf(activeFilter);
+      let newIndex = currentIndex;
+
+      if (deltaX > 0 && currentIndex > 0) {
+        newIndex = currentIndex - 1;
+      } else if (deltaX < 0 && currentIndex < filterCategories.length - 1) {
+        newIndex = currentIndex + 1;
+      }
+
+      if (newIndex !== currentIndex) {
+        setIsAnimating(true);
+        setActiveFilter(filterCategories[newIndex]);
+        
+        setTimeout(() => {
+          setSwipeOffset(0);
+          setTimeout(() => {
+            setIsAnimating(false);
+          }, window.innerWidth <= 768 ? 300 : 400);
+        }, 50);
+      } else {
+        setSwipeOffset(0);
+      }
+    } else {
+      setSwipeOffset(0);
+    }
+
+    setIsSwiping(false);
+  };
+
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       const response = await safeFetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`);
@@ -269,35 +336,66 @@ const AdminDashboard = ({ admin, onLogout }) => {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}
+    onTouchStart={handleTouchStart}
+    onTouchMove={handleTouchMove}
+    onTouchEnd={handleTouchEnd}
+    >
       <style>
         {`
           @media (max-width: 768px) {
-            .admin-buttons {
-              display: flex !important;
-              flex-wrap: wrap !important;
-              gap: 0.5rem !important;
+            .admin-metrics-row {
+              grid-template-columns: 1fr !important;
+              gap: 0.8rem !important;
             }
             
-            .admin-buttons > * {
-              flex: 1 1 auto !important;
-              min-width: 100px !important;
+            .admin-metrics-item {
+              padding: 0.8rem !important;
+            }
+            
+            .admin-buttons {
+              flex-direction: column !important;
+              gap: 0.8rem !important;
+            }
+            
+            .admin-buttons button {
+              width: 100% !important;
+              justify-content: center !important;
+            }
+            
+            .speed-details {
+              flex-direction: column !important;
+              gap: 0.3rem !important;
+              align-items: flex-start !important;
+            }
+            
+            .filter-buttons {
+              justify-content: center !important;
+            }
+            
+            .filter-button {
+              flex: 1 !important;
+              min-width: 0 !important;
+              padding: 0.6rem 0.8rem !important;
+              font-size: 0.8rem !important;
+            }
+          }
+          
+          @media (min-width: 769px) {
+            .container {
+              max-width: 800px !important;
+              margin: 0 auto !important;
             }
           }
         `}
       </style>
       
-      <div style={{
+      <div className="container" style={{
         background: 'white',
         padding: '1.5rem',
         boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-        borderBottom: '1px solid #f0f0f0',
-        width: '100%',
-        maxWidth: '800px',
-        margin: '0 auto'
+        borderBottom: '1px solid #f0f0f0'
       }}>
         {/* Заголовок */}
         <div style={{
@@ -326,13 +424,13 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
 
         {/* Метрики */}
-        <div style={{
+        <div className="admin-metrics-row" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '1rem',
           marginBottom: '1rem'
         }}>
-          <div style={{
+          <div className="admin-metrics-item" style={{
             background: 'linear-gradient(135deg, #4caf50, #45a049)',
             borderRadius: '12px',
             padding: '1rem',
@@ -340,9 +438,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
             textAlign: 'center'
           }}>
             <div style={{
-              fontSize: '0.9rem',
+              fontSize: '0.8rem',
               fontWeight: 'bold',
-              marginBottom: '0.3rem'
+              marginBottom: '0.3rem',
+              opacity: 0.9
             }}>
               ВЫРУЧКА
             </div>
@@ -354,7 +453,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
             </div>
           </div>
 
-          <div style={{
+          <div className="admin-metrics-item" style={{
             background: 'linear-gradient(135deg, #2196f3, #1976d2)',
             borderRadius: '12px',
             padding: '1rem',
@@ -362,9 +461,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
             textAlign: 'center'
           }}>
             <div style={{
-              fontSize: '0.9rem',
+              fontSize: '0.8rem',
               fontWeight: 'bold',
-              marginBottom: '0.3rem'
+              marginBottom: '0.3rem',
+              opacity: 0.9
             }}>
               ТРАФИК
             </div>
@@ -376,7 +476,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
             </div>
           </div>
 
-          <div style={{
+          <div className="admin-metrics-item" style={{
             background: 'linear-gradient(135deg, #ff9800, #f57c00)',
             borderRadius: '12px',
             padding: '1rem',
@@ -384,9 +484,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
             textAlign: 'center'
           }}>
             <div style={{
-              fontSize: '0.9rem',
+              fontSize: '0.8rem',
               fontWeight: 'bold',
-              marginBottom: '0.3rem'
+              marginBottom: '0.3rem',
+              opacity: 0.9
             }}>
               СР. ЧЕК
             </div>
@@ -414,9 +515,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
           }}>
             <div style={{ flex: 1 }}>
               <div style={{
-                fontSize: '0.9rem',
+                fontSize: '0.8rem',
                 fontWeight: 'bold',
-                marginBottom: '0.3rem'
+                marginBottom: '0.3rem',
+                opacity: 0.9
               }}>
                 СКОРОСТЬ ОБСЛУЖИВАНИЯ
               </div>
@@ -428,7 +530,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
                 {averageTimeStats ? `${averageTimeStats.averageMinutes} мин` : 'Нет данных'}
               </div>
               {averageTimeStats && (
-                <div style={{
+                <div className="speed-details" style={{
                   display: 'flex',
                   gap: '1rem',
                   fontSize: '0.7rem',
@@ -468,7 +570,8 @@ const AdminDashboard = ({ admin, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem'
+              gap: '0.5rem',
+              minWidth: '100px'
             }}
           >
             <span>{autoRefresh ? '🔄' : '⏸️'}</span>
@@ -488,7 +591,9 @@ const AdminDashboard = ({ admin, onLogout }) => {
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              justifyContent: 'center',
+              gap: '0.5rem',
+              minWidth: '100px'
             }}
           >
             <span>↻</span>
@@ -508,7 +613,9 @@ const AdminDashboard = ({ admin, onLogout }) => {
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              justifyContent: 'center',
+              gap: '0.5rem',
+              minWidth: '100px'
             }}
           >
             <span>🚪</span>
@@ -517,7 +624,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
       </div>
 
-      <div style={{
+      <div className="container" style={{
         maxWidth: '800px',
         margin: '0 auto',
         padding: '1rem 2rem 2rem 2rem'
@@ -579,10 +686,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
           padding: '0.5rem 2rem',
           backdropFilter: 'blur(10px)'
         }}>
-          <div style={{
+          <div className="filter-buttons" style={{
             display: 'flex',
             gap: '0.5rem',
-            flexWrap: 'wrap'
+            flexWrap: 'nowrap'
           }}>
             {[
               { key: 'pending', label: 'Новые', count: orders.filter(o => o.status === 'pending').length },
@@ -591,9 +698,10 @@ const AdminDashboard = ({ admin, onLogout }) => {
             ].map((filter) => (
               <button
                 key={filter.key}
+                className="filter-button"
                 onClick={() => setActiveFilter(filter.key)}
                 style={{
-                  padding: '0.75rem 1.5rem',
+                  padding: '0.75rem 1rem',
                   background: activeFilter === filter.key 
                     ? 'linear-gradient(135deg, #667eea, #764ba2)' 
                     : 'rgba(255, 255, 255, 0.9)',
@@ -605,7 +713,8 @@ const AdminDashboard = ({ admin, onLogout }) => {
                   fontWeight: 'bold',
                   transition: 'all 0.2s ease',
                   boxShadow: activeFilter === filter.key ? '0 4px 12px rgba(102, 126, 234, 0.3)' : '0 2px 8px rgba(0,0,0,0.1)',
-                  backdropFilter: 'blur(10px)'
+                  backdropFilter: 'blur(10px)',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {filter.label} ({filter.count})
@@ -615,7 +724,13 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
 
         {/* Заказы */}
-        <div>
+        <div 
+          style={{
+            transform: `translateX(${swipeOffset}px)`,
+            opacity: isAnimating ? 0.6 : 1,
+            transition: isSwiping ? 'none' : 'all 0.3s ease-out'
+          }}
+        >
           {filteredOrders.length === 0 ? (
             <div style={{
               background: 'white',
