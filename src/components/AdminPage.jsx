@@ -5,7 +5,8 @@ import {
   API_URL, 
   formatNumber, 
   calculateAverageTime, 
-  safeFetch 
+  safeFetch,
+  saveStatusChange
 } from './utils';
 
 const AdminDashboard = ({ admin, onLogout }) => {
@@ -199,9 +200,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
+      // Сначала получаем текущий статус заказа
+      const currentOrder = orders.find(order => order.orderId === orderId);
+      const oldStatus = currentOrder ? currentOrder.status : null;
+      
       const response = await safeFetch(`${API_URL}?action=updateOrderStatus&orderId=${orderId}&status=${newStatus}`);
       
       if (response.ok) {
+        // Сохраняем время изменения статуса
+        if (oldStatus !== newStatus) {
+          await saveStatusChange(orderId, newStatus, oldStatus);
+        }
+        
         setOrders(prev => prev.map(order => 
           order.orderId === orderId 
             ? { ...order, status: newStatus }
