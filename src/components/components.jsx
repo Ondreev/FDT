@@ -1,6 +1,8 @@
-// components.jsx - React компоненты
+// components.jsx - React компоненты (обновленная версия с печатью)
 import { useState, useEffect } from 'react';
 import { formatDate, formatNumber, normalizePhoneNumber, createWhatsAppLink, API_URL, safeFetch } from './utils';
+// ✅ ИМПОРТИРУЕМ КОМПОНЕНТЫ ПЕЧАТИ
+import { PrintOrderModal, PrintButton } from './PrintSystem';
 
 export const OrderTimer = ({ orderDate, status, order }) => {
   const [elapsed, setElapsed] = useState(0);
@@ -303,6 +305,8 @@ export const AdminLogin = ({ onLoginSuccess }) => {
 export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  // ✅ ДОБАВЛЯЕМ СОСТОЯНИЕ ДЛЯ МОДАЛЬНОГО ОКНА ПЕЧАТИ
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   const statusInfo = statusLabels.find(s => s.status === order.status) || 
     { label: order.status, color: '#999' };
@@ -321,394 +325,409 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   };
 
   return (
-    <div style={{
-      background: 'white',
-      borderRadius: '16px',
-      padding: '1.5rem',
-      marginBottom: '1rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      // ✅ КРАСНАЯ ОБВОДКА ДЛЯ САМОВЫВОЗА
-      border: isPickup ? '3px solid #ff4444' : isDone ? '2px solid #4caf50' : isArchived ? '2px solid #999' : '1px solid #e0e0e0',
-      position: 'relative',
-      // ✅ ПУЛЬСИРУЮЩАЯ АНИМАЦИЯ ДЛЯ САМОВЫВОЗА
-      animation: isPickup && !isDone && !isArchived ? 'urgentPulse 2s infinite' : 'none'
-    }}>
-      
-      {/* ✅ СТИЛИ ДЛЯ АНИМАЦИЙ */}
-      <style>
-        {`
-          @keyframes urgentPulse {
-            0%, 100% { 
-              box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 0 0 0 rgba(255, 68, 68, 0.7);
-            }
-            50% { 
-              box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 0 0 6px rgba(255, 68, 68, 0);
-            }
-          }
-          
-          @keyframes urgentBadgePulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-          }
-          
-          @keyframes checkmarkBounce {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-          }
-        `}
-      </style>
-
-      {/* ✅ ПЛАШКА "СРОЧНЫЙ!" ДЛЯ САМОВЫВОЗА */}
-      {isPickup && !isDone && !isArchived && (
-        <div style={{
-          position: 'absolute',
-          top: '-8px',
-          left: '16px',
-          background: '#ff4444',
-          color: 'white',
-          padding: '0.3rem 0.8rem',
-          borderRadius: '12px',
-          fontSize: '0.8rem',
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
-          boxShadow: '0 2px 8px rgba(255, 68, 68, 0.4)',
-          animation: 'urgentBadgePulse 1.5s infinite',
-          zIndex: 10
-        }}>
-          🔥 СРОЧНЫЙ!
-        </div>
-      )}
-
-      {/* Зеленая галочка для завершенных */}
-      {(isDone || isArchived) && (
-        <div style={{
-          position: 'absolute',
-          top: '-10px',
-          right: '-10px',
-          background: isDone ? '#4caf50' : '#999',
-          borderRadius: '50%',
-          width: '40px',
-          height: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '1.5rem',
-          color: 'white',
-          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
-          animation: 'checkmarkBounce 0.5s ease-out'
-        }}>
-          ✓
-        </div>
-      )}
-
+    <>
       <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        background: 'white',
+        borderRadius: '16px',
+        padding: '1.5rem',
         marginBottom: '1rem',
-        cursor: 'pointer'
-      }}
-      onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div>
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        // ✅ КРАСНАЯ ОБВОДКА ДЛЯ САМОВЫВОЗА
+        border: isPickup ? '3px solid #ff4444' : isDone ? '2px solid #4caf50' : isArchived ? '2px solid #999' : '1px solid #e0e0e0',
+        position: 'relative',
+        // ✅ ПУЛЬСИРУЮЩАЯ АНИМАЦИЯ ДЛЯ САМОВЫВОЗА
+        animation: isPickup && !isDone && !isArchived ? 'urgentPulse 2s infinite' : 'none'
+      }}>
+        
+        {/* ✅ СТИЛИ ДЛЯ АНИМАЦИЙ */}
+        <style>
+          {`
+            @keyframes urgentPulse {
+              0%, 100% { 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 0 0 0 rgba(255, 68, 68, 0.7);
+              }
+              50% { 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 0 0 6px rgba(255, 68, 68, 0);
+              }
+            }
+            
+            @keyframes urgentBadgePulse {
+              0%, 100% { transform: scale(1); }
+              50% { transform: scale(1.1); }
+            }
+            
+            @keyframes checkmarkBounce {
+              0% { transform: scale(0); }
+              50% { transform: scale(1.2); }
+              100% { transform: scale(1); }
+            }
+          `}
+        </style>
+
+        {/* ✅ МАЛЕНЬКАЯ КНОПКА ПЕЧАТИ В ПРАВОМ ВЕРХНЕМ УГЛУ */}
+        <PrintButton 
+          order={order} 
+          onPrintClick={() => setIsPrintModalOpen(true)} 
+        />
+
+        {/* ✅ ПЛАШКА "СРОЧНЫЙ!" ДЛЯ САМОВЫВОЗА */}
+        {isPickup && !isDone && !isArchived && (
           <div style={{
-            fontSize: '1.2rem',
+            position: 'absolute',
+            top: '-8px',
+            left: '16px',
+            background: '#ff4444',
+            color: 'white',
+            padding: '0.3rem 0.8rem',
+            borderRadius: '12px',
+            fontSize: '0.8rem',
             fontWeight: 'bold',
-            // ✅ КРАСНЫЙ ЦВЕТ ЗАГОЛОВКА ДЛЯ САМОВЫВОЗА
-            color: isPickup ? '#ff4444' : '#2c1e0f',
-            marginBottom: '0.25rem',
+            textTransform: 'uppercase',
+            boxShadow: '0 2px 8px rgba(255, 68, 68, 0.4)',
+            animation: 'urgentBadgePulse 1.5s infinite',
+            zIndex: 10
+          }}>
+            🔥 СРОЧНЫЙ!
+          </div>
+        )}
+
+        {/* Зеленая галочка для завершенных */}
+        {(isDone || isArchived) && (
+          <div style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '50px', // ✅ СДВИГАЕМ ВЛЕВО, ЧТОБЫ НЕ ПЕРЕКРЫВАТЬ КНОПКУ ПЕЧАТИ
+            background: isDone ? '#4caf50' : '#999',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
             display: 'flex',
             alignItems: 'center',
-            gap: '1rem',
-            flexWrap: 'wrap'
+            justifyContent: 'center',
+            fontSize: '1.5rem',
+            color: 'white',
+            boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+            animation: 'checkmarkBounce 0.5s ease-out'
           }}>
-            <span>Заказ #{order.orderId}</span>
-            {/* ✅ ДОПОЛНИТЕЛЬНАЯ ИКОНКА ДЛЯ САМОВЫВОЗА */}
-            {isPickup && !isDone && !isArchived && (
-              <span style={{ 
-                fontSize: '1rem', 
-                animation: 'urgentBadgePulse 1.5s infinite' 
-              }}>
-                🏃‍♂️💨
-              </span>
-            )}
-            {/* ✅ ПЕРЕДАЕМ ОБЪЕКТ ЗАКАЗА В ТАЙМЕР */}
-            {order.date && <OrderTimer orderDate={order.date} status={order.status} order={order} />}
+            ✓
+          </div>
+        )}
+
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+          cursor: 'pointer'
+        }}
+        onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div>
+            <div style={{
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              // ✅ КРАСНЫЙ ЦВЕТ ЗАГОЛОВКА ДЛЯ САМОВЫВОЗА
+              color: isPickup ? '#ff4444' : '#2c1e0f',
+              marginBottom: '0.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              flexWrap: 'wrap'
+            }}>
+              <span>Заказ #{order.orderId}</span>
+              {/* ✅ ДОПОЛНИТЕЛЬНАЯ ИКОНКА ДЛЯ САМОВЫВОЗА */}
+              {isPickup && !isDone && !isArchived && (
+                <span style={{ 
+                  fontSize: '1rem', 
+                  animation: 'urgentBadgePulse 1.5s infinite' 
+                }}>
+                  🏃‍♂️💨
+                </span>
+              )}
+              {/* ✅ ПЕРЕДАЕМ ОБЪЕКТ ЗАКАЗА В ТАЙМЕР */}
+              {order.date && <OrderTimer orderDate={order.date} status={order.status} order={order} />}
+            </div>
+            <div style={{
+              fontSize: '0.9rem',
+              color: '#666'
+            }}>
+              {order.date ? formatDate(order.date) : 'Нет времени'} • {order.customerName}
+              {/* ✅ ИНДИКАТОР САМОВЫВОЗА В ПОДЗАГОЛОВКЕ */}
+              {isPickup && (
+                <span style={{
+                  marginLeft: '0.5rem',
+                  background: '#ff4444',
+                  color: 'white',
+                  padding: '0.1rem 0.4rem',
+                  borderRadius: '8px',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold'
+                }}>
+                  САМОВЫВОЗ
+                </span>
+              )}
+            </div>
+          </div>
+          <div style={{
+            background: statusInfo.color,
+            color: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '20px',
+            fontSize: '0.9rem',
+            fontWeight: 'bold'
+          }}>
+            {statusInfo.label}
+          </div>
+        </div>
+
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: isExpanded ? '1.5rem' : '0'
+        }}>
+          <div style={{
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            color: '#2c1e0f'
+          }}>
+            Итого: {formatNumber(order.total)} ₽
           </div>
           <div style={{
             fontSize: '0.9rem',
             color: '#666'
           }}>
-            {order.date ? formatDate(order.date) : 'Нет времени'} • {order.customerName}
-            {/* ✅ ИНДИКАТОР САМОВЫВОЗА В ПОДЗАГОЛОВКЕ */}
-            {isPickup && (
-              <span style={{
-                marginLeft: '0.5rem',
-                background: '#ff4444',
-                color: 'white',
-                padding: '0.1rem 0.4rem',
-                borderRadius: '8px',
-                fontSize: '0.7rem',
-                fontWeight: 'bold'
-              }}>
-                САМОВЫВОЗ
-              </span>
-            )}
+            {products.length} товар{products.length > 1 ? 'а' : ''}
           </div>
         </div>
-        <div style={{
-          background: statusInfo.color,
-          color: 'white',
-          padding: '0.5rem 1rem',
-          borderRadius: '20px',
-          fontSize: '0.9rem',
-          fontWeight: 'bold'
-        }}>
-          {statusInfo.label}
-        </div>
-      </div>
 
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: isExpanded ? '1.5rem' : '0'
-      }}>
-        <div style={{
-          fontSize: '1.1rem',
-          fontWeight: 'bold',
-          color: '#2c1e0f'
-        }}>
-          Итого: {formatNumber(order.total)} ₽
-        </div>
-        <div style={{
-          fontSize: '0.9rem',
-          color: '#666'
-        }}>
-          {products.length} товар{products.length > 1 ? 'а' : ''}
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div style={{
-          borderTop: '1px solid #f0f0f0',
-          paddingTop: '1.5rem'
-        }}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h4 style={{
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              color: '#2c1e0f',
-              marginBottom: '0.75rem'
-            }}>
-              📞 Контакты
-            </h4>
-            <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.6' }}>
-              <div><strong>Клиент:</strong> {order.customerName}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span><strong>Телефон:</strong></span>
-                {(() => {
-                  try {
-                    const normalizedPhone = normalizePhoneNumber(order.phone);
-                    const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
-                    
-                    if (whatsappLink && normalizedPhone) {
-                      return (
-                        <a
-                          href={whatsappLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            color: '#25D366',
-                            textDecoration: 'none',
-                            fontWeight: 'bold',
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '8px',
-                            border: '1px solid #25D366',
-                            background: '#f0fff0',
-                            transition: 'all 0.2s ease',
-                            cursor: 'pointer',
-                            display: 'inline-block'
-                          }}
-                          title={`Написать в WhatsApp: ${normalizedPhone}`}
-                        >
-                          📱 {normalizedPhone}
-                        </a>
-                      );
-                    } else {
-                      return (
-                        <span style={{ 
-                          color: '#999',
-                          fontStyle: 'italic'
-                        }}>
-                          {order.phone || 'Не указан'}
-                        </span>
-                      );
-                    }
-                  } catch (error) {
-                    return (
-                      <span style={{ 
-                        color: '#999',
-                        fontStyle: 'italic'
-                      }}>
-                        {order.phone || 'Не указан'} (ошибка)
-                      </span>
-                    );
-                  }
-                })()}
-              </div>
-              <div>
-                <strong>Адрес:</strong> 
-                <span style={{
-                  // ✅ ВЫДЕЛЯЕМ АДРЕС САМОВЫВОЗА
-                  color: isPickup ? '#ff4444' : 'inherit',
-                  fontWeight: isPickup ? 'bold' : 'normal'
-                }}>
-                  {order.address}
-                  {isPickup && (
-                    <span style={{
-                      marginLeft: '0.5rem',
-                      fontSize: '0.8rem'
-                    }}>
-                      🏃‍♂️💨
-                    </span>
-                  )}
-                </span>
-              </div>
-              {order.comment && (
-                <div><strong>Комментарий:</strong> {order.comment}</div>
-              )}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h4 style={{
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              color: '#2c1e0f',
-              marginBottom: '0.75rem'
-            }}>
-              🛒 Состав заказа
-            </h4>
-            <div style={{
-              background: '#f8f9fa',
-              borderRadius: '8px',
-              padding: '1rem'
-            }}>
-              {products.map((item, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.5rem 0',
-                  borderBottom: index < products.length - 1 ? '1px solid #e0e0e0' : 'none'
-                }}>
-                  <div>
-                    <div style={{
-                      fontWeight: 'bold',
-                      color: '#2c1e0f',
-                      fontSize: '0.9rem'
-                    }}>
-                      {item.name}
-                      {item.name.includes('⚡') && (
-                        <span style={{
-                          background: '#ff0844',
-                          color: 'white',
-                          fontSize: '0.7rem',
-                          padding: '0.1rem 0.3rem',
-                          borderRadius: '4px',
-                          marginLeft: '0.5rem'
-                        }}>
-                          FLASH
-                        </span>
-                      )}
-                      {item.name.includes('🎉') && (
-                        <span style={{
-                          background: '#4caf50',
-                          color: 'white',
-                          fontSize: '0.7rem',
-                          padding: '0.1rem 0.3rem',
-                          borderRadius: '4px',
-                          marginLeft: '0.5rem'
-                        }}>
-                          БЕСПЛАТНО
-                        </span>
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '0.8rem',
-                      color: '#666'
-                    }}>
-                      {item.quantity} × {formatNumber(item.price)} ₽
-                    </div>
-                  </div>
-                  <div style={{
-                    fontWeight: 'bold',
-                    color: '#2c1e0f'
-                  }}>
-                    {formatNumber(item.price * item.quantity)} ₽
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {!isArchived && (
-            <div style={{ marginBottom: '1rem' }}>
+        {isExpanded && (
+          <div style={{
+            borderTop: '1px solid #f0f0f0',
+            paddingTop: '1.5rem'
+          }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <h4 style={{
                 fontSize: '1rem',
                 fontWeight: 'bold',
                 color: '#2c1e0f',
                 marginBottom: '0.75rem'
               }}>
-                🔄 Изменить статус
+                📞 Контакты
               </h4>
-              <div style={{
-                display: 'flex',
-                gap: '0.5rem',
-                flexWrap: 'wrap'
-              }}>
-                {statusLabels
-                  .filter(status => status.status !== order.status)
-                  .map((status) => (
-                    <button
-                      key={status.status}
-                      onClick={() => handleStatusChange(status.status)}
-                      disabled={isUpdating}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        background: status.color,
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '0.9rem',
-                        fontWeight: 'bold',
-                        cursor: isUpdating ? 'not-allowed' : 'pointer',
-                        opacity: isUpdating ? 0.6 : 1
-                      }}
-                    >
-                      {status.label}
-                    </button>
-                  ))}
+              <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.6' }}>
+                <div><strong>Клиент:</strong> {order.customerName}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span><strong>Телефон:</strong></span>
+                  {(() => {
+                    try {
+                      const normalizedPhone = normalizePhoneNumber(order.phone);
+                      const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
+                      
+                      if (whatsappLink && normalizedPhone) {
+                        return (
+                          <a
+                            href={whatsappLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              color: '#25D366',
+                              textDecoration: 'none',
+                              fontWeight: 'bold',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '8px',
+                              border: '1px solid #25D366',
+                              background: '#f0fff0',
+                              transition: 'all 0.2s ease',
+                              cursor: 'pointer',
+                              display: 'inline-block'
+                            }}
+                            title={`Написать в WhatsApp: ${normalizedPhone}`}
+                          >
+                            📱 {normalizedPhone}
+                          </a>
+                        );
+                      } else {
+                        return (
+                          <span style={{ 
+                            color: '#999',
+                            fontStyle: 'italic'
+                          }}>
+                            {order.phone || 'Не указан'}
+                          </span>
+                        );
+                      }
+                    } catch (error) {
+                      return (
+                        <span style={{ 
+                          color: '#999',
+                          fontStyle: 'italic'
+                        }}>
+                          {order.phone || 'Не указан'} (ошибка)
+                        </span>
+                      );
+                    }
+                  })()}
+                </div>
+                <div>
+                  <strong>Адрес:</strong> 
+                  <span style={{
+                    // ✅ ВЫДЕЛЯЕМ АДРЕС САМОВЫВОЗА
+                    color: isPickup ? '#ff4444' : 'inherit',
+                    fontWeight: isPickup ? 'bold' : 'normal'
+                  }}>
+                    {order.address}
+                    {isPickup && (
+                      <span style={{
+                        marginLeft: '0.5rem',
+                        fontSize: '0.8rem'
+                      }}>
+                        🏃‍♂️💨
+                      </span>
+                    )}
+                  </span>
+                </div>
+                {order.comment && (
+                  <div><strong>Комментарий:</strong> {order.comment}</div>
+                )}
               </div>
             </div>
-          )}
-        </div>
-      )}
 
-      <div style={{
-        textAlign: 'center',
-        marginTop: '0.5rem',
-        fontSize: '0.8rem',
-        color: '#999',
-        cursor: 'pointer'
-      }}
-      onClick={() => setIsExpanded(!isExpanded)}
-      >
-        {isExpanded ? '▲ Свернуть' : '▼ Подробнее'}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                color: '#2c1e0f',
+                marginBottom: '0.75rem'
+              }}>
+                🛒 Состав заказа
+              </h4>
+              <div style={{
+                background: '#f8f9fa',
+                borderRadius: '8px',
+                padding: '1rem'
+              }}>
+                {products.map((item, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.5rem 0',
+                    borderBottom: index < products.length - 1 ? '1px solid #e0e0e0' : 'none'
+                  }}>
+                    <div>
+                      <div style={{
+                        fontWeight: 'bold',
+                        color: '#2c1e0f',
+                        fontSize: '0.9rem'
+                      }}>
+                        {item.name}
+                        {item.name.includes('⚡') && (
+                          <span style={{
+                            background: '#ff0844',
+                            color: 'white',
+                            fontSize: '0.7rem',
+                            padding: '0.1rem 0.3rem',
+                            borderRadius: '4px',
+                            marginLeft: '0.5rem'
+                          }}>
+                            FLASH
+                          </span>
+                        )}
+                        {item.name.includes('🎉') && (
+                          <span style={{
+                            background: '#4caf50',
+                            color: 'white',
+                            fontSize: '0.7rem',
+                            padding: '0.1rem 0.3rem',
+                            borderRadius: '4px',
+                            marginLeft: '0.5rem'
+                          }}>
+                            БЕСПЛАТНО
+                          </span>
+                        )}
+                      </div>
+                      <div style={{
+                        fontSize: '0.8rem',
+                        color: '#666'
+                      }}>
+                        {item.quantity} × {formatNumber(item.price)} ₽
+                      </div>
+                    </div>
+                    <div style={{
+                      fontWeight: 'bold',
+                      color: '#2c1e0f'
+                    }}>
+                      {formatNumber(item.price * item.quantity)} ₽
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {!isArchived && (
+              <div style={{ marginBottom: '1rem' }}>
+                <h4 style={{
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  color: '#2c1e0f',
+                  marginBottom: '0.75rem'
+                }}>
+                  🔄 Изменить статус
+                </h4>
+                <div style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  flexWrap: 'wrap'
+                }}>
+                  {statusLabels
+                    .filter(status => status.status !== order.status)
+                    .map((status) => (
+                      <button
+                        key={status.status}
+                        onClick={() => handleStatusChange(status.status)}
+                        disabled={isUpdating}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          background: status.color,
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '0.9rem',
+                          fontWeight: 'bold',
+                          cursor: isUpdating ? 'not-allowed' : 'pointer',
+                          opacity: isUpdating ? 0.6 : 1
+                        }}
+                      >
+                        {status.label}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{
+          textAlign: 'center',
+          marginTop: '0.5rem',
+          fontSize: '0.8rem',
+          color: '#999',
+          cursor: 'pointer'
+        }}
+        onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? '▲ Свернуть' : '▼ Подробнее'}
+        </div>
       </div>
-    </div>
+
+      {/* ✅ МОДАЛЬНОЕ ОКНО ПЕЧАТИ */}
+      <PrintOrderModal
+        order={order}
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+      />
+    </>
   );
 };
