@@ -102,19 +102,20 @@ export const calculateAverageTime = (orders) => {
     console.log('DEBUG: Заказов за сегодня:', todayOrders.length);
     console.log('DEBUG: Первый заказ:', todayOrders[0]);
 
-    // Функция для парсинга времени из формата "30.07.2025 19:03:49"
+    // Функция для парсинга времени из разных форматов
     const parseTimeString = (timeStr) => {
       if (!timeStr) return null;
       try {
-        // Проверяем формат "DD.MM.YYYY HH:MM:SS"
-        if (typeof timeStr === 'string' && timeStr.includes('.') && timeStr.includes(':')) {
+        console.log(`DEBUG: Пытаемся парсить: "${timeStr}"`);
+        
+        // Формат 1: "DD.MM.YYYY HH:MM:SS"
+        if (typeof timeStr === 'string' && timeStr.includes('.') && timeStr.includes(':') && !timeStr.includes('T')) {
           const [datePart, timePart] = timeStr.split(' ');
           if (!datePart || !timePart) return null;
           
           const [day, month, year] = datePart.split('.');
           const [hours, minutes, seconds] = timePart.split(':');
           
-          // Добавляем валидацию
           if (!day || !month || !year || !hours || !minutes) return null;
           
           const date = new Date(
@@ -126,13 +127,22 @@ export const calculateAverageTime = (orders) => {
             parseInt(seconds || 0)
           );
           
-          console.log(`DEBUG: Парсинг "${timeStr}" -> ${date}`);
+          console.log(`DEBUG: Парсинг DD.MM.YYYY "${timeStr}" -> ${date}`);
           return isNaN(date.getTime()) ? null : date;
         }
         
-        // Если не наш формат, пробуем стандартный парсинг
+        // Формат 2: ISO формат "2025-07-30T17:22:33.000Z" или похожий
+        if (typeof timeStr === 'string' && (timeStr.includes('T') || timeStr.includes('-'))) {
+          const date = new Date(timeStr);
+          console.log(`DEBUG: Парсинг ISO "${timeStr}" -> ${date}`);
+          return isNaN(date.getTime()) ? null : date;
+        }
+        
+        // Формат 3: Любой другой стандартный формат
         const date = new Date(timeStr);
+        console.log(`DEBUG: Парсинг стандартный "${timeStr}" -> ${date}`);
         return isNaN(date.getTime()) ? null : date;
+        
       } catch (error) {
         console.log(`DEBUG: Ошибка парсинга времени "${timeStr}":`, error);
         return null;
