@@ -344,8 +344,6 @@ const fetchViaJSONP = (url) => {
   });
 };
 
-import { API_URL } from '../config';
-
 export const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
