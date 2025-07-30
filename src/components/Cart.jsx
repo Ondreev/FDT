@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react';
 import DiscountProgressBar from './DiscountProgressBar';
 import FlashOfferPopup from './FlashOfferTimer';
 import { FreeDeliveryProgress, FreeDeliveryPopup, formatNumber } from './SimpleDeliveryManager';
-
-import { API_URL } from '../config'; // или './config' в зависимости от расположения
-
-// И использовать API_URL вместо прямой ссылки
+import { API_URL } from '../config';
 
 const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart, deliveryMode: propDeliveryMode, setDeliveryMode: propSetDeliveryMode }) => {
   const [discounts, setDiscounts] = useState([]);
