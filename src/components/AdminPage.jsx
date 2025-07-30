@@ -247,7 +247,15 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const filteredOrders = filterOrders(orders, activeFilter);
   const pendingCount = orders.filter(order => order.status === 'pending').length;
-  const averageTimeStats = calculateAverageTime(orders);
+  const averageTimeStatsRaw = calculateAverageTime(orders);
+const averageTimeStats = averageTimeStatsRaw || {
+  averageMinutes: null,
+  avgCookingTime: null,
+  avgDeliveryTime: null,
+  completedCount: 0,
+  activeCount: orders.filter(o => ['pending', 'cooking', 'delivering'].includes(o.status)).length,
+  note: 'Нет завершённых заказов сегодня'
+};
   
   // Правильный расчет трафика и среднего чека с московским временем
   const todayOrders = orders.filter(order => {
