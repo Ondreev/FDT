@@ -57,127 +57,170 @@ export const updateOrderStatusRequest = async (orderId, newStatus) => {
 };
 
 export const calculateAverageTime = (orders) => {
-  const getMoscowToday = () => {
-    const now = new Date();
-    const moscowTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Moscow" }));
-    return moscowTime.toISOString().split('T')[0];
-  };
+  try {
+    // Получаем сегодняшнюю дату в московском времени
+    const getMoscowToday = () => {
+      const now = new Date();
+      const moscowTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Moscow" }));
+      return moscowTime.toISOString().split('T')[0];
+    };
 
-  const todayMoscow = getMoscowToday();
+    const todayMoscow = getMoscowToday();
 
-  const todayOrders = orders.filter(order => {
-    if (!order.date) return false;
-    try {
-      let orderDate;
-      if (typeof order.date === 'string' && order.date.includes('.') && !order.date.includes('T')) {
-        const dateParts = order.date.split(' ')[0].split('.');
-        if (dateParts.length === 3) {
-          orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+    // Фильтруем заказы за сегодня
+    const todayOrders = orders.filter(order => {
+      if (!order.date) return false;
+      try {
+        let orderDate;
+        if (typeof order.date === 'string' && order.date.includes('.') && !order.date.includes('T')) {
+          const dateParts = order.date.split(' ')[0].split('.');
+          if (dateParts.length === 3) {
+            orderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+          }
+        } else {
+          const dateObj = new Date(order.date);
+          orderDate = dateObj.toISOString().split('T')[0];
         }
-      } else {
-        const dateObj = new Date(order.date);
-        orderDate = dateObj.toISOString().split('T')[0];
+        return orderDate === todayMoscow;
+      } catch (error) {
+        return false;
       }
-      return orderDate === todayMoscow;
-    } catch (error) {
-      return false;
+    });
+
+    if (todayOrders.length === 0) {
+      return {
+        averageMinutes: null,
+        note: 'Нет заказов за сегодня',
+        completedCount: 0,
+        activeCount: 0,
+        avgCookingTime: 0,
+        avgDeliveryTime: 0
+      };
     }
-  });
 
-  if (todayOrders.length === 0) return null;
+    // Функция для парсинга времени из формата "30.07.2025 19:03:49"
+    const parseTimeString = (timeStr) => {
+      if (!timeStr) return null;
+      try {
+        if (typeof timeStr === 'string' && timeStr.includes('.') && timeStr.includes(':')) {
+          const [datePart, timePart] = timeStr.split(' ');
+          const [day, month, year] = datePart.split('.');
+          const [hours, minutes, seconds] = timePart.split(':');
+          return new Date(year, month - 1, day, hours, minutes, seconds || 0);
+        }
+        return new Date(timeStr);
+      } catch (error) {
+        return null;
+      }
+    };
 
-  const completedOrders = todayOrders.filter(order =>
-    ['done', 'archived'].includes(order.status)
-  );
+    // Функция для расчета разности времени в минутах
+    const getTimeDifferenceMinutes = (startTime, endTime) => {
+      const start = parseTimeString(startTime);
+      const end = parseTimeString(endTime);
+      
+      if (!start || !end) return null;
+      
+      const diffMs = end.getTime() - start.getTime();
+      return Math.round(diffMs / (1000 * 60)); // в минутах
+    };
 
-  if (completedOrders.length === 0) {
-    const activeOrders = todayOrders.filter(order =>
+    // Разделяем заказы на завершенные и активные
+    const completedOrders = todayOrders.filter(order => order.status === 'done');
+    const activeOrders = todayOrders.filter(order => 
       ['pending', 'cooking', 'delivering'].includes(order.status)
     );
 
-    if (activeOrders.length === 0) return null;
+    if (completedOrders.length === 0) {
+      return {
+        averageMinutes: null,
+        note: 'Нет завершенных заказов за сегодня',
+        completedCount: 0,
+        activeCount: activeOrders.length,
+        avgCookingTime: 0,
+        avgDeliveryTime: 0
+      };
+    }
 
+    // Рассчитываем времена для каждого завершенного заказа
+    const orderTimes = [];
+
+    completedOrders.forEach(order => {
+      // ✅ ОБЩЕЕ ВРЕМЯ: от pendingTime до doneTime
+      const totalTime = getTimeDifferenceMinutes(
+        order.pendingTime || order.date, 
+        order.doneTime
+      );
+
+      // ✅ ВРЕМЯ ГОТОВКИ: от pendingTime до deliveringTime
+      const cookingTime = getTimeDifferenceMinutes(
+        order.pendingTime || order.date,
+        order.deliveringTime
+      );
+
+      // ✅ ВРЕМЯ ДОСТАВКИ: от deliveringTime до doneTime  
+      const deliveryTime = getTimeDifferenceMinutes(
+        order.deliveringTime,
+        order.doneTime
+      );
+
+      // Добавляем только если есть валидные данные
+      if (totalTime !== null && totalTime > 0) {
+        orderTimes.push({
+          orderId: order.orderId,
+          total: totalTime,
+          cooking: cookingTime && cookingTime > 0 ? cookingTime : 0,
+          delivery: deliveryTime && deliveryTime > 0 ? deliveryTime : 0
+        });
+      }
+    });
+
+    if (orderTimes.length === 0) {
+      return {
+        averageMinutes: null,
+        note: 'Недостаточно данных для расчета',
+        completedCount: completedOrders.length,
+        activeCount: activeOrders.length,
+        avgCookingTime: 0,
+        avgDeliveryTime: 0
+      };
+    }
+
+    // ✅ РАСЧЕТ СРЕДНИХ ЗНАЧЕНИЙ
+    const avgTotal = Math.round(
+      orderTimes.reduce((sum, order) => sum + order.total, 0) / orderTimes.length
+    );
+
+    const cookingTimes = orderTimes.filter(order => order.cooking > 0);
+    const avgCooking = cookingTimes.length > 0 
+      ? Math.round(cookingTimes.reduce((sum, order) => sum + order.cooking, 0) / cookingTimes.length)
+      : 0;
+
+    const deliveryTimes = orderTimes.filter(order => order.delivery > 0);
+    const avgDelivery = deliveryTimes.length > 0
+      ? Math.round(deliveryTimes.reduce((sum, order) => sum + order.delivery, 0) / deliveryTimes.length)
+      : 0;
+
+    return {
+      averageMinutes: avgTotal,
+      completedCount: orderTimes.length,
+      activeCount: activeOrders.length,
+      avgCookingTime: avgCooking,
+      avgDeliveryTime: avgDelivery,
+      note: null
+    };
+
+  } catch (error) {
+    console.error('Error in calculateAverageTime:', error);
     return {
       averageMinutes: null,
+      note: 'Ошибка расчета времени',
       completedCount: 0,
-      avgCookingTime: null,
-      avgDeliveryTime: null,
-      activeCount: activeOrders.length,
-      note: 'Пока нет завершенных заказов за сегодня'
+      activeCount: 0,
+      avgCookingTime: 0,
+      avgDeliveryTime: 0
     };
   }
-
-  const parseTimeString = (timeStr) => {
-    if (!timeStr) return null;
-    try {
-      if (typeof timeStr === 'string' && timeStr.includes('.') && timeStr.includes(':')) {
-        const [datePart, timePart] = timeStr.split(' ');
-        const [day, month, year] = datePart.split('.');
-        const [hours, minutes, seconds] = timePart.split(':');
-        return new Date(year, month - 1, day, hours, minutes, seconds || 0).getTime();
-      }
-      return new Date(timeStr).getTime();
-    } catch (error) {
-      return null;
-    }
-  };
-
-  const calculateTimesForOrder = (order) => {
-    const pendingTime = parseTimeString(order.pendingTime || order.date);
-    const cookingTime = parseTimeString(order.cookingTime);
-    const deliveringTime = parseTimeString(order.deliveringTime);
-    const doneTime = parseTimeString(order.doneTime) || parseTimeString(order.archivedTime);
-
-    if (!pendingTime || !doneTime) return null;
-
-    let cookingDuration = 0;
-    let deliveryDuration = 0;
-    let totalTime = 0;
-
-    if (cookingTime) {
-      cookingDuration = Math.round((cookingTime - pendingTime) / 60000);
-      if (deliveringTime) {
-        deliveryDuration = Math.round((doneTime - deliveringTime) / 60000);
-      } else {
-        deliveryDuration = Math.round((doneTime - cookingTime) / 60000);
-      }
-    } else if (deliveringTime) {
-      cookingDuration = Math.round((deliveringTime - pendingTime) / 60000);
-      deliveryDuration = Math.round((doneTime - deliveringTime) / 60000);
-    } else {
-      totalTime = Math.round((doneTime - pendingTime) / 60000);
-      cookingDuration = Math.round(totalTime * 0.6);
-      deliveryDuration = Math.round(totalTime * 0.4);
-    }
-
-    if (!totalTime) totalTime = cookingDuration + deliveryDuration;
-
-    return {
-      cooking: Math.max(0, cookingDuration),
-      delivery: Math.max(0, deliveryDuration),
-      total: Math.max(0, totalTime)
-    };
-  };
-
-  const orderTimes = completedOrders
-    .map(calculateTimesForOrder)
-    .filter(times => times !== null && times.total > 0);
-
-  if (orderTimes.length === 0) return null;
-
-  const avgCooking = orderTimes.reduce((sum, t) => sum + t.cooking, 0) / orderTimes.length;
-  const avgDelivery = orderTimes.reduce((sum, t) => sum + t.delivery, 0) / orderTimes.length;
-  const avgTotal = orderTimes.reduce((sum, t) => sum + t.total, 0) / orderTimes.length;
-
-  return {
-    averageMinutes: Math.round(avgTotal),
-    completedCount: completedOrders.length,
-    avgCookingTime: Math.round(avgCooking),
-    avgDeliveryTime: Math.round(avgDelivery),
-    activeCount: todayOrders.filter(order =>
-      ['pending', 'cooking', 'delivering'].includes(order.status)
-    ).length
-  };
 };
 
 export const normalizePhoneNumber = (phone) => {
