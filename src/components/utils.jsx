@@ -88,7 +88,6 @@ export const calculateAverageTime = (orders) => {
     });
 
     if (todayOrders.length === 0) {
-      console.log('DEBUG: Нет заказов за сегодня');
       return {
         averageMinutes: null,
         note: 'Нет заказов за сегодня',
@@ -99,15 +98,10 @@ export const calculateAverageTime = (orders) => {
       };
     }
 
-    console.log('DEBUG: Заказов за сегодня:', todayOrders.length);
-    console.log('DEBUG: Первый заказ:', todayOrders[0]);
-
     // Функция для парсинга времени из разных форматов
     const parseTimeString = (timeStr) => {
       if (!timeStr) return null;
       try {
-        console.log(`DEBUG: Пытаемся парсить: "${timeStr}"`);
-        
         // Формат 1: "DD.MM.YYYY HH:MM:SS"
         if (typeof timeStr === 'string' && timeStr.includes('.') && timeStr.includes(':') && !timeStr.includes('T')) {
           const [datePart, timePart] = timeStr.split(' ');
@@ -127,24 +121,20 @@ export const calculateAverageTime = (orders) => {
             parseInt(seconds || 0)
           );
           
-          console.log(`DEBUG: Парсинг DD.MM.YYYY "${timeStr}" -> ${date}`);
           return isNaN(date.getTime()) ? null : date;
         }
         
         // Формат 2: ISO формат "2025-07-30T17:22:33.000Z" или похожий
         if (typeof timeStr === 'string' && (timeStr.includes('T') || timeStr.includes('-'))) {
           const date = new Date(timeStr);
-          console.log(`DEBUG: Парсинг ISO "${timeStr}" -> ${date}`);
           return isNaN(date.getTime()) ? null : date;
         }
         
         // Формат 3: Любой другой стандартный формат
         const date = new Date(timeStr);
-        console.log(`DEBUG: Парсинг стандартный "${timeStr}" -> ${date}`);
         return isNaN(date.getTime()) ? null : date;
         
       } catch (error) {
-        console.log(`DEBUG: Ошибка парсинга времени "${timeStr}":`, error);
         return null;
       }
     };
@@ -154,19 +144,10 @@ export const calculateAverageTime = (orders) => {
       const start = parseTimeString(startTime);
       const end = parseTimeString(endTime);
       
-      console.log(`DEBUG: Расчет разности "${startTime}" -> "${endTime}"`);
-      console.log(`DEBUG: start = ${start}, end = ${end}`);
-      
-      if (!start || !end) {
-        console.log(`DEBUG: Одно из времен null: start=${start}, end=${end}`);
-        return null;
-      }
+      if (!start || !end) return null;
       
       const diffMs = end.getTime() - start.getTime();
-      const diffMinutes = Math.round(diffMs / (1000 * 60));
-      
-      console.log(`DEBUG: Разность = ${diffMinutes} минут`);
-      return diffMinutes;
+      return Math.round(diffMs / (1000 * 60));
     };
 
     // Разделяем заказы на завершенные и активные
@@ -179,8 +160,6 @@ export const calculateAverageTime = (orders) => {
     );
 
     if (completedOrders.length === 0) {
-      console.log('DEBUG: Нет завершенных заказов за сегодня');
-      console.log('DEBUG: Активных заказов:', activeOrders.length);
       return {
         averageMinutes: null,
         note: 'Нет завершенных заказов за сегодня',
@@ -190,9 +169,6 @@ export const calculateAverageTime = (orders) => {
         avgDeliveryTime: 0
       };
     }
-
-    console.log('DEBUG: Завершенных заказов:', completedOrders.length);
-    console.log('DEBUG: Первый завершенный заказ:', completedOrders[0]);
 
     // Рассчитываем времена для каждого завершенного заказа
     const orderTimes = [];
@@ -216,15 +192,6 @@ export const calculateAverageTime = (orders) => {
         order.doneTime || order.archivedTime
       );
 
-      console.log(`DEBUG: Заказ ${order.orderId}:`);
-      console.log(`  pendingTime: ${order.pendingTime}`);
-      console.log(`  deliveringTime: ${order.deliveringTime}`);
-      console.log(`  doneTime: ${order.doneTime}`);
-      console.log(`  archivedTime: ${order.archivedTime}`);
-      console.log(`  totalTime: ${totalTime} мин`);
-      console.log(`  cookingTime: ${cookingTime} мин`);
-      console.log(`  deliveryTime: ${deliveryTime} мин`);
-
       // Добавляем только если есть валидные данные
       if (totalTime !== null && totalTime > 0) {
         orderTimes.push({
@@ -237,7 +204,6 @@ export const calculateAverageTime = (orders) => {
     });
 
     if (orderTimes.length === 0) {
-      console.log('DEBUG: Нет валидных данных для расчета времени');
       return {
         averageMinutes: null,
         note: 'Недостаточно данных для расчета',
@@ -247,9 +213,6 @@ export const calculateAverageTime = (orders) => {
         avgDeliveryTime: 0
       };
     }
-
-    console.log('DEBUG: Валидных заказов для расчета:', orderTimes.length);
-    console.log('DEBUG: Данные для расчета:', orderTimes);
 
     // ✅ РАСЧЕТ СРЕДНИХ ЗНАЧЕНИЙ
     const avgTotal = Math.round(
@@ -265,14 +228,6 @@ export const calculateAverageTime = (orders) => {
     const avgDelivery = deliveryTimes.length > 0
       ? Math.round(deliveryTimes.reduce((sum, order) => sum + order.delivery, 0) / deliveryTimes.length)
       : 0;
-
-    console.log('DEBUG: Результат расчета:', {
-      avgTotal,
-      avgCooking,
-      avgDelivery,
-      completedCount: orderTimes.length,
-      activeCount: activeOrders.length
-    });
 
     return {
       averageMinutes: avgTotal,
