@@ -342,7 +342,7 @@ const fetchViaJSONP = (url) => {
       }
     }, 10000);
   });
-};омогательные функции
+};
 
 import { API_URL } from '../config';
 
