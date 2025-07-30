@@ -220,6 +220,9 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   const products = JSON.parse(order.products || '[]');
   const isDone = order.status === 'done';
   const isArchived = order.status === 'archived';
+  
+  // ✅ ПРОВЕРЯЕМ САМОВЫВОЗ
+  const isPickup = order.address && order.address.toLowerCase().includes('самовывоз');
 
   const handleStatusChange = async (newStatus) => {
     setIsUpdating(true);
@@ -234,9 +237,60 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
       padding: '1.5rem',
       marginBottom: '1rem',
       boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      border: isDone ? '2px solid #4caf50' : isArchived ? '2px solid #999' : '1px solid #e0e0e0',
-      position: 'relative'
+      // ✅ КРАСНАЯ ОБВОДКА ДЛЯ САМОВЫВОЗА
+      border: isPickup ? '3px solid #ff4444' : isDone ? '2px solid #4caf50' : isArchived ? '2px solid #999' : '1px solid #e0e0e0',
+      position: 'relative',
+      // ✅ ПУЛЬСИРУЮЩАЯ АНИМАЦИЯ ДЛЯ САМОВЫВОЗА
+      animation: isPickup && !isDone && !isArchived ? 'urgentPulse 2s infinite' : 'none'
     }}>
+      
+      {/* ✅ СТИЛИ ДЛЯ АНИМАЦИЙ */}
+      <style>
+        {`
+          @keyframes urgentPulse {
+            0%, 100% { 
+              box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 0 0 0 rgba(255, 68, 68, 0.7);
+            }
+            50% { 
+              box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 0 0 6px rgba(255, 68, 68, 0);
+            }
+          }
+          
+          @keyframes urgentBadgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+          }
+          
+          @keyframes checkmarkBounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+          }
+        `}
+      </style>
+
+      {/* ✅ ПЛАШКА "СРОЧНЫЙ!" ДЛЯ САМОВЫВОЗА */}
+      {isPickup && !isDone && !isArchived && (
+        <div style={{
+          position: 'absolute',
+          top: '-8px',
+          left: '16px',
+          background: '#ff4444',
+          color: 'white',
+          padding: '0.3rem 0.8rem',
+          borderRadius: '12px',
+          fontSize: '0.8rem',
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          boxShadow: '0 2px 8px rgba(255, 68, 68, 0.4)',
+          animation: 'urgentBadgePulse 1.5s infinite',
+          zIndex: 10
+        }}>
+          🔥 СРОЧНЫЙ!
+        </div>
+      )}
+
+      {/* Зеленая галочка для завершенных */}
       {(isDone || isArchived) && (
         <div style={{
           position: 'absolute',
@@ -251,7 +305,8 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
           justifyContent: 'center',
           fontSize: '1.5rem',
           color: 'white',
-          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+          animation: 'checkmarkBounce 0.5s ease-out'
         }}>
           ✓
         </div>
@@ -270,7 +325,8 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
           <div style={{
             fontSize: '1.2rem',
             fontWeight: 'bold',
-            color: '#2c1e0f',
+            // ✅ КРАСНЫЙ ЦВЕТ ЗАГОЛОВКА ДЛЯ САМОВЫВОЗА
+            color: isPickup ? '#ff4444' : '#2c1e0f',
             marginBottom: '0.25rem',
             display: 'flex',
             alignItems: 'center',
@@ -278,6 +334,15 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             flexWrap: 'wrap'
           }}>
             <span>Заказ #{order.orderId}</span>
+            {/* ✅ ДОПОЛНИТЕЛЬНАЯ ИКОНКА ДЛЯ САМОВЫВОЗА */}
+            {isPickup && !isDone && !isArchived && (
+              <span style={{ 
+                fontSize: '1rem', 
+                animation: 'urgentBadgePulse 1.5s infinite' 
+              }}>
+                🏃‍♂️💨
+              </span>
+            )}
             {order.date && <OrderTimer orderDate={order.date} status={order.status} />}
           </div>
           <div style={{
@@ -285,6 +350,20 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             color: '#666'
           }}>
             {order.date ? formatDate(order.date) : 'Нет времени'} • {order.customerName}
+            {/* ✅ ИНДИКАТОР САМОВЫВОЗА В ПОДЗАГОЛОВКЕ */}
+            {isPickup && (
+              <span style={{
+                marginLeft: '0.5rem',
+                background: '#ff4444',
+                color: 'white',
+                padding: '0.1rem 0.4rem',
+                borderRadius: '8px',
+                fontSize: '0.7rem',
+                fontWeight: 'bold'
+              }}>
+                САМОВЫВОЗ
+              </span>
+            )}
           </div>
         </div>
         <div style={{
@@ -389,7 +468,24 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                   }
                 })()}
               </div>
-              <div><strong>Адрес:</strong> {order.address}</div>
+              <div>
+                <strong>Адрес:</strong> 
+                <span style={{
+                  // ✅ ВЫДЕЛЯЕМ АДРЕС САМОВЫВОЗА
+                  color: isPickup ? '#ff4444' : 'inherit',
+                  fontWeight: isPickup ? 'bold' : 'normal'
+                }}>
+                  {order.address}
+                  {isPickup && (
+                    <span style={{
+                      marginLeft: '0.5rem',
+                      fontSize: '0.8rem'
+                    }}>
+                      🏃‍♂️💨
+                    </span>
+                  )}
+                </span>
+              </div>
               {order.comment && (
                 <div><strong>Комментарий:</strong> {order.comment}</div>
               )}
