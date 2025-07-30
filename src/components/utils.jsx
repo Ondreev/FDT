@@ -88,6 +88,7 @@ export const calculateAverageTime = (orders) => {
     });
 
     if (todayOrders.length === 0) {
+      console.log('DEBUG: Нет заказов за сегодня');
       return {
         averageMinutes: null,
         note: 'Нет заказов за сегодня',
@@ -97,6 +98,9 @@ export const calculateAverageTime = (orders) => {
         avgDeliveryTime: 0
       };
     }
+
+    console.log('DEBUG: Заказов за сегодня:', todayOrders.length);
+    console.log('DEBUG: Первый заказ:', todayOrders[0]);
 
     // Функция для парсинга времени из формата "30.07.2025 19:03:49"
     const parseTimeString = (timeStr) => {
@@ -126,12 +130,17 @@ export const calculateAverageTime = (orders) => {
     };
 
     // Разделяем заказы на завершенные и активные
-    const completedOrders = todayOrders.filter(order => order.status === 'done');
+    // ✅ ИСПРАВЛЕНО: учитываем и 'done' и 'archived' как завершенные
+    const completedOrders = todayOrders.filter(order => 
+      ['done', 'archived'].includes(order.status)
+    );
     const activeOrders = todayOrders.filter(order => 
       ['pending', 'cooking', 'delivering'].includes(order.status)
     );
 
     if (completedOrders.length === 0) {
+      console.log('DEBUG: Нет завершенных заказов за сегодня');
+      console.log('DEBUG: Активных заказов:', activeOrders.length);
       return {
         averageMinutes: null,
         note: 'Нет завершенных заказов за сегодня',
@@ -142,14 +151,17 @@ export const calculateAverageTime = (orders) => {
       };
     }
 
+    console.log('DEBUG: Завершенных заказов:', completedOrders.length);
+    console.log('DEBUG: Первый завершенный заказ:', completedOrders[0]);
+
     // Рассчитываем времена для каждого завершенного заказа
     const orderTimes = [];
 
     completedOrders.forEach(order => {
-      // ✅ ОБЩЕЕ ВРЕМЯ: от pendingTime до doneTime
+      // ✅ ОБЩЕЕ ВРЕМЯ: от pendingTime до doneTime (или archivedTime)
       const totalTime = getTimeDifferenceMinutes(
         order.pendingTime || order.date, 
-        order.doneTime
+        order.doneTime || order.archivedTime
       );
 
       // ✅ ВРЕМЯ ГОТОВКИ: от pendingTime до deliveringTime
@@ -158,11 +170,20 @@ export const calculateAverageTime = (orders) => {
         order.deliveringTime
       );
 
-      // ✅ ВРЕМЯ ДОСТАВКИ: от deliveringTime до doneTime  
+      // ✅ ВРЕМЯ ДОСТАВКИ: от deliveringTime до doneTime (или archivedTime)
       const deliveryTime = getTimeDifferenceMinutes(
         order.deliveringTime,
-        order.doneTime
+        order.doneTime || order.archivedTime
       );
+
+      console.log(`DEBUG: Заказ ${order.orderId}:`);
+      console.log(`  pendingTime: ${order.pendingTime}`);
+      console.log(`  deliveringTime: ${order.deliveringTime}`);
+      console.log(`  doneTime: ${order.doneTime}`);
+      console.log(`  archivedTime: ${order.archivedTime}`);
+      console.log(`  totalTime: ${totalTime} мин`);
+      console.log(`  cookingTime: ${cookingTime} мин`);
+      console.log(`  deliveryTime: ${deliveryTime} мин`);
 
       // Добавляем только если есть валидные данные
       if (totalTime !== null && totalTime > 0) {
@@ -176,6 +197,7 @@ export const calculateAverageTime = (orders) => {
     });
 
     if (orderTimes.length === 0) {
+      console.log('DEBUG: Нет валидных данных для расчета времени');
       return {
         averageMinutes: null,
         note: 'Недостаточно данных для расчета',
@@ -185,6 +207,9 @@ export const calculateAverageTime = (orders) => {
         avgDeliveryTime: 0
       };
     }
+
+    console.log('DEBUG: Валидных заказов для расчета:', orderTimes.length);
+    console.log('DEBUG: Данные для расчета:', orderTimes);
 
     // ✅ РАСЧЕТ СРЕДНИХ ЗНАЧЕНИЙ
     const avgTotal = Math.round(
@@ -200,6 +225,14 @@ export const calculateAverageTime = (orders) => {
     const avgDelivery = deliveryTimes.length > 0
       ? Math.round(deliveryTimes.reduce((sum, order) => sum + order.delivery, 0) / deliveryTimes.length)
       : 0;
+
+    console.log('DEBUG: Результат расчета:', {
+      avgTotal,
+      avgCooking,
+      avgDelivery,
+      completedCount: orderTimes.length,
+      activeCount: activeOrders.length
+    });
 
     return {
       averageMinutes: avgTotal,
