@@ -106,14 +106,35 @@ export const calculateAverageTime = (orders) => {
     const parseTimeString = (timeStr) => {
       if (!timeStr) return null;
       try {
+        // Проверяем формат "DD.MM.YYYY HH:MM:SS"
         if (typeof timeStr === 'string' && timeStr.includes('.') && timeStr.includes(':')) {
           const [datePart, timePart] = timeStr.split(' ');
+          if (!datePart || !timePart) return null;
+          
           const [day, month, year] = datePart.split('.');
           const [hours, minutes, seconds] = timePart.split(':');
-          return new Date(year, month - 1, day, hours, minutes, seconds || 0);
+          
+          // Добавляем валидацию
+          if (!day || !month || !year || !hours || !minutes) return null;
+          
+          const date = new Date(
+            parseInt(year), 
+            parseInt(month) - 1, 
+            parseInt(day), 
+            parseInt(hours), 
+            parseInt(minutes), 
+            parseInt(seconds || 0)
+          );
+          
+          console.log(`DEBUG: Парсинг "${timeStr}" -> ${date}`);
+          return isNaN(date.getTime()) ? null : date;
         }
-        return new Date(timeStr);
+        
+        // Если не наш формат, пробуем стандартный парсинг
+        const date = new Date(timeStr);
+        return isNaN(date.getTime()) ? null : date;
       } catch (error) {
+        console.log(`DEBUG: Ошибка парсинга времени "${timeStr}":`, error);
         return null;
       }
     };
@@ -123,10 +144,19 @@ export const calculateAverageTime = (orders) => {
       const start = parseTimeString(startTime);
       const end = parseTimeString(endTime);
       
-      if (!start || !end) return null;
+      console.log(`DEBUG: Расчет разности "${startTime}" -> "${endTime}"`);
+      console.log(`DEBUG: start = ${start}, end = ${end}`);
+      
+      if (!start || !end) {
+        console.log(`DEBUG: Одно из времен null: start=${start}, end=${end}`);
+        return null;
+      }
       
       const diffMs = end.getTime() - start.getTime();
-      return Math.round(diffMs / (1000 * 60)); // в минутах
+      const diffMinutes = Math.round(diffMs / (1000 * 60));
+      
+      console.log(`DEBUG: Разность = ${diffMinutes} минут`);
+      return diffMinutes;
     };
 
     // Разделяем заказы на завершенные и активные
