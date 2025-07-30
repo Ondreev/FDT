@@ -1,8 +1,8 @@
 // components.jsx - React компоненты (обновленная версия с печатью)
 import { useState, useEffect } from 'react';
 import { formatDate, formatNumber, normalizePhoneNumber, createWhatsAppLink, API_URL, safeFetch } from './utils';
-// ✅ ИМПОРТИРУЕМ КОМПОНЕНТЫ ПЕЧАТИ
-import { PrintOrderModal, PrintButton } from './PrintSystem';
+// ✅ ИМПОРТИРУЕМ ТОЛЬКО МОДАЛЬНОЕ ОКНО ПЕЧАТИ
+import { PrintOrderModal } from './PrintSystem';
 
 export const OrderTimer = ({ orderDate, status, order }) => {
   const [elapsed, setElapsed] = useState(0);
@@ -364,11 +364,7 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
           `}
         </style>
 
-        {/* ✅ МАЛЕНЬКАЯ КНОПКА ПЕЧАТИ В ПРАВОМ ВЕРХНЕМ УГЛУ */}
-        <PrintButton 
-          order={order} 
-          onPrintClick={() => setIsPrintModalOpen(true)} 
-        />
+
 
         {/* ✅ ПЛАШКА "СРОЧНЫЙ!" ДЛЯ САМОВЫВОЗА */}
         {isPickup && !isDone && !isArchived && (
@@ -396,7 +392,7 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
           <div style={{
             position: 'absolute',
             top: '-10px',
-            right: '50px', // ✅ СДВИГАЕМ ВЛЕВО, ЧТОБЫ НЕ ПЕРЕКРЫВАТЬ КНОПКУ ПЕЧАТИ
+            right: '-10px', // ✅ ВОЗВРАЩАЕМ НА МЕСТО, ТАК КАК КНОПКИ ПЕЧАТИ НЕТ
             background: isDone ? '#4caf50' : '#999',
             borderRadius: '50%',
             width: '40px',
@@ -506,92 +502,133 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
             borderTop: '1px solid #f0f0f0',
             paddingTop: '1.5rem'
           }}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h4 style={{
-                fontSize: '1rem',
-                fontWeight: 'bold',
-                color: '#2c1e0f',
-                marginBottom: '0.75rem'
-              }}>
-                📞 Контакты
-              </h4>
-              <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.6' }}>
-                <div><strong>Клиент:</strong> {order.customerName}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span><strong>Телефон:</strong></span>
-                  {(() => {
-                    try {
-                      const normalizedPhone = normalizePhoneNumber(order.phone);
-                      const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
-                      
-                      if (whatsappLink && normalizedPhone) {
-                        return (
-                          <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                              color: '#25D366',
-                              textDecoration: 'none',
-                              fontWeight: 'bold',
-                              padding: '0.25rem 0.5rem',
-                              borderRadius: '8px',
-                              border: '1px solid #25D366',
-                              background: '#f0fff0',
-                              transition: 'all 0.2s ease',
-                              cursor: 'pointer',
-                              display: 'inline-block'
-                            }}
-                            title={`Написать в WhatsApp: ${normalizedPhone}`}
-                          >
-                            📱 {normalizedPhone}
-                          </a>
-                        );
-                      } else {
+            {/* ✅ СЕКЦИЯ КОНТАКТОВ С КНОПКОЙ ПЕЧАТИ */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'flex-start',
+              marginBottom: '1.5rem',
+              gap: '1rem'
+            }}>
+              <div style={{ flex: 1 }}>
+                <h4 style={{
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  color: '#2c1e0f',
+                  marginBottom: '0.75rem'
+                }}>
+                  📞 Контакты
+                </h4>
+                <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.6' }}>
+                  <div><strong>Клиент:</strong> {order.customerName}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span><strong>Телефон:</strong></span>
+                    {(() => {
+                      try {
+                        const normalizedPhone = normalizePhoneNumber(order.phone);
+                        const whatsappLink = createWhatsAppLink(order.phone, order.orderId);
+                        
+                        if (whatsappLink && normalizedPhone) {
+                          return (
+                            <a
+                              href={whatsappLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                color: '#25D366',
+                                textDecoration: 'none',
+                                fontWeight: 'bold',
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '8px',
+                                border: '1px solid #25D366',
+                                background: '#f0fff0',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer',
+                                display: 'inline-block'
+                              }}
+                              title={`Написать в WhatsApp: ${normalizedPhone}`}
+                            >
+                              📱 {normalizedPhone}
+                            </a>
+                          );
+                        } else {
+                          return (
+                            <span style={{ 
+                              color: '#999',
+                              fontStyle: 'italic'
+                            }}>
+                              {order.phone || 'Не указан'}
+                            </span>
+                          );
+                        }
+                      } catch (error) {
                         return (
                           <span style={{ 
                             color: '#999',
                             fontStyle: 'italic'
                           }}>
-                            {order.phone || 'Не указан'}
+                            {order.phone || 'Не указан'} (ошибка)
                           </span>
                         );
                       }
-                    } catch (error) {
-                      return (
-                        <span style={{ 
-                          color: '#999',
-                          fontStyle: 'italic'
+                    })()}
+                  </div>
+                  <div>
+                    <strong>Адрес:</strong> 
+                    <span style={{
+                      // ✅ ВЫДЕЛЯЕМ АДРЕС САМОВЫВОЗА
+                      color: isPickup ? '#ff4444' : 'inherit',
+                      fontWeight: isPickup ? 'bold' : 'normal'
+                    }}>
+                      {order.address}
+                      {isPickup && (
+                        <span style={{
+                          marginLeft: '0.5rem',
+                          fontSize: '0.8rem'
                         }}>
-                          {order.phone || 'Не указан'} (ошибка)
+                          🏃‍♂️💨
                         </span>
-                      );
-                    }
-                  })()}
+                      )}
+                    </span>
+                  </div>
+                  {order.comment && (
+                    <div><strong>Комментарий:</strong> {order.comment}</div>
+                  )}
                 </div>
-                <div>
-                  <strong>Адрес:</strong> 
-                  <span style={{
-                    // ✅ ВЫДЕЛЯЕМ АДРЕС САМОВЫВОЗА
-                    color: isPickup ? '#ff4444' : 'inherit',
-                    fontWeight: isPickup ? 'bold' : 'normal'
-                  }}>
-                    {order.address}
-                    {isPickup && (
-                      <span style={{
-                        marginLeft: '0.5rem',
-                        fontSize: '0.8rem'
-                      }}>
-                        🏃‍♂️💨
-                      </span>
-                    )}
-                  </span>
-                </div>
-                {order.comment && (
-                  <div><strong>Комментарий:</strong> {order.comment}</div>
-                )}
               </div>
+
+              {/* ✅ БОЛЬШАЯ КНОПКА ПЕЧАТИ */}
+              <button
+                onClick={() => setIsPrintModalOpen(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #28a745, #20c997)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '1rem 1.5rem',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
+                  transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap',
+                  minWidth: '130px'
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 16px rgba(40, 167, 69, 0.4)';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)';
+                }}
+              >
+                🖨️ Печать
+              </button>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
