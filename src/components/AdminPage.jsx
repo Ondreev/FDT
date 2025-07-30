@@ -233,16 +233,49 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const filterOrders = (orders, filter) => {
     const activeOrders = orders.filter(order => !['done', 'archived'].includes(order.status));
     
+    let filteredOrders;
     switch (filter) {
       case 'pending':
-        return activeOrders.filter(order => order.status === 'pending');
+        filteredOrders = activeOrders.filter(order => order.status === 'pending');
+        break;
       case 'active':
-        return activeOrders.filter(order => ['cooking', 'delivering'].includes(order.status));
+        filteredOrders = activeOrders.filter(order => ['cooking', 'delivering'].includes(order.status));
+        break;
       case 'archive':
-        return orders.filter(order => ['done', 'archived'].includes(order.status));
+        filteredOrders = orders.filter(order => ['done', 'archived'].includes(order.status));
+        break;
       default:
-        return activeOrders;
+        filteredOrders = activeOrders;
     }
+    
+    // ✅ СОРТИРУЕМ: САМОВЫВОЗ В НАЧАЛО СПИСКА
+    return filteredOrders.sort((a, b) => {
+      const aIsPickup = a.address && a.address.toLowerCase().includes('самовывоз');
+      const bIsPickup = b.address && b.address.toLowerCase().includes('самовывоз');
+      
+      // Если один заказ самовывоз, а другой нет - самовывоз идет первым
+      if (aIsPickup && !bIsPickup) return -1;
+      if (!aIsPickup && bIsPickup) return 1;
+      
+      // Если оба самовывоз или оба не самовывоз - сортируем по дате (новые сверху)
+      const parseDate = (dateStr) => {
+        if (!dateStr) return 0;
+        try {
+          if (typeof dateStr === 'string' && dateStr.includes('.') && dateStr.includes(':') && !dateStr.includes('T')) {
+            const [datePart, timePart] = dateStr.split(' ');
+            const [day, month, year] = datePart.split('.');
+            const [hours, minutes, seconds] = timePart.split(':');
+            return new Date(year, month - 1, day, hours, minutes, seconds).getTime();
+          } else {
+            return new Date(dateStr).getTime();
+          }
+        } catch (error) {
+          return 0;
+        }
+      };
+      
+      return parseDate(b.date) - parseDate(a.date);
+    });
   };
 
   const filteredOrders = filterOrders(orders, activeFilter);
