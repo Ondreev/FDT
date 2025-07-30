@@ -2,12 +2,24 @@
 import { useState, useEffect } from 'react';
 import { formatDate, formatNumber, normalizePhoneNumber, createWhatsAppLink, API_URL, safeFetch } from './utils';
 
-export const OrderTimer = ({ orderDate, status }) => {
+export const OrderTimer = ({ orderDate, status, order }) => {
   const [elapsed, setElapsed] = useState(0);
   const [isRunning, setIsRunning] = useState(!['done', 'archived'].includes(status));
+  const [isFixed, setIsFixed] = useState(false);
 
   useEffect(() => {
     if (!orderDate) return;
+    
+    // ✅ ДЛЯ ЗАВЕРШЕННЫХ ЗАКАЗОВ ИСПОЛЬЗУЕМ ФИКСИРОВАННОЕ ВРЕМЯ
+    if (['done', 'archived'].includes(status)) {
+      const fixedTime = calculateFixedTime(order);
+      if (fixedTime !== null) {
+        setElapsed(fixedTime);
+        setIsFixed(true);
+        setIsRunning(false);
+        return;
+      }
+    }
     
     let startTime;
     try {
@@ -45,11 +57,75 @@ export const OrderTimer = ({ orderDate, status }) => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [orderDate, isRunning]);
+  }, [orderDate, isRunning, status, order]);
 
   useEffect(() => {
-    setIsRunning(!['done', 'archived'].includes(status));
-  }, [status]);
+    const shouldRun = !['done', 'archived'].includes(status);
+    setIsRunning(shouldRun);
+    
+    // Если статус изменился на завершенный, вычисляем фиксированное время
+    if (['done', 'archived'].includes(status) && !isFixed) {
+      const fixedTime = calculateFixedTime(order);
+      if (fixedTime !== null) {
+        setElapsed(fixedTime);
+        setIsFixed(true);
+      }
+    }
+  }, [status, order, isFixed]);
+
+  // ✅ ФУНКЦИЯ ДЛЯ РАСЧЕТА ФИКСИРОВАННОГО ВРЕМЕНИ ЗАВЕРШЕННЫХ ЗАКАЗОВ
+  const calculateFixedTime = (order) => {
+    if (!order) return null;
+    
+    try {
+      // Время начала заказа
+      const startTime = parseTimeString(order.pendingTime || order.date);
+      if (!startTime) return null;
+      
+      // Время завершения (doneTime или archivedTime)
+      const endTime = parseTimeString(order.doneTime || order.archivedTime);
+      if (!endTime) return null;
+      
+      // Разность в секундах
+      const diffMs = endTime.getTime() - startTime.getTime();
+      return Math.floor(diffMs / 1000);
+      
+    } catch (error) {
+      console.error('Error calculating fixed time:', error);
+      return null;
+    }
+  };
+
+  // ✅ ФУНКЦИЯ ДЛЯ ПАРСИНГА ВРЕМЕНИ
+  const parseTimeString = (timeStr) => {
+    if (!timeStr) return null;
+    try {
+      // Формат 1: "DD.MM.YYYY HH:MM:SS"
+      if (typeof timeStr === 'string' && timeStr.includes('.') && timeStr.includes(':') && !timeStr.includes('T')) {
+        const [datePart, timePart] = timeStr.split(' ');
+        if (!datePart || !timePart) return null;
+        
+        const [day, month, year] = datePart.split('.');
+        const [hours, minutes, seconds] = timePart.split(':');
+        
+        if (!day || !month || !year || !hours || !minutes) return null;
+        
+        return new Date(
+          parseInt(year), 
+          parseInt(month) - 1, 
+          parseInt(day), 
+          parseInt(hours), 
+          parseInt(minutes), 
+          parseInt(seconds || 0)
+        );
+      }
+      
+      // Формат 2: ISO формат или другой
+      return new Date(timeStr);
+    } catch (error) {
+      return null;
+    }
+  };
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -64,6 +140,7 @@ export const OrderTimer = ({ orderDate, status }) => {
 
   const isOverdue = elapsed > 1800 && isRunning;
   const isCritical = elapsed > 2700 && isRunning;
+  const isCompleted = ['done', 'archived'].includes(status);
 
   return (
     <div style={{
@@ -75,13 +152,26 @@ export const OrderTimer = ({ orderDate, status }) => {
       fontSize: '0.9rem',
       fontWeight: 'bold',
       fontFamily: 'monospace',
-      background: isCritical ? '#ff1744' : isOverdue ? '#ff9800' : isRunning ? '#4caf50' : '#9e9e9e',
+      background: isCompleted 
+        ? '#4caf50'  // Зеленый для завершенных
+        : isCritical 
+        ? '#ff1744' 
+        : isOverdue 
+        ? '#ff9800' 
+        : isRunning 
+        ? '#2196f3'  // Синий для активных
+        : '#9e9e9e',
       color: 'white',
       animation: isOverdue && isRunning ? 'pulse 1.5s infinite' : 'none',
-      boxShadow: isOverdue ? '0 0 10px rgba(255, 87, 34, 0.5)' : 'none'
+      boxShadow: isOverdue && isRunning ? '0 0 10px rgba(255, 87, 34, 0.5)' : 'none'
     }}>
-      <span>{isRunning ? '⏱️' : '⏹️'}</span>
+      <span>
+        {isCompleted ? '✅' : isRunning ? '⏱️' : '⏹️'}
+      </span>
       <span>{formatTime(elapsed)}</span>
+      {isFixed && (
+        <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>🔒</span>
+      )}
     </div>
   );
 };
@@ -343,7 +433,8 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                 🏃‍♂️💨
               </span>
             )}
-            {order.date && <OrderTimer orderDate={order.date} status={order.status} />}
+            {/* ✅ ПЕРЕДАЕМ ОБЪЕКТ ЗАКАЗА В ТАЙМЕР */}
+            {order.date && <OrderTimer orderDate={order.date} status={order.status} order={order} />}
           </div>
           <div style={{
             fontSize: '0.9rem',
