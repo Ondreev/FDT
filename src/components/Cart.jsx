@@ -145,8 +145,17 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
       return;
     }
     
-    // ✅ ПЕРЕДАЕМ ИТОГОВУЮ СУММУ СО СКИДКАМИ
-    onOpenOrderForm(total);
+    // ✅ ПЕРЕДАЕМ СУММУ И ДАННЫЕ О СКИДКЕ
+    const discountData = {
+      total,
+      discountPercent: currentDiscount?.discountPercent || 0,
+      discountAmount: discountAmount || 0,
+      productsSubtotal,
+      subtotal,
+      cart
+    };
+    
+    onOpenOrderForm(discountData);
   };
 
   if (!isOpen) return null;
