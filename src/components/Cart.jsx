@@ -120,19 +120,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     return violations;
   };
 
-  // Функция оформления заказа
-  const handleOrderSubmit = () => {
-    const violations = checkFlashViolations();
-    
-    if (violations.length > 0) {
-      setViolatingItems(violations);
-      setShowViolationAlert(true);
-      return;
-    }
-    
-    onOpenOrderForm();
-  };
-
+  // ✅ РАССЧИТЫВАЕМ ВСЕ СУММЫ
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
   // Рассчитываем скидку (только на товары, не на доставку)
@@ -145,7 +133,21 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     .sort((a, b) => b.minTotal - a.minTotal)[0];
   
   const discountAmount = currentDiscount ? Math.round(productsSubtotal * currentDiscount.discountPercent / 100) : 0;
-  const total = subtotal - discountAmount;
+  const total = subtotal - discountAmount; // ← ИТОГОВАЯ СУММА СО СКИДКАМИ
+
+  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ОФОРМЛЕНИЯ ЗАКАЗА
+  const handleOrderSubmit = () => {
+    const violations = checkFlashViolations();
+    
+    if (violations.length > 0) {
+      setViolatingItems(violations);
+      setShowViolationAlert(true);
+      return;
+    }
+    
+    // ✅ ПЕРЕДАЕМ ИТОГОВУЮ СУММУ СО СКИДКАМИ
+    onOpenOrderForm(total);
+  };
 
   if (!isOpen) return null;
 
