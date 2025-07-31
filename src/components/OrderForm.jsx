@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 
 import { API_URL } from '../config'; // или './config' в зависимости от расположения
 
-// И использовать API_URL вместо прямой ссылки
-const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) => {
+// ✅ ОБНОВЛЕННАЯ СИГНАТУРА - принимаем discountData вместо total
+const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -16,6 +16,15 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  
+  // ✅ ИЗВЛЕКАЕМ ДАННЫЕ ИЗ discountData
+  const { 
+    total = 0, 
+    cart = [], 
+    discountPercent = 0, 
+    discountAmount = 0,
+    productsSubtotal = 0
+  } = discountData || {};
   
   // Читаем deliveryMode прямо из localStorage
   const deliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
@@ -127,13 +136,22 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
         return '📱 Теперь напиши свой номер WhatsApp:';
       
       case 'confirmation':
-        return '🎯 Проверь заказ:\n\n' +
+        // ✅ ОБНОВЛЕННОЕ СООБЩЕНИЕ С ИНФОРМАЦИЕЙ О СКИДКЕ
+        let confirmationText = '🎯 Проверь заказ:\n\n' +
           `👤 ${updatedFormData.customerName}\n` +
           `${currentMode === 'pickup' ? '🏪 Самовывоз (Реутов, ул. Калинина, д. 8)' : '🚗 Доставка: ' + updatedFormData.address}\n` +
           `📱 ${updatedFormData.phone}\n` +
-          `${updatedFormData.comment ? '💬 ' + updatedFormData.comment + '\n' : ''}` +
-          `💰 Итого: ${total} ${settings.currency || '₽'}\n\n` +
+          `${updatedFormData.comment ? '💬 ' + updatedFormData.comment + '\n' : ''}`;
+        
+        // Добавляем информацию о скидке если она есть
+        if (discountAmount > 0) {
+          confirmationText += `💰 Скидка ${discountPercent}%: -${discountAmount} ₽\n`;
+        }
+        
+        confirmationText += `💰 Итого: ${total} ${settings.currency || '₽'}\n\n` +
           'Отправляю заказ? 🚀';
+        
+        return confirmationText;
       
       default:
         return step.botMessage || '';
@@ -202,7 +220,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
     return steps.length;
   };
 
-  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ЗАКАЗА
+  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ЗАКАЗА С ДАННЫМИ О СКИДКЕ
   const handleSubmitOrder = async () => {
     setIsSubmitting(true);
     
@@ -219,7 +237,7 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
       // Формат: 25.07.2025 19:51:45
       const formattedDateTime = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
 
-      // Создаем данные заказа
+      // ✅ СОЗДАЕМ ДАННЫЕ ЗАКАЗА С ИНФОРМАЦИЕЙ О СКИДКЕ
       const orderData = {
         action: 'createOrder',
         orderId: Date.now().toString(),
@@ -233,7 +251,10 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
           price: item.price,
           quantity: item.quantity
         }))),
-        total: total.toString(),
+        total: total.toString(),  // ✅ Итоговая сумма со скидками
+        discountPercent: discountPercent,  // ✅ Процент скидки
+        discountAmount: discountAmount,    // ✅ Размер скидки в рублях
+        productsSubtotal: productsSubtotal, // ✅ Сумма товаров до скидки
         status: 'pending',
         date: formattedDateTime  // ✅ ДОБАВЛЯЕМ ДАТУ С ВРЕМЕНЕМ В ПРАВИЛЬНОМ ФОРМАТЕ
       };
@@ -249,10 +270,18 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
       const result = await response.text();
       
       if (result.includes('success') || response.ok) {
-        // Показываем сообщение об успехе
+        // ✅ ОБНОВЛЕННОЕ СООБЩЕНИЕ ОБ УСПЕХЕ С ИНФОРМАЦИЕЙ О СКИДКЕ
+        let successMessage = '🎉 Заказ отправлен!\n\n';
+        
+        if (discountAmount > 0) {
+          successMessage += `💰 Вы сэкономили ${discountAmount} ₽ благодаря скидке ${discountPercent}%!\n\n`;
+        }
+        
+        successMessage += 'Мы свяжемся с тобой в WhatsApp в ближайшее время!\n\nСпасибо за заказ! ❤️';
+        
         setMessages(prev => [...prev, {
           type: 'bot',
-          text: '🎉 Заказ отправлен!\n\nМы свяжемся с тобой в WhatsApp в ближайшее время!\n\nСпасибо за заказ! ❤️',
+          text: successMessage,
           timestamp: new Date()
         }]);
         
