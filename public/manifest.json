@@ -1,6 +1,6 @@
 {
   "name": "ACAKYCA Суши и роллы",
-  "short_name": "ДОСТАВКА",
+  "short_name": "СУШИ",
   "description": "Приложение для заказа суши, роллов и WOK в Реутове, Новокосино и Новогиреево",
   "start_url": "https://ondreev.github.io/FDT",
   "display": "standalone",
