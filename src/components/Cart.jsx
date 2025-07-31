@@ -290,7 +290,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           background: settings.backgroundColor || '#fdf0e2',
           flexShrink: 0
         }}>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c1e0f', margin: 0 }}>Корзина</h2>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#2c1e0f', margin: 0 }}>Корзина</h2>
           
           {/* Переключатель доставки - современный дизайн */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -647,16 +647,14 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           </div>
         </div>
 
-        {/* БЛОК СУММЫ ВНИЗУ - ЗАФИКСИРОВАННЫЙ */}
-        {cart.length > 0 && (
-          <div style={{ 
-            backgroundColor: 'rgba(255,255,255,0.95)',
-            backdropFilter: 'blur(10px)',
-            padding: '1rem',
-            borderTop: '1px solid #e0e0e0',
-            boxShadow: '0 -2px 8px rgba(0,0,0,0.1)',
-            flexShrink: 0
-          }}>
+        {/* БЛОК СУММЫ ВНИЗУ - НЕ ЗАКРЕПЛЕННЫЙ */}
+{cart.length > 0 && (
+  <div style={{ 
+    backgroundColor: 'white',
+    padding: '1rem',
+    borderTop: '1px solid #e0e0e0',
+    marginTop: '1rem'
+  }}>
             <div style={{ marginBottom: '0.75rem' }}>
               <div style={{ 
                 display: 'flex',
