@@ -234,9 +234,6 @@ const OrderForm = ({ isOpen, onClose, cart, total, settings, onOrderSuccess }) =
           quantity: item.quantity
         }))),
         total: total.toString(),
-        // После строки total: total.toString(),
-discountPercent: currentDiscount?.discountPercent || 0,
-discountAmount: discountAmount || 0,
         status: 'pending',
         date: formattedDateTime  // ✅ ДОБАВЛЯЕМ ДАТУ С ВРЕМЕНЕМ В ПРАВИЛЬНОМ ФОРМАТЕ
       };
