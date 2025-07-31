@@ -364,8 +364,6 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
           `}
         </style>
 
-
-
         {/* ✅ ПЛАШКА "СРОЧНЫЙ!" ДЛЯ САМОВЫВОЗА */}
         {isPickup && !isDone && !isArchived && (
           <div style={{
@@ -700,6 +698,52 @@ export const OrderCard = ({ order, statusLabels, onStatusChange }) => {
                     </div>
                   </div>
                 ))}
+
+                {/* ✅ БЛОК СО СКИДКОЙ - ДОБАВЛЯЕМ ПОСЛЕ ТОВАРОВ */}
+                {order.discountAmount > 0 && (
+                  <div style={{
+                    padding: '0.75rem 0 0.5rem 0',
+                    borderTop: '2px solid #e8f5e8',
+                    marginTop: '0.75rem'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: 'linear-gradient(135deg, #e8f5e8, #f1f8e9)',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
+                      border: '2px solid #4caf50'
+                    }}>
+                      <div>
+                        <div style={{
+                          color: '#2e7d32',
+                          fontWeight: 'bold',
+                          fontSize: '0.95rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}>
+                          💰 Применена скидка {order.discountPercent}%
+                        </div>
+                        <div style={{
+                          fontSize: '0.8rem',
+                          color: '#4caf50',
+                          marginTop: '0.2rem'
+                        }}>
+                          Экономия для клиента
+                        </div>
+                      </div>
+                      <div style={{
+                        color: '#2e7d32',
+                        fontWeight: 'bold',
+                        fontSize: '1.1rem'
+                      }}>
+                        -{formatNumber(order.discountAmount)} ₽
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
