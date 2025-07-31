@@ -251,22 +251,21 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
       )}
 
       <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          maxWidth: '400px',
-          height: '100vh',
-          background: settings.backgroundColor || '#fdf0e2',
-          zIndex: 1001,
-          display: 'flex',
-          flexDirection: 'column',
-          animation: 'slideInLeft 0.3s ease-out',
-          boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
-          boxSizing: 'border-box',
-        }}
-      >
+  style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    maxWidth: '400px',
+    height: '100vh',
+    background: settings.backgroundColor || '#fdf0e2',
+    zIndex: 1001,
+    overflowY: 'auto',         // ← ДОБАВИТЬ ЭТУ СТРОКУ
+    animation: 'slideInLeft 0.3s ease-out',
+    boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
+    boxSizing: 'border-box',
+  }}
+>
         <style>
           {`
             @keyframes slideInLeft {
