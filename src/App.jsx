@@ -290,6 +290,9 @@ const ShopPage = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
   
+  // ✅ ДОБАВЛЯЕМ СОСТОЯНИЕ ДЛЯ ДАННЫХ О СКИДКЕ
+  const [discountData, setDiscountData] = useState(null);
+  
   // Состояния для рейтинга
   const [ratingPopup, setRatingPopup] = useState({ isOpen: false, product: null });
   const [userRatings, setUserRatings] = useState({});
@@ -470,9 +473,11 @@ const ShopPage = () => {
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Рассчитываем финальную сумму со скидкой для формы заказа
-  const calculateFinalTotal = () => {
-    return subtotal;
+  // ✅ ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ОТКРЫТИЯ ФОРМЫ ЗАКАЗА
+  const handleOpenOrderForm = (discountData) => {
+    setDiscountData(discountData);  // Сохраняем данные о скидке
+    setIsCartOpen(false);
+    setIsOrderFormOpen(true);
   };
 
   return (
@@ -829,21 +834,19 @@ const ShopPage = () => {
           settings={settings}
           addToCart={addToCart}
           setCart={setCart}
-          onOpenOrderForm={() => {
-            setIsCartOpen(false);
-            setIsOrderFormOpen(true);
-          }}
+          onOpenOrderForm={handleOpenOrderForm}  // ✅ ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ
         />
 
+        {/* ✅ ОБНОВЛЕННЫЙ OrderForm С discountData */}
         <OrderForm
           isOpen={isOrderFormOpen}
           onClose={() => setIsOrderFormOpen(false)}
-          cart={cart}
-          total={calculateFinalTotal()}
+          discountData={discountData}  // ✅ ПЕРЕДАЕМ ДАННЫЕ О СКИДКЕ
           settings={settings}
           onOrderSuccess={() => {
             clearCart();
             setIsOrderFormOpen(false);
+            setDiscountData(null);  // ✅ ОЧИЩАЕМ ДАННЫЕ СКИДКИ
           }}
         />
 
