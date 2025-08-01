@@ -5,7 +5,6 @@ import OrderForm from './components/OrderForm';
 import OrderingNowBanner from './components/OrderingNowBanner';
 import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
-import React from 'react';
 
 import { API_URL, CONFIG } from './config';
 
@@ -16,6 +15,7 @@ fetch(API_URL + '?action=something')
 const StarRating = ({ rating, size = 16, onClick, isClickable = false }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
+  const totalStars = fullStars + (hasHalfStar ? 1 : 0);
 
   return (
     <div style={{
@@ -297,20 +297,10 @@ const ShopPage = () => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // ✅ СОСТОЯНИЕ ДЛЯ ЛЕНИВОЙ ЗАГРУЗКИ КАТЕГОРИЙ В РАЗДЕЛЕ "ВСЕ"
-  const [visibleCategoriesCount, setVisibleCategoriesCount] = useState(1);
-
   // Сохраняем режим доставки в localStorage
   useEffect(() => {
     localStorage.setItem('deliveryMode', deliveryMode);
   }, [deliveryMode]);
-
-  // ✅ СБРАСЫВАЕМ СЧЕТЧИК КАТЕГОРИЙ ПРИ СМЕНЕ АКТИВНОЙ КАТЕГОРИИ
-  useEffect(() => {
-    if (activeCategory === null) {
-      setVisibleCategoriesCount(1);
-    }
-  }, [activeCategory]);
 
   useEffect(() => {
     if (settings.font) {
@@ -464,14 +454,10 @@ const ShopPage = () => {
     setIsSwiping(false);
   };
 
-  // ✅ ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ЗАГРУЗКИ СЛЕДУЮЩЕЙ КАТЕГОРИИ
-  const handleLoadMore = () => {
-    setVisibleCategoriesCount(prev => prev + 1);
-  };
-
   const filteredProducts = activeCategory
     ? products.filter((p) => p.category === activeCategory)
     : products;
+
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -691,9 +677,6 @@ const ShopPage = () => {
         )}
 
         <div className="product-grid">
-          {/* ✅ РЕНДЕРИМ ЗАГОЛОВКИ КАТЕГОРИЙ В РАЗДЕЛЕ "ВСЕ" */}
-          {renderCategoryHeaders()}
-
           {filteredProducts.map((product, index) => (
             <div
               key={product.id}
@@ -756,6 +739,7 @@ const ShopPage = () => {
                     position: 'absolute',
                     top: '2.2rem',
                     right: '1rem',
+                    backgroundColor: '#e03636',
                     color: '#fff',
                     fontWeight: 'bold',
                     padding: '0.2rem 0.45rem',
@@ -773,9 +757,9 @@ const ShopPage = () => {
                 <div
                   style={{
                     position: 'absolute',
-                    top: String(product.id).includes('H') ? '3.5rem' : '2.2rem',
+                    top: String(product.id).includes('H') ? '3.5rem' : '2.2rem', // Если есть ОСТРОЕ, размещаем ниже
                     right: '1rem',
-                    backgroundColor: '#ff7f32',
+                    backgroundColor: '#ff7f32', // Оранжевый цвет
                     color: '#fff',
                     fontWeight: 'bold',
                     padding: '0.2rem 0.45rem',
@@ -794,9 +778,9 @@ const ShopPage = () => {
                   style={{
                     position: 'absolute',
                     top: (String(product.id).includes('H') ? '3.5rem' : 
-                          String(product.id).includes('Z') ? '3.5rem' : '2.2rem'),
+                          String(product.id).includes('Z') ? '3.5rem' : '2.2rem'), // Размещаем с учетом других плашек
                     right: '1rem',
-                    backgroundColor: '#8bc34a',
+                    backgroundColor: '#8bc34a', // Салатовый цвет
                     color: '#fff',
                     fontWeight: 'bold',
                     padding: '0.2rem 0.45rem',
@@ -927,59 +911,6 @@ const ShopPage = () => {
               </div>
             </div>
           ))}
-
-          {/* ✅ КНОПКА "СМОТРЕТЬ ЕЩЕ" ИЛИ ФИНАЛЬНОЕ СООБЩЕНИЕ */}
-          {!activeCategory && (
-            <div style={{
-              gridColumn: '1 / -1',
-              display: 'flex',
-              justifyContent: 'center',
-              marginTop: '2rem'
-            }}>
-              {visibleCategoriesCount < categories.length ? (
-                <button
-                  onClick={handleLoadMore}
-                  style={{
-                    background: settings.primaryColor || '#ff7f32',
-                    color: 'white',
-                    border: 'none',
-                    padding: '1rem 2rem',
-                    borderRadius: '20px',
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    fontFamily: settings.font || 'Fredoka',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    transition: 'transform 0.2s ease',
-                  }}
-                  onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
-                  onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
-                  onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                >
-                  Смотреть еще
-                </button>
-              ) : (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '2rem',
-                  background: '#fff7ed',
-                  borderRadius: '20px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
-                }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍽️</div>
-                  <p style={{
-                    fontSize: '1.3rem',
-                    fontWeight: 'bold',
-                    color: '#2c1e0f',
-                    margin: 0,
-                    fontFamily: settings.font || 'Fredoka'
-                  }}>
-                    Ну это все наше меню, Готов заказать?
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Менеджеры компонентов */}
@@ -1003,18 +934,19 @@ const ShopPage = () => {
           settings={settings}
           addToCart={addToCart}
           setCart={setCart}
-          onOpenOrderForm={handleOpenOrderForm}
+          onOpenOrderForm={handleOpenOrderForm}  // ✅ ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ
         />
 
+        {/* ✅ ОБНОВЛЕННЫЙ OrderForm С discountData */}
         <OrderForm
           isOpen={isOrderFormOpen}
           onClose={() => setIsOrderFormOpen(false)}
-          discountData={discountData}
+          discountData={discountData}  // ✅ ПЕРЕДАЕМ ДАННЫЕ О СКИДКЕ
           settings={settings}
           onOrderSuccess={() => {
             clearCart();
             setIsOrderFormOpen(false);
-            setDiscountData(null);
+            setDiscountData(null);  // ✅ ОЧИЩАЕМ ДАННЫЕ СКИДКИ
           }}
         />
 
