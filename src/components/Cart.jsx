@@ -125,8 +125,8 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
   
   // Рассчитываем скидку (только на товары, не на доставку)
   const productsSubtotal = cart
-    .filter(item => !item.isDelivery)
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
+  .filter(item => !item.isDelivery && !String(item.id).includes('S'))  // ← ИСКЛЮЧАЕМ СЕТЫ ИЗ СКИДОК
+  .reduce((sum, item) => sum + item.price * item.quantity, 0);
   
   const currentDiscount = discounts
     .filter(d => d.minTotal <= productsSubtotal)
