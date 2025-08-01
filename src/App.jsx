@@ -15,7 +15,7 @@ fetch(API_URL + '?action=something')
 const StarRating = ({ rating, size = 16, onClick, isClickable = false }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  const totalStars = fullStars + (hasHalfStar ? 1 : 0);
 
   return (
     <div style={{
@@ -54,18 +54,6 @@ const StarRating = ({ rating, size = 16, onClick, isClickable = false }) => {
           <span style={{ color: '#ddd' }}>⭐</span>
         </span>
       )}
-      
-      {/* Пустые звезды */}
-      {Array(emptyStars).fill().map((_, i) => (
-        <span key={`empty-${i}`} style={{ 
-          color: '#ddd', 
-          fontSize: `${size}px`,
-          lineHeight: 1,
-          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
-        }}>
-          ⭐
-        </span>
-      ))}
       
       {/* Числовой рейтинг */}
       <span style={{
