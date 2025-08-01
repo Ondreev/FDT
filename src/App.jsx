@@ -534,11 +534,13 @@ const ShopPage = () => {
           @keyframes chefBadgePulse {
             0%, 100% { 
               transform: scale(1);
-              background: linear-gradient(135deg, #FFD700, #FFA500);
+              border-color: #FFA500;
+              box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.7);
             }
             50% { 
-              transform: scale(1.05);
-              background: linear-gradient(135deg, #FFA500, #FFD700);
+              transform: scale(1.02);
+              border-color: #FF8C00;
+              box-shadow: 0 0 0 3px rgba(255, 165, 0, 0);
             }
           }
         `}
@@ -818,19 +820,19 @@ const ShopPage = () => {
               {/* ✅ ПЛАШКА ШЕФА - под картинкой */}
               {String(product.id).includes('C') && (
                 <div style={{
-                  background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                  color: '#8B4513',
+                  background: '#FFD700',
+                  color: '#000',
                   fontWeight: 'bold',
-                  padding: '0.3rem 0.8rem',
-                  borderRadius: '999px',
-                  fontSize: '0.7rem',
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: '8px',
+                  fontSize: '0.6rem',
                   fontFamily: settings.font || 'Fredoka',
                   marginBottom: '0.5rem',
                   animation: 'chefBadgePulse 2s infinite',
                   textAlign: 'center',
-                  boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
+                  border: '2px solid #FFA500'
                 }}>
-                  ⭐ Шеф рекомендует! ⭐
+                  Шеф рекомендует!
                 </div>
               )}
               
