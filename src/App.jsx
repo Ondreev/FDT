@@ -235,7 +235,7 @@ const RatingPopup = ({ isOpen, onClose, productName, onRatingSubmit }) => {
   );
 };
 
-// Компонент для управления flash-товарами в корзине так
+// Компонент для управления flash-товарами в корзине
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   useEffect(() => {
     // Находим товар с R2000 в ID (это будет "6R2000") 
@@ -246,9 +246,9 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
     const flashItem = cart.find(item => item.id === `${specialProduct.id}_flash`);
     if (!flashItem) return;
     
-    // Вычисляем сумму остальных товаров (исключая доставку и этот flash товар)
+    // ✅ ИСКЛЮЧАЕМ СЕТЫ ИЗ РАСЧЕТА FLASH-ТОВАРОВ
     const otherItemsSubtotal = cart
-      .filter(item => item.id !== flashItem.id && !item.isDelivery)
+      .filter(item => item.id !== flashItem.id && !item.isDelivery && !String(item.id).includes('S'))
       .reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     const conditionMet = otherItemsSubtotal >= 2000;
@@ -515,6 +515,32 @@ const ShopPage = () => {
               grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
             }
           }
+
+          /* ✅ АНИМАЦИИ ДЛЯ РЕКОМЕНДАЦИЙ ШЕФА */
+          @keyframes chefGlow {
+            0%, 100% { 
+              box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4), 0 0 0 0 rgba(255, 215, 0, 0.7);
+            }
+            50% { 
+              box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6), 0 0 0 4px rgba(255, 215, 0, 0);
+            }
+          }
+          
+          @keyframes crownBounce {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-3px) rotate(5deg); }
+          }
+          
+          @keyframes chefBadgePulse {
+            0%, 100% { 
+              transform: scale(1);
+              background: linear-gradient(135deg, #FFD700, #FFA500);
+            }
+            50% { 
+              transform: scale(1.05);
+              background: linear-gradient(135deg, #FFA500, #FFD700);
+            }
+          }
         `}
       </style>
       
@@ -669,10 +695,20 @@ const ShopPage = () => {
                 background: '#fff7ed',
                 borderRadius: '20px',
                 padding: '1rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                boxShadow: String(product.id).includes('C') 
+                  ? '0 8px 25px rgba(255, 215, 0, 0.4)' 
+                  : '0 4px 12px rgba(0,0,0,0.04)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
+                // ✅ ОБВОДКА ДЛЯ ТОВАРОВ ШЕФА
+                border: String(product.id).includes('C') 
+                  ? '3px solid #FFD700' 
+                  : 'none',
+                // ✅ АНИМАЦИЯ ДЛЯ ТОВАРОВ ШЕФА
+                animation: String(product.id).includes('C') 
+                  ? 'chefGlow 2s infinite' 
+                  : 'none'
               }}
             >
               {/* Рейтинг справа вверху */}
@@ -692,67 +728,81 @@ const ShopPage = () => {
                 </div>
               )}
 
+              {/* ✅ КОРОНА ШЕФА - слева вверху */}
+              {String(product.id).includes('C') && (
+                <div style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  left: '1rem',
+                  fontSize: '1.5rem',
+                  zIndex: 3,
+                  animation: 'crownBounce 1.5s infinite'
+                }}>
+                  👑
+                </div>
+              )}
+
               {/* Плашки для типов блюд */}
-{String(product.id).includes('H') && (
-  <div
-    style={{
-      position: 'absolute',
-      top: '2.2rem',
-      right: '1rem',
-      backgroundColor: '#e03636',
-      color: '#fff',
-      fontWeight: 'bold',
-      padding: '0.2rem 0.45rem',
-      borderRadius: '999px',
-      fontSize: '0.6rem',
-      fontFamily: settings.font || 'Fredoka',
-      zIndex: 2
-    }}
-  >
-    ОСТРОЕ
-  </div>
-)}
+              {String(product.id).includes('H') && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '2.2rem',
+                    right: '1rem',
+                    backgroundColor: '#e03636',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    padding: '0.2rem 0.45rem',
+                    borderRadius: '999px',
+                    fontSize: '0.6rem',
+                    fontFamily: settings.font || 'Fredoka',
+                    zIndex: 2
+                  }}
+                >
+                  ОСТРОЕ
+                </div>
+              )}
 
-{String(product.id).includes('Z') && (
-  <div
-    style={{
-      position: 'absolute',
-      top: String(product.id).includes('H') ? '3.5rem' : '2.2rem', // Если есть ОСТРОЕ, размещаем ниже
-      right: '1rem',
-      backgroundColor: '#ff7f32', // Оранжевый цвет
-      color: '#fff',
-      fontWeight: 'bold',
-      padding: '0.2rem 0.45rem',
-      borderRadius: '999px',
-      fontSize: '0.6rem',
-      fontFamily: settings.font || 'Fredoka',
-      zIndex: 2
-    }}
-  >
-    ЗАПЕЧЕННЫЙ
-  </div>
-)}
+              {String(product.id).includes('Z') && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: String(product.id).includes('H') ? '3.5rem' : '2.2rem', // Если есть ОСТРОЕ, размещаем ниже
+                    right: '1rem',
+                    backgroundColor: '#ff7f32', // Оранжевый цвет
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    padding: '0.2rem 0.45rem',
+                    borderRadius: '999px',
+                    fontSize: '0.6rem',
+                    fontFamily: settings.font || 'Fredoka',
+                    zIndex: 2
+                  }}
+                >
+                  ЗАПЕЧЕННЫЙ
+                </div>
+              )}
 
-{String(product.id).includes('T') && (
-  <div
-    style={{
-      position: 'absolute',
-      top: (String(product.id).includes('H') ? '3.5rem' : 
-            String(product.id).includes('Z') ? '3.5rem' : '2.2rem'), // Размещаем с учетом других плашек
-      right: '1rem',
-      backgroundColor: '#8bc34a', // Салатовый цвет
-      color: '#fff',
-      fontWeight: 'bold',
-      padding: '0.2rem 0.45rem',
-      borderRadius: '999px',
-      fontSize: '0.6rem',
-      fontFamily: settings.font || 'Fredoka',
-      zIndex: 2
-    }}
-  >
-    ТЕПЛЫЙ
-  </div>
-)}
+              {String(product.id).includes('T') && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: (String(product.id).includes('H') ? '3.5rem' : 
+                          String(product.id).includes('Z') ? '3.5rem' : '2.2rem'), // Размещаем с учетом других плашек
+                    right: '1rem',
+                    backgroundColor: '#8bc34a', // Салатовый цвет
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    padding: '0.2rem 0.45rem',
+                    borderRadius: '999px',
+                    fontSize: '0.6rem',
+                    fontFamily: settings.font || 'Fredoka',
+                    zIndex: 2
+                  }}
+                >
+                  ТЕПЛЫЙ
+                </div>
+              )}
               
               <img
                 src={product.imageUrl}
@@ -764,6 +814,25 @@ const ShopPage = () => {
                   marginBottom: '0.5rem'
                 }}
               />
+
+              {/* ✅ ПЛАШКА ШЕФА - под картинкой */}
+              {String(product.id).includes('C') && (
+                <div style={{
+                  background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                  color: '#8B4513',
+                  fontWeight: 'bold',
+                  padding: '0.3rem 0.8rem',
+                  borderRadius: '999px',
+                  fontSize: '0.7rem',
+                  fontFamily: settings.font || 'Fredoka',
+                  marginBottom: '0.5rem',
+                  animation: 'chefBadgePulse 2s infinite',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
+                }}>
+                  ⭐ Шеф рекомендует! ⭐
+                </div>
+              )}
               
               <h2
                 style={{
