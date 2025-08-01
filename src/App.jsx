@@ -5,6 +5,7 @@ import OrderForm from './components/OrderForm';
 import OrderingNowBanner from './components/OrderingNowBanner';
 import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
+import React from 'react';
 
 import { API_URL, CONFIG } from './config';
 
@@ -296,11 +297,21 @@ const ShopPage = () => {
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  
+  // ✅ СОСТОЯНИЯ ДЛЯ ЛЕНИВОЙ ЗАГРУЗКИ КАТЕГОРИЙ В РАЗДЕЛЕ "ВСЕ"
+  const [visibleCategoriesCount, setVisibleCategoriesCount] = useState(1);
 
   // Сохраняем режим доставки в localStorage
   useEffect(() => {
     localStorage.setItem('deliveryMode', deliveryMode);
   }, [deliveryMode]);
+
+  // ✅ СБРАСЫВАЕМ СЧЕТЧИК КАТЕГОРИЙ ПРИ СМЕНЕ АКТИВНОЙ КАТЕГОРИИ
+  useEffect(() => {
+    if (activeCategory === null) {
+      setVisibleCategoriesCount(1);
+    }
+  }, [activeCategory]);
 
   useEffect(() => {
     if (settings.font) {
@@ -457,6 +468,34 @@ const ShopPage = () => {
   const filteredProducts = activeCategory
     ? products.filter((p) => p.category === activeCategory)
     : products;
+
+  // ✅ ФУНКЦИЯ ДЛЯ ГРУППИРОВКИ ТОВАРОВ ПО КАТЕГОРИЯМ В РАЗДЕЛЕ "ВСЕ"
+  const getProductsByCategories = () => {
+    if (activeCategory) {
+      // Если выбрана конкретная категория, показываем только её товары
+      return products.filter((p) => p.category === activeCategory);
+    }
+    
+    // Для раздела "ВСЕ" группируем по категориям
+    const visibleCategories = categories.slice(0, visibleCategoriesCount);
+    const groupedProducts = [];
+    
+    visibleCategories.forEach(category => {
+      const categoryProducts = products.filter(p => p.category === category.id);
+      if (categoryProducts.length > 0) {
+        groupedProducts.push({
+          category: category,
+          products: categoryProducts
+        });
+      }
+    });
+    
+    return groupedProducts;
+  };
+
+  const handleLoadMore = () => {
+    setVisibleCategoriesCount(prev => prev + 1);
+  };
 
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -677,182 +716,554 @@ const ShopPage = () => {
         )}
 
         <div className="product-grid">
-          {filteredProducts.map((product, index) => (
-            <div
-              key={product.id}
-              style={{
-                position: 'relative',
-                background: '#fff7ed',
-                borderRadius: '20px',
-                padding: '1rem',
-                boxShadow: String(product.id).includes('C') 
-                  ? '0 8px 25px rgba(255, 215, 0, 0.4)' 
-                  : '0 4px 12px rgba(0,0,0,0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                // ✅ ОБВОДКА ДЛЯ ТОВАРОВ ШЕФА
-                border: String(product.id).includes('C') 
-                  ? '3px solid #FFD700' 
-                  : 'none',
-                // ✅ АНИМАЦИЯ ДЛЯ ТОВАРОВ ШЕФА
-                animation: String(product.id).includes('C') 
-                  ? 'chefGlow 2s infinite' 
-                  : 'none'
-              }}
-            >
-              {/* Рейтинг справа вверху */}
-              {product.rating && (
-                <div style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  zIndex: 3
-                }}>
-                  <StarRating 
-                    rating={parseFloat(product.rating)} 
-                    size={12} 
-                    onClick={() => openRatingPopup(product)}
-                    isClickable={true}
-                  />
-                </div>
-              )}
-
-              {/* ✅ КОРОНА ШЕФА - слева вверху */}
-              {String(product.id).includes('C') && (
-                <div style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  left: '1rem',
-                  fontSize: '1.5rem',
-                  zIndex: 3,
-                  animation: 'crownBounce 1.5s infinite'
-                }}>
-                  👑
-                </div>
-              )}
-
-              {/* Плашки для типов блюд */}
-              {String(product.id).includes('H') && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '2.2rem',
-                    right: '1rem',
-                    backgroundColor: '#e03636',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.2rem 0.45rem',
-                    borderRadius: '999px',
-                    fontSize: '0.6rem',
-                    fontFamily: settings.font || 'Fredoka',
-                    zIndex: 2
-                  }}
-                >
-                  ОСТРОЕ
-                </div>
-              )}
-
-              {String(product.id).includes('Z') && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: String(product.id).includes('H') ? '3.5rem' : '2.2rem', // Если есть ОСТРОЕ, размещаем ниже
-                    right: '1rem',
-                    backgroundColor: '#ff7f32', // Оранжевый цвет
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.2rem 0.45rem',
-                    borderRadius: '999px',
-                    fontSize: '0.6rem',
-                    fontFamily: settings.font || 'Fredoka',
-                    zIndex: 2
-                  }}
-                >
-                  ЗАПЕЧЕННЫЙ
-                </div>
-              )}
-
-              {String(product.id).includes('T') && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: (String(product.id).includes('H') ? '3.5rem' : 
-                          String(product.id).includes('Z') ? '3.5rem' : '2.2rem'), // Размещаем с учетом других плашек
-                    right: '1rem',
-                    backgroundColor: '#8bc34a', // Салатовый цвет
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.2rem 0.45rem',
-                    borderRadius: '999px',
-                    fontSize: '0.6rem',
-                    fontFamily: settings.font || 'Fredoka',
-                    zIndex: 2
-                  }}
-                >
-                  ТЕПЛЫЙ
-                </div>
-              )}
-              
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                style={{ 
-                  width: '100%', 
-                  maxWidth: '160px', 
-                  borderRadius: '12px', 
-                  marginBottom: '0.5rem'
-                }}
-              />
-
-              {/* ✅ ПЛАШКА ШЕФА - под картинкой */}
-              {String(product.id).includes('C') && (
-                <div style={{
-                  background: '#FFD700',
-                  color: '#000',
-                  fontWeight: 'bold',
-                  padding: '0.2rem 0.5rem',
-                  borderRadius: '8px',
-                  fontSize: '0.6rem',
-                  fontFamily: settings.font || 'Fredoka',
-                  marginBottom: '0.5rem',
-                  animation: 'chefBadgePulse 2s infinite',
-                  textAlign: 'center',
-                  border: '2px solid #FFA500'
-                }}>
-                  Шеф рекомендует!
-                </div>
-              )}
-              
-              <h2
+          {activeCategory ? (
+            // Показываем товары конкретной категории (как раньше)
+            filteredProducts.map((product, index) => (
+              <div
+                key={product.id}
                 style={{
-                  fontSize: '1.4rem',
-                  fontWeight: 'bold',
-                  color: '#4b2e12',
-                  margin: '0.5rem 0 0.25rem 0',
-                  textAlign: 'center',
+                  position: 'relative',
+                  background: '#fff7ed',
+                  borderRadius: '20px',
+                  padding: '1rem',
+                  boxShadow: String(product.id).includes('C') 
+                    ? '0 8px 25px rgba(255, 215, 0, 0.4)' 
+                    : '0 4px 12px rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  // ✅ ОБВОДКА ДЛЯ ТОВАРОВ ШЕФА
+                  border: String(product.id).includes('C') 
+                    ? '3px solid #FFD700' 
+                    : 'none',
+                  // ✅ АНИМАЦИЯ ДЛЯ ТОВАРОВ ШЕФА
+                  animation: String(product.id).includes('C') 
+                    ? 'chefGlow 2s infinite' 
+                    : 'none'
                 }}
               >
-                {product.name}
-              </h2>
-              <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
-              <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
-              
-              {/* Нижняя часть карточки */}
-              <div style={{ 
-                marginTop: 'auto',
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center',
-                gap: '0.5rem',
-                width: '100%'
-              }}>
-                <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0', color: '#2c1e0f' }}>
-                  {product.price} {settings.currency || '₽'}
-                </p>
-                <div
+                {/* Рейтинг справа вверху */}
+                {product.rating && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    zIndex: 3
+                  }}>
+                    <StarRating 
+                      rating={parseFloat(product.rating)} 
+                      size={12} 
+                      onClick={() => openRatingPopup(product)}
+                      isClickable={true}
+                    />
+                  </div>
+                )}
+
+                {/* ✅ КОРОНА ШЕФА - слева вверху */}
+                {String(product.id).includes('C') && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    left: '1rem',
+                    fontSize: '1.5rem',
+                    zIndex: 3,
+                    animation: 'crownBounce 1.5s infinite'
+                  }}>
+                    👑
+                  </div>
+                )}
+
+                {/* Плашки для типов блюд */}
+                {String(product.id).includes('H') && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '2.2rem',
+                      right: '1rem',
+                      backgroundColor: '#e03636',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      padding: '0.2rem 0.45rem',
+                      borderRadius: '999px',
+                      fontSize: '0.6rem',
+                      fontFamily: settings.font || 'Fredoka',
+                      zIndex: 2
+                    }}
+                  >
+                    ОСТРОЕ
+                  </div>
+                )}
+
+                {String(product.id).includes('Z') && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: String(product.id).includes('H') ? '3.5rem' : '2.2rem',
+                      right: '1rem',
+                      backgroundColor: '#ff7f32',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      padding: '0.2rem 0.45rem',
+                      borderRadius: '999px',
+                      fontSize: '0.6rem',
+                      fontFamily: settings.font || 'Fredoka',
+                      zIndex: 2
+                    }}
+                  >
+                    ЗАПЕЧЕННЫЙ
+                  </div>
+                )}
+
+                {String(product.id).includes('T') && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: (String(product.id).includes('H') ? '3.5rem' : 
+                            String(product.id).includes('Z') ? '3.5rem' : '2.2rem'),
+                      right: '1rem',
+                      backgroundColor: '#8bc34a',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      padding: '0.2rem 0.45rem',
+                      borderRadius: '999px',
+                      fontSize: '0.6rem',
+                      fontFamily: settings.font || 'Fredoka',
+                      zIndex: 2
+                    }}
+                  >
+                    ТЕПЛЫЙ
+                  </div>
+                )}
+                
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  style={{ 
+                    width: '100%', 
+                    maxWidth: '160px', 
+                    borderRadius: '12px', 
+                    marginBottom: '0.5rem'
+                  }}
+                />
+
+                {/* ✅ ПЛАШКА ШЕФА - под картинкой */}
+                {String(product.id).includes('C') && (
+                  <div style={{
+                    background: '#FFD700',
+                    color: '#000',
+                    fontWeight: 'bold',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '8px',
+                    fontSize: '0.6rem',
+                    fontFamily: settings.font || 'Fredoka',
+                    marginBottom: '0.5rem',
+                    animation: 'chefBadgePulse 2s infinite',
+                    textAlign: 'center',
+                    border: '2px solid #FFA500'
+                  }}>
+                    Шеф рекомендует!
+                  </div>
+                )}
+                
+                <h2
                   style={{
-                    display: 'flex',
+                    fontSize: '1.4rem',
+                    fontWeight: 'bold',
+                    color: '#4b2e12',
+                    margin: '0.5rem 0 0.25rem 0',
+                    textAlign: 'center',
+                  }}
+                >
+                  {product.name}
+                </h2>
+                <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
+                <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
+                
+                {/* Нижняя часть карточки */}
+                <div style={{ 
+                  marginTop: 'auto',
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  width: '100%'
+                }}>
+                  <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0', color: '#2c1e0f' }}>
+                    {product.price} {settings.currency || '₽'}
+                  </p>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '0.25rem',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        const existing = cart.find(item => item.id === product.id);
+                        if (existing && existing.quantity > 1) {
+                          updateQuantity(product.id, existing.quantity - 1);
+                        } else {
+                          removeFromCart(product.id);
+                        }
+                      }}
+                      style={{
+                        backgroundColor: settings.primaryColor || '#ff7f32',
+                        color: '#fff',
+                        fontSize: '1.25rem',
+                        padding: '0.2rem 0.7rem',
+                        border: 'none',
+                        borderRadius: '12px 0 0 12px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      −
+                    </button>
+                    <div
+                      style={{
+                        background: '#fff1dd',
+                        padding: '0.2rem 1rem',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        borderRadius: '4px',
+                        minWidth: '40px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {cart.find(item => item.id === product.id)?.quantity || 0}
+                    </div>
+                    <button
+                      onClick={() => addToCart(product)}
+                      style={{
+                        backgroundColor: settings.primaryColor || '#ff7f32',
+                        color: '#fff',
+                        fontSize: '1.25rem',
+                        padding: '0.2rem 0.7rem',
+                        border: 'none',
+                        borderRadius: '0 12px 12px 0',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            // ✅ ПОКАЗЫВАЕМ ТОВАРЫ ПО КАТЕГОРИЯМ В РАЗДЕЛЕ "ВСЕ"
+            <>
+              {getProductsByCategories().map((categoryGroup, categoryIndex) => (
+                <React.Fragment key={categoryGroup.category.id}>
+                  {/* Заголовок категории */}
+                  <div style={{
+                    gridColumn: '1 / -1',
+                    marginTop: categoryIndex > 0 ? '2rem' : '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <h3 style={{
+                      fontSize: '1.8rem',
+                      fontWeight: 'bold',
+                      color: '#2c1e0f',
+                      margin: 0,
+                      textAlign: 'center',
+                      fontFamily: settings.font || 'Fredoka'
+                    }}>
+                      {categoryGroup.category.name}
+                    </h3>
+                  </div>
+                  
+                  {/* Товары категории */}
+                  {categoryGroup.products.map((product) => (
+                    <div
+                      key={product.id}
+                      style={{
+                        position: 'relative',
+                        background: '#fff7ed',
+                        borderRadius: '20px',
+                        padding: '1rem',
+                        boxShadow: String(product.id).includes('C') 
+                          ? '0 8px 25px rgba(255, 215, 0, 0.4)' 
+                          : '0 4px 12px rgba(0,0,0,0.04)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        border: String(product.id).includes('C') 
+                          ? '3px solid #FFD700' 
+                          : 'none',
+                        animation: String(product.id).includes('C') 
+                          ? 'chefGlow 2s infinite' 
+                          : 'none'
+                      }}
+                    >
+                      {/* Рейтинг справа вверху */}
+                      {product.rating && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '1rem',
+                          right: '1rem',
+                          zIndex: 3
+                        }}>
+                          <StarRating 
+                            rating={parseFloat(product.rating)} 
+                            size={12} 
+                            onClick={() => openRatingPopup(product)}
+                            isClickable={true}
+                          />
+                        </div>
+                      )}
+
+                      {/* ✅ КОРОНА ШЕФА - слева вверху */}
+                      {String(product.id).includes('C') && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '1rem',
+                          left: '1rem',
+                          fontSize: '1.5rem',
+                          zIndex: 3,
+                          animation: 'crownBounce 1.5s infinite'
+                        }}>
+                          👑
+                        </div>
+                      )}
+
+                      {/* Плашки для типов блюд */}
+                      {String(product.id).includes('H') && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '2.2rem',
+                            right: '1rem',
+                            backgroundColor: '#e03636',
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: '999px',
+                            fontSize: '0.6rem',
+                            fontFamily: settings.font || 'Fredoka',
+                            zIndex: 2
+                          }}
+                        >
+                          ОСТРОЕ
+                        </div>
+                      )}
+
+                      {String(product.id).includes('Z') && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: String(product.id).includes('H') ? '3.5rem' : '2.2rem',
+                            right: '1rem',
+                            backgroundColor: '#ff7f32',
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: '999px',
+                            fontSize: '0.6rem',
+                            fontFamily: settings.font || 'Fredoka',
+                            zIndex: 2
+                          }}
+                        >
+                          ЗАПЕЧЕННЫЙ
+                        </div>
+                      )}
+
+                      {String(product.id).includes('T') && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: (String(product.id).includes('H') ? '3.5rem' : 
+                                  String(product.id).includes('Z') ? '3.5rem' : '2.2rem'),
+                            right: '1rem',
+                            backgroundColor: '#8bc34a',
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: '999px',
+                            fontSize: '0.6rem',
+                            fontFamily: settings.font || 'Fredoka',
+                            zIndex: 2
+                          }}
+                        >
+                          ТЕПЛЫЙ
+                        </div>
+                      )}
+                      
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        style={{ 
+                          width: '100%', 
+                          maxWidth: '160px', 
+                          borderRadius: '12px', 
+                          marginBottom: '0.5rem'
+                        }}
+                      />
+
+                      {/* ✅ ПЛАШКА ШЕФА - под картинкой */}
+                      {String(product.id).includes('C') && (
+                        <div style={{
+                          background: '#FFD700',
+                          color: '#000',
+                          fontWeight: 'bold',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '8px',
+                          fontSize: '0.6rem',
+                          fontFamily: settings.font || 'Fredoka',
+                          marginBottom: '0.5rem',
+                          animation: 'chefBadgePulse 2s infinite',
+                          textAlign: 'center',
+                          border: '2px solid #FFA500'
+                        }}>
+                          Шеф рекомендует!
+                        </div>
+                      )}
+                      
+                      <h2
+                        style={{
+                          fontSize: '1.4rem',
+                          fontWeight: 'bold',
+                          color: '#4b2e12',
+                          margin: '0.5rem 0 0.25rem 0',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {product.name}
+                      </h2>
+                      <p style={{ fontSize: '0.95rem', margin: 0, color: '#5a3d1d', textAlign: 'center' }}>{product.description}</p>
+                      <p style={{ fontSize: '0.9rem', color: '#b5834f', margin: '0.25rem 0' }}>{product.weight}</p>
+                      
+                      {/* Нижняя часть карточки */}
+                      <div style={{ 
+                        marginTop: 'auto',
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        width: '100%'
+                      }}>
+                        <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: '0', color: '#2c1e0f' }}>
+                          {product.price} {settings.currency || '₽'}
+                        </p>
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '0.25rem',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <button
+                            onClick={() => {
+                              const existing = cart.find(item => item.id === product.id);
+                              if (existing && existing.quantity > 1) {
+                                updateQuantity(product.id, existing.quantity - 1);
+                              } else {
+                                removeFromCart(product.id);
+                              }
+                            }}
+                            style={{
+                              backgroundColor: settings.primaryColor || '#ff7f32',
+                              color: '#fff',
+                              fontSize: '1.25rem',
+                              padding: '0.2rem 0.7rem',
+                              border: 'none',
+                              borderRadius: '12px 0 0 12px',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            −
+                          </button>
+                          <div
+                            style={{
+                              background: '#fff1dd',
+                              padding: '0.2rem 1rem',
+                              border: 'none',
+                              fontWeight: 'bold',
+                              borderRadius: '4px',
+                              minWidth: '40px',
+                              textAlign: 'center',
+                            }}
+                          >
+                            {cart.find(item => item.id === product.id)?.quantity || 0}
+                          </div>
+                          <button
+                            onClick={() => addToCart(product)}
+                            style={{
+                              backgroundColor: settings.primaryColor || '#ff7f32',
+                              color: '#fff',
+                              fontSize: '1.25rem',
+                              padding: '0.2rem 0.7rem',
+                              border: 'none',
+                              borderRadius: '0 12px 12px 0',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+              
+              {/* Кнопка "Смотреть еще" или финальное сообщение */}
+              <div style={{
+                gridColumn: '1 / -1',
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '2rem'
+              }}>
+                {visibleCategoriesCount < categories.length ? (
+                  <button
+                    onClick={handleLoadMore}
+                    style={{
+                      background: settings.primaryColor || '#ff7f32',
+                      color: 'white',
+                      border: 'none',
+                      padding: '1rem 2rem',
+                      borderRadius: '20px',
+                      fontSize: '1.1rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      fontFamily: settings.font || 'Fredoka',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      transition: 'transform 0.2s ease',
+                    }}
+                    onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
+                    onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
+                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                  >
+                    Смотреть еще
+                  </button>
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '2rem',
+                    background: '#fff7ed',
+                    borderRadius: '20px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
+                  }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍽️</div>
+                    <p style={{
+                      fontSize: '1.3rem',
+                      fontWeight: 'bold',
+                      color: '#2c1e0f',
+                      margin: 0,
+                      fontFamily: settings.font || 'Fredoka'
+                    }}>
+                      Ну это все наше меню, Готов заказать?
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>'flex',
                     gap: '0.25rem',
                     alignItems: 'center',
                   }}
