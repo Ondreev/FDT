@@ -692,26 +692,67 @@ const ShopPage = () => {
                 </div>
               )}
 
-              {/* Плашка ОСТРОЕ - под рейтингом */}
-              {String(product.id).includes('H') && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '2.2rem',
-                    right: '1rem',
-                    backgroundColor: '#e03636',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    padding: '0.2rem 0.45rem',
-                    borderRadius: '999px',
-                    fontSize: '0.6rem',
-                    fontFamily: settings.font || 'Fredoka',
-                    zIndex: 2
-                  }}
-                >
-                  ОСТРОЕ
-                </div>
-              )}
+              {/* Плашки для типов блюд */}
+{String(product.id).includes('H') && (
+  <div
+    style={{
+      position: 'absolute',
+      top: '2.2rem',
+      right: '1rem',
+      backgroundColor: '#e03636',
+      color: '#fff',
+      fontWeight: 'bold',
+      padding: '0.2rem 0.45rem',
+      borderRadius: '999px',
+      fontSize: '0.6rem',
+      fontFamily: settings.font || 'Fredoka',
+      zIndex: 2
+    }}
+  >
+    ОСТРОЕ
+  </div>
+)}
+
+{String(product.id).includes('Z') && (
+  <div
+    style={{
+      position: 'absolute',
+      top: String(product.id).includes('H') ? '3.5rem' : '2.2rem', // Если есть ОСТРОЕ, размещаем ниже
+      right: '1rem',
+      backgroundColor: '#ff7f32', // Оранжевый цвет
+      color: '#fff',
+      fontWeight: 'bold',
+      padding: '0.2rem 0.45rem',
+      borderRadius: '999px',
+      fontSize: '0.6rem',
+      fontFamily: settings.font || 'Fredoka',
+      zIndex: 2
+    }}
+  >
+    ЗАПЕЧЕННЫЙ
+  </div>
+)}
+
+{String(product.id).includes('T') && (
+  <div
+    style={{
+      position: 'absolute',
+      top: (String(product.id).includes('H') ? '3.5rem' : 
+            String(product.id).includes('Z') ? '3.5rem' : '2.2rem'), // Размещаем с учетом других плашек
+      right: '1rem',
+      backgroundColor: '#8bc34a', // Салатовый цвет
+      color: '#fff',
+      fontWeight: 'bold',
+      padding: '0.2rem 0.45rem',
+      borderRadius: '999px',
+      fontSize: '0.6rem',
+      fontFamily: settings.font || 'Fredoka',
+      zIndex: 2
+    }}
+  >
+    ТЕПЛЫЙ
+  </div>
+)}
               
               <img
                 src={product.imageUrl}
