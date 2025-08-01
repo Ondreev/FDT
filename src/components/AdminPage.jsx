@@ -32,6 +32,11 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // ✅ ДОБАВИТЬ ЭТО:
+  useEffect(() => {
+    document.title = 'Дашборд - Админ панель';
+  }, []);
+
   useEffect(() => {
     loadData();
   }, []);
