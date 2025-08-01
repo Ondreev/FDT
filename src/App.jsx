@@ -5,6 +5,7 @@ import OrderForm from './components/OrderForm';
 import OrderingNowBanner from './components/OrderingNowBanner';
 import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
+import React from 'react';
 
 import { API_URL, CONFIG } from './config';
 
@@ -468,55 +469,9 @@ const ShopPage = () => {
     setVisibleCategoriesCount(prev => prev + 1);
   };
 
-  // ✅ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ОТФИЛЬТРОВАННЫХ ТОВАРОВ
-  const getFilteredProducts = () => {
-    if (activeCategory) {
-      // Если выбрана конкретная категория - показываем все её товары
-      return products.filter((p) => p.category === activeCategory);
-    } else {
-      // Если раздел "ВСЕ" - показываем товары только из видимых категорий
-      const visibleCategories = categories.slice(0, visibleCategoriesCount);
-      const visibleCategoryIds = visibleCategories.map(cat => cat.id);
-      return products.filter(product => visibleCategoryIds.includes(product.category));
-    }
-  };
-
-  // ✅ ФУНКЦИЯ ДЛЯ РЕНДЕРА ЗАГОЛОВКОВ КАТЕГОРИЙ В РАЗДЕЛЕ "ВСЕ"
-  const renderCategoryHeaders = () => {
-    if (activeCategory) return null;
-    
-    const visibleCategories = categories.slice(0, visibleCategoriesCount);
-    const result = [];
-    
-    visibleCategories.forEach((category, categoryIndex) => {
-      const categoryProducts = products.filter(p => p.category === category.id);
-      if (categoryProducts.length === 0) return;
-
-      // Добавляем заголовок категории
-      result.push(
-        <div key={`header-${category.id}`} style={{
-          gridColumn: '1 / -1',
-          marginTop: categoryIndex > 0 ? '2rem' : '1rem',
-          marginBottom: '1rem'
-        }}>
-          <h3 style={{
-            fontSize: '1.8rem',
-            fontWeight: 'bold',
-            color: '#2c1e0f',
-            margin: 0,
-            textAlign: 'center',
-            fontFamily: settings.font || 'Fredoka'
-          }}>
-            {category.name}
-          </h3>
-        </div>
-      );
-    });
-
-    return result;
-  };
-
-  const filteredProducts = getFilteredProducts();
+  const filteredProducts = activeCategory
+    ? products.filter((p) => p.category === activeCategory)
+    : products;
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
