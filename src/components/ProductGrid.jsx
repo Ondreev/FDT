@@ -43,65 +43,20 @@ const ProductGrid = ({
   const filteredProducts = getFilteredProducts();
 
   return (
-    <>
-      <style>
-        {`
-          .product-grid {
-            display: grid;
-            gap: 1rem;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          }
-
-          /* ✅ СТИЛИ ДЛЯ СЕТОВ (товары с буквой S) - ИСПРАВЛЕННАЯ ВЕРСИЯ */
-          .product-card-set {
-            /* На мобильных остается обычная ширина */
-          }
-
-          /* На очень узких экранах все карточки обычного размера */
-          @media (max-width: 400px) {
-            .product-grid {
-              grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-            }
-          }
-
-          /* На средних экранах сеты становятся шире */
-          @media (min-width: 600px) {
-            .product-card-set {
-              grid-column: span 2;
-            }
-          }
-
-          /* На широких экранах ограничиваем сеты */
-          @media (min-width: 900px) {
-            .product-grid {
-              grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            }
-            .product-card-set {
-              grid-column: span 2;
-              max-width: calc(2 * 200px + 1rem);
-            }
-          }
-        `}
-      </style>
-      
-      <div className="product-grid">
+    <div className="product-grid">
       {activeCategory ? (
         // ✅ ПОКАЗЫВАЕМ ТОВАРЫ КОНКРЕТНОЙ КАТЕГОРИИ (КАК РАНЬШЕ)
         filteredProducts.map((product, index) => (
-          <div
+          <ProductCard
             key={product.id}
-            className={String(product.id).includes('S') ? 'product-card-set' : ''}
-          >
-            <ProductCard
-              product={product}
-              settings={settings}
-              cart={cart}
-              onAddToCart={onAddToCart}
-              onUpdateQuantity={onUpdateQuantity}
-              onRemoveFromCart={onRemoveFromCart}
-              onRatingClick={onRatingClick}
-            />
-          </div>
+            product={product}
+            settings={settings}
+            cart={cart}
+            onAddToCart={onAddToCart}
+            onUpdateQuantity={onUpdateQuantity}
+            onRemoveFromCart={onRemoveFromCart}
+            onRatingClick={onRatingClick}
+          />
         ))
       ) : (
         // ✅ РАЗДЕЛ "ВСЕ" С ЛЕНИВОЙ ЗАГРУЗКОЙ
@@ -132,20 +87,16 @@ const ProductGrid = ({
                 
                 {/* Товары категории */}
                 {categoryProducts.map((product) => (
-                  <div
+                  <ProductCard
                     key={product.id}
-                    className={String(product.id).includes('S') ? 'product-card-set' : ''}
-                  >
-                    <ProductCard
-                      product={product}
-                      settings={settings}
-                      cart={cart}
-                      onAddToCart={onAddToCart}
-                      onUpdateQuantity={onUpdateQuantity}
-                      onRemoveFromCart={onRemoveFromCart}
-                      onRatingClick={onRatingClick}
-                    />
-                  </div>
+                    product={product}
+                    settings={settings}
+                    cart={cart}
+                    onAddToCart={onAddToCart}
+                    onUpdateQuantity={onUpdateQuantity}
+                    onRemoveFromCart={onRemoveFromCart}
+                    onRatingClick={onRatingClick}
+                  />
                 ))}
               </React.Fragment>
             );
@@ -204,7 +155,6 @@ const ProductGrid = ({
         </>
       )}
     </div>
-    </>
   );
 };
 
