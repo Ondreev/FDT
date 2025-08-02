@@ -52,34 +52,33 @@ const ProductGrid = ({
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
           }
 
-          /* ✅ СТИЛИ ДЛЯ СЕТОВ (товары с буквой S) */
+          /* ✅ СТИЛИ ДЛЯ СЕТОВ (товары с буквой S) - ИСПРАВЛЕННАЯ ВЕРСИЯ */
           .product-card-set {
-            grid-column: span 2;
-            max-width: none;
+            /* На мобильных остается обычная ширина */
           }
 
-          /* На очень узких экранах сеты занимают всю ширину */
+          /* На очень узких экранах все карточки обычного размера */
           @media (max-width: 400px) {
             .product-grid {
               grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
             }
+          }
+
+          /* На средних экранах сеты становятся шире */
+          @media (min-width: 600px) {
             .product-card-set {
               grid-column: span 2;
             }
           }
 
-          /* На средних экранах (планшеты) */
-          @media (min-width: 401px) and (max-width: 768px) {
-            .product-card-set {
-              grid-column: span 2;
+          /* На широких экранах ограничиваем сеты */
+          @media (min-width: 900px) {
+            .product-grid {
+              grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             }
-          }
-
-          /* На десктопе ограничиваем максимум 2 колонками для сетов */
-          @media (min-width: 769px) {
             .product-card-set {
               grid-column: span 2;
-              max-width: calc(2 * 180px + 1rem);
+              max-width: calc(2 * 200px + 1rem);
             }
           }
         `}
