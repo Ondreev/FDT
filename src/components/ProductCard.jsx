@@ -1,4 +1,120 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+// Компонент модального окна с увеличенной картинкой
+const ImageModal = ({ isOpen, onClose, imageUrl, productName }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10001,
+        padding: '1rem',
+        animation: 'modalFadeIn 0.3s ease'
+      }}
+      onClick={onClose}
+    >
+      <div 
+        style={{
+          position: 'relative',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          animation: 'imageSlideIn 0.4s ease-out'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={imageUrl}
+          alt={productName}
+          style={{
+            width: '100%',
+            height: 'auto',
+            maxHeight: '90vh',
+            borderRadius: '20px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            objectFit: 'contain'
+          }}
+        />
+        
+        {/* Кнопка закрытия */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            background: 'rgba(0, 0, 0, 0.6)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            fontSize: '1.5rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background 0.2s ease'
+          }}
+          onMouseEnter={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.8)'}
+          onMouseLeave={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.6)'}
+        >
+          ×
+        </button>
+
+        {/* Название блюда */}
+        <div style={{
+          position: 'absolute',
+          bottom: '0',
+          left: '0',
+          right: '0',
+          background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+          color: 'white',
+          padding: '2rem 1.5rem 1rem',
+          borderRadius: '0 0 20px 20px',
+          textAlign: 'center'
+        }}>
+          <h3 style={{
+            margin: 0,
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+          }}>
+            {productName}
+          </h3>
+        </div>
+      </div>
+
+      <style>
+        {`
+          @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          @keyframes imageSlideIn {
+            from { 
+              opacity: 0;
+              transform: scale(0.8) translateY(20px);
+            }
+            to { 
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+        `}
+      </style>
+    </div>
+  );
+};
 
 // Компонент для отображения звездного рейтинга
 const StarRating = ({ rating, size = 16, onClick, isClickable = false }) => {
@@ -67,6 +183,7 @@ const ProductCard = ({
   onRatingClick 
 }) => {
   const quantity = cart.find(item => item.id === product.id)?.quantity || 0;
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const handleDecrement = () => {
     if (quantity > 1) {
@@ -195,12 +312,31 @@ const ProductCard = ({
       <img
         src={product.imageUrl}
         alt={product.name}
+        onClick={() => setIsImageModalOpen(true)}
         style={{ 
           width: '100%', 
           maxWidth: '160px', 
           borderRadius: '12px', 
-          marginBottom: '0.5rem'
+          marginBottom: '0.5rem',
+          cursor: 'pointer',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease'
         }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'scale(1.05)';
+          e.target.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'scale(1)';
+          e.target.style.boxShadow = 'none';
+        }}
+      />
+
+      {/* Модальное окно с увеличенной картинкой */}
+      <ImageModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        imageUrl={product.imageUrl}
+        productName={product.name}
       />
 
       {/* ✅ ПЛАШКА ШЕФА - под картинкой */}
