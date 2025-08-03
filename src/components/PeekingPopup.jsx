@@ -15,8 +15,21 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
     if (specialProducts.length === 0) return;
 
     const showRandomProduct = () => {
-      const randomProduct = specialProducts[Math.floor(Math.random() * specialProducts.length)];
+      // Если все товары уже показаны - сбрасываем список
+      const productsToShow = availableProducts.length > 0 ? availableProducts : specialProducts;
+      
+      if (productsToShow.length === 0) return;
+      
+      // Если мы сбросили список - очищаем память о показанных товарах
+      if (availableProducts.length === 0 && specialProducts.length > 0) {
+        setShownProducts(new Set());
+      }
+      
+      const randomProduct = productsToShow[Math.floor(Math.random() * productsToShow.length)];
       setCurrentProduct(randomProduct);
+      
+      // Запоминаем, что показали этот товар
+      setShownProducts(prev => new Set([...prev, randomProduct.id]));
       
       // Фаза 1: выглядывает (1 сек)
       setAnimationPhase('peeking');
@@ -67,7 +80,7 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
       clearTimeout(scrollTimeout);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [specialProducts]); // Убрал isVisible из зависимостей
+  }, [specialProducts, availableProducts]); // Добавляем availableProducts в зависимости // Убрал isVisible из зависимостей
 
   if (!isVisible || !currentProduct) return null;
 
@@ -165,7 +178,7 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
           style={{
             position: 'fixed',
             left: '180px', // Поверх правой части блюда
-            bottom: '480px', // Верхняя часть блюда
+            bottom: '420px', // Верх группы элементов
             zIndex: 1500,
             fontSize: '24px',
             fontWeight: 'bold',
@@ -184,14 +197,39 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
         </div>
       )}
 
-      {/* Парящая кнопка заказа - НА блюде */}
+      {/* Название товара - сразу под ценой */}
+      {animationPhase === 'showing' && (
+        <div
+          style={{
+            position: 'fixed',
+            left: '160px', // Чуть левее цены
+            bottom: '380px', // Под ценой
+            zIndex: 1500,
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: 'white',
+            background: 'rgba(0,0,0,0.8)',
+            padding: '6px 12px',
+            borderRadius: '15px',
+            animation: 'fadeInFloat 1s ease-out',
+            pointerEvents: 'none',
+            textAlign: 'center',
+            maxWidth: '140px',
+            lineHeight: '1.2'
+          }}
+        >
+          {currentProduct.name}
+        </div>
+      )}
+
+      {/* Парящая кнопка заказа - под названием */}
       {animationPhase === 'showing' && (
         <button
           onClick={handleOrderProduct}
           style={{
             position: 'fixed',
-            left: '160px', // Центр блюда
-            bottom: '320px', // Средняя часть блюда
+            left: '160px', // По центру группы
+            bottom: '320px', // Под названием
             zIndex: 1500,
             background: `linear-gradient(135deg, ${settings.primaryColor || '#ff7f32'}, ${settings.primaryColor || '#ff7f32'}dd)`,
             color: 'white',
@@ -219,31 +257,6 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
         >
           🛒 Заказать
         </button>
-      )}
-
-      {/* Название товара - НА блюде */}
-      {animationPhase === 'showing' && (
-        <div
-          style={{
-            position: 'fixed',
-            left: '140px', // Левая часть блюда
-            bottom: '420px', // Между ценой и кнопкой
-            zIndex: 1500,
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: 'white',
-            background: 'rgba(0,0,0,0.8)',
-            padding: '6px 12px',
-            borderRadius: '15px',
-            animation: 'fadeInFloat 1s ease-out',
-            pointerEvents: 'none',
-            textAlign: 'center',
-            maxWidth: '140px',
-            lineHeight: '1.2'
-          }}
-        >
-          {currentProduct.name}
-        </div>
       )}
     </>
   );
