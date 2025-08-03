@@ -236,6 +236,9 @@ const ShopPage = () => {
     return localStorage.getItem('deliveryMode') || 'delivery';
   });
   
+  // Состояние для показа sticky баннеров
+  const [showStickyBanners, setShowStickyBanners] = useState(false);
+  
   // Состояния для плавного свайпа
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
@@ -247,6 +250,16 @@ const ShopPage = () => {
   useEffect(() => {
     localStorage.setItem('deliveryMode', deliveryMode);
   }, [deliveryMode]);
+
+  // Отслеживаем скролл для sticky баннеров
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyBanners(window.scrollY > 150);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (settings.font) {
@@ -573,7 +586,7 @@ const ShopPage = () => {
           </div>
         )}
 
-        {/* ✅ КОМПАКТНЫЕ ПРЕДЛОЖЕНИЯ НА ГЛАВНОЙ СТРАНИЦЕ */}
+        {/* ✅ ОБЫЧНЫЕ БАННЕРЫ ВВЕРХУ */}
         <div style={{ padding: '0 1rem' }}>
           <MainPageDeliveryOffer 
             cart={cart}
@@ -588,6 +601,31 @@ const ShopPage = () => {
             addToCart={addToCart}
           />
         </div>
+
+        {/* ✅ STICKY БАННЕРЫ ПРИ СКРОЛЛЕ */}
+        {showStickyBanners && (
+          <div style={{ 
+            position: 'sticky',
+            top: '0px', // Прямо под категориями
+            zIndex: 899, // Ниже категорий (900)
+            background: settings.backgroundColor || '#fdf0e2',
+            padding: '0 1rem',
+            borderBottom: '1px solid #e0e0e0'
+          }}>
+            <MainPageDeliveryOffer 
+              cart={cart}
+              settings={settings}
+              deliveryMode={deliveryMode}
+            />
+
+            <MainPageFlashOffer 
+              products={products}
+              cart={cart}
+              settings={settings}
+              addToCart={addToCart}
+            />
+          </div>
+        )}
 
         {/* ✅ ИСПОЛЬЗУЕМ НОВЫЙ КОМПОНЕНТ ProductGrid */}
         <ProductGrid
