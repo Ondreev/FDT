@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
-// Главный компонент выглядывающих товаров с буквой R
+// Главный компонент выглядывающих товаров с буквой W
 const PeekingPopup = ({ products, settings, addToCart, cart }) => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [animationPhase, setAnimationPhase] = useState('hidden'); // hidden, peeking, showing, hiding
+  const [shownProducts, setShownProducts] = useState(new Set()); // Запоминаем показанные товары
 
   // Находим ВСЕ товары с буквой W в ID
   const specialProducts = products.filter(product => 
@@ -15,40 +16,48 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
     if (specialProducts.length === 0) return;
 
     const showRandomProduct = () => {
-      // Если все товары уже показаны - сбрасываем список
-      const productsToShow = availableProducts.length > 0 ? availableProducts : specialProducts;
-      
-      if (productsToShow.length === 0) return;
-      
-      // Если мы сбросили список - очищаем память о показанных товарах
-      if (availableProducts.length === 0 && specialProducts.length > 0) {
-        setShownProducts(new Set());
-      }
-      
-      const randomProduct = productsToShow[Math.floor(Math.random() * productsToShow.length)];
-      setCurrentProduct(randomProduct);
-      
-      // Запоминаем, что показали этот товар
-      setShownProducts(prev => new Set([...prev, randomProduct.id]));
-      
-      // Фаза 1: выглядывает (1 сек)
-      setAnimationPhase('peeking');
-      setIsVisible(true);
-      
-      // Фаза 2: полностью показывается через 1 сек (8 сек показа)
-      setTimeout(() => {
-        setAnimationPhase('showing');
-      }, 1000);
-      
-      // Фаза 3: прячется через 8 сек показа
-      setTimeout(() => {
-        setAnimationPhase('hiding');
+      // Получаем текущее состояние показанных товаров
+      setShownProducts(currentShown => {
+        // Находим товары, которые еще не показывались - ЗДЕСЬ определяем availableProducts
+        const notShownYet = specialProducts.filter(product => 
+          !currentShown.has(product.id)
+        );
+        
+        // Если все товары уже показаны - используем все товары и сбрасываем память
+        const productsToShow = notShownYet.length > 0 ? notShownYet : specialProducts;
+        
+        if (productsToShow.length === 0) return currentShown;
+        
+        const randomProduct = productsToShow[Math.floor(Math.random() * productsToShow.length)];
+        setCurrentProduct(randomProduct);
+        
+        // Фаза 1: выглядывает (1 сек)
+        setAnimationPhase('peeking');
+        setIsVisible(true);
+        
+        // Фаза 2: полностью показывается через 1 сек (8 сек показа)
         setTimeout(() => {
-          setIsVisible(false);
-          setCurrentProduct(null);
-          setAnimationPhase('hidden');
-        }, 800);
-      }, 9000); // 1 сек пикинг + 8 сек показ
+          setAnimationPhase('showing');
+        }, 1000);
+        
+        // Фаза 3: прячется через 8 сек показа
+        setTimeout(() => {
+          setAnimationPhase('hiding');
+          setTimeout(() => {
+            setIsVisible(false);
+            setCurrentProduct(null);
+            setAnimationPhase('hidden');
+          }, 800);
+        }, 9000); // 1 сек пикинг + 8 сек показ
+        
+        // Если использовали все товары - сбрасываем и добавляем текущий
+        if (notShownYet.length === 0) {
+          return new Set([randomProduct.id]);
+        }
+        
+        // Добавляем текущий товар к показанным
+        return new Set([...currentShown, randomProduct.id]);
+      });
     };
 
     // Отслеживаем скролл для ЗАПУСКА анимаций
@@ -80,7 +89,7 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
       clearTimeout(scrollTimeout);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [specialProducts, availableProducts]); // Добавляем availableProducts в зависимости // Убрал isVisible из зависимостей
+  }, [specialProducts]); // Только specialProducts в зависимостях
 
   if (!isVisible || !currentProduct) return null;
 
