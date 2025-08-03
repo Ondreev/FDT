@@ -156,15 +156,6 @@ const RatingPopup = ({ isOpen, onClose, productName, onRatingSubmit }) => {
             </p>
           </div>
         )}
-
-        {/* ✅ ТОНКИЕ ЗАКРЕПЛЕННЫЕ ПРОГРЕСС-БАРЫ ПОД КАТЕГОРИЯМИ */}
-        <StickyProgressBars 
-          products={products}
-          cart={cart}
-          settings={settings}
-          deliveryMode={deliveryMode}
-          onShowPopup={handleShowActivationPopup}
-        />
       </div>
       
       <style>
@@ -615,6 +606,15 @@ const ShopPage = () => {
             ))}
           </div>
         )}
+
+        {/* ✅ ТОНКИЕ ЗАКРЕПЛЕННЫЕ ПРОГРЕСС-БАРЫ ПОД КАТЕГОРИЯМИ */}
+        <StickyProgressBars 
+          products={products}
+          cart={cart}
+          settings={settings}
+          deliveryMode={deliveryMode}
+          onShowPopup={handleShowActivationPopup}
+        />
 
         {/* ✅ КОМПАКТНЫЕ ПРЕДЛОЖЕНИЯ НА ГЛАВНОЙ СТРАНИЦЕ */}
         <div style={{ padding: '0 1rem' }}>
