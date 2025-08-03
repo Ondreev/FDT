@@ -85,9 +85,9 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
   const getTransform = () => {
     switch (animationPhase) {
       case 'peeking':
-        return 'translateX(-75%) rotate(10deg)';  // Выглядывает слева
+        return 'translateX(-50%) rotate(10deg)';  // Выглядывает слева - больше видно
       case 'showing':
-        return 'translateX(-20%) rotate(10deg)';  // Почти полностью виден слева
+        return 'translateX(10%) rotate(10deg)';   // Почти полностью виден - еще больше сдвинут
       case 'hiding':
         return 'translateX(-100%) rotate(10deg)'; // Прячется влево
       default:
@@ -137,7 +137,7 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
       <div
         style={{
           position: 'fixed',
-          left: '-150px', // Слева вместо справа
+          left: '-80px', // Меньше отступ слева, чтобы блюдо было видно
           bottom: '150px',
           zIndex: 1400,
           transform: getTransform(),
@@ -159,22 +159,22 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
         />
       </div>
 
-      {/* Парящая цена */}
+      {/* Парящая цена - НА блюде */}
       {animationPhase === 'showing' && (
         <div
           style={{
             position: 'fixed',
-            left: '280px', // Слева от товара
-            bottom: '380px', // Позиция для большого товара
+            left: '180px', // Поверх правой части блюда
+            bottom: '480px', // Верхняя часть блюда
             zIndex: 1500,
-            fontSize: '24px', // Исходный размер
+            fontSize: '24px',
             fontWeight: 'bold',
             color: '#FFD700',
             animation: 'priceGlow 2s infinite, fadeInFloat 0.6s ease-out',
             background: 'rgba(0,0,0,0.7)',
-            padding: '8px 16px', // Исходный размер
+            padding: '8px 16px',
             borderRadius: '20px',
-            border: '2px solid #FFD700', // Исходная толщина
+            border: '2px solid #FFD700',
             pointerEvents: 'none',
             textAlign: 'center',
             minWidth: '80px'
@@ -184,28 +184,28 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
         </div>
       )}
 
-      {/* Парящая кнопка заказа */}
+      {/* Парящая кнопка заказа - НА блюде */}
       {animationPhase === 'showing' && (
         <button
           onClick={handleOrderProduct}
           style={{
             position: 'fixed',
-            left: '260px', // Слева от товара
-            bottom: '280px', // Позиция для большого товара
+            left: '160px', // Центр блюда
+            bottom: '320px', // Средняя часть блюда
             zIndex: 1500,
             background: `linear-gradient(135deg, ${settings.primaryColor || '#ff7f32'}, ${settings.primaryColor || '#ff7f32'}dd)`,
             color: 'white',
             border: 'none',
-            borderRadius: '25px', // Исходный размер
-            padding: '12px 20px', // Исходный размер
-            fontSize: '16px', // Исходный размер
+            borderRadius: '25px',
+            padding: '12px 20px',
+            fontSize: '16px',
             fontWeight: 'bold',
             cursor: 'pointer',
             boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
             animation: 'buttonFloat 2s infinite, fadeInFloat 0.8s ease-out',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
-            minWidth: '120px', // Исходный размер
+            minWidth: '120px',
             textAlign: 'center'
           }}
           onMouseEnter={(e) => {
@@ -221,24 +221,24 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
         </button>
       )}
 
-      {/* Название товара (компактное) */}
+      {/* Название товара - НА блюде */}
       {animationPhase === 'showing' && (
         <div
           style={{
             position: 'fixed',
-            left: '240px', // Слева от товара
-            bottom: '330px', // Позиция для большого товара
+            left: '140px', // Левая часть блюда
+            bottom: '420px', // Между ценой и кнопкой
             zIndex: 1500,
-            fontSize: '14px', // Исходный размер
+            fontSize: '14px',
             fontWeight: 'bold',
             color: 'white',
             background: 'rgba(0,0,0,0.8)',
-            padding: '6px 12px', // Исходный размер
+            padding: '6px 12px',
             borderRadius: '15px',
             animation: 'fadeInFloat 1s ease-out',
             pointerEvents: 'none',
             textAlign: 'center',
-            maxWidth: '140px', // Исходный размер
+            maxWidth: '140px',
             lineHeight: '1.2'
           }}
         >
