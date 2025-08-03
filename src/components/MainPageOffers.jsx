@@ -138,8 +138,8 @@ export const MainPageFlashOffer = ({ products, cart, settings, addToCart }) => {
         <button
           onClick={handleAddToCart}
           style={{
-            background: conditionMet ? '#4CAF50' : 'rgba(255,255,255,0.9)',
-            color: conditionMet ? 'white' : '#ff0844',
+            background: 'rgba(255,255,255,0.9)',
+            color: '#ff0844',
             border: 'none',
             borderRadius: '6px',
             padding: '6px 10px',
@@ -148,20 +148,17 @@ export const MainPageFlashOffer = ({ products, cart, settings, addToCart }) => {
             cursor: 'pointer'
           }}
         >
-          {conditionMet ? `За ${discountedPrice}₽!` : 'В корзину'}
+          В корзину
         </button>
       </div>
 
       {/* Компактный прогресс */}
-      <div style={{ fontSize: '11px', marginBottom: '6px' }}>
+      <div style={{ fontSize: '12px', marginBottom: '6px' }}>
         {conditionMet ? (
           <span style={{ 
-            color: '#4CAF50', 
+            color: 'white', 
             fontWeight: 'bold',
-            background: 'rgba(255,255,255,0.9)',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            color: '#2e7d32'
+            fontSize: '13px'
           }}>
             ✓ Условие выполнено! Добавляйте за {discountedPrice}₽
           </span>
