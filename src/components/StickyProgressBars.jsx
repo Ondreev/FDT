@@ -246,13 +246,14 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
 const StickyProgressBars = ({ products, cart, settings, deliveryMode, onShowPopup }) => {
   const [showBars, setShowBars] = useState(false);
 
-  // Показываем только если есть товары в корзине
-  const hasProducts = cart.length > 0; // ИСПРАВЛЕНО: считаем ВСЕ товары, включая доставку
+  // ИСПРАВЛЕНО: правильно считаем товары
+  const realProducts = cart.filter(item => !item.isDelivery && item.id !== 'delivery_service');
+  const hasProducts = realProducts.length > 0;
 
   useEffect(() => {
     const handleScroll = () => {
-      // Показываем тонкие бары после прокрутки на 100px (уменьшил)
-      setShowBars(window.scrollY > 100);
+      // Показываем тонкие бары после прокрутки на 50px
+      setShowBars(window.scrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -265,27 +266,27 @@ const StickyProgressBars = ({ products, cart, settings, deliveryMode, onShowPopu
     }
   };
 
-  // ОТЛАДКА - показываем всегда если есть хоть один товар
-  console.log('StickyProgressBars render:', {
+  // ОТЛАДКА
+  console.log('StickyProgressBars:', {
     hasProducts,
     showBars,
+    realProductsCount: realProducts.length,
     cartLength: cart.length,
     deliveryMode,
     scrollY: typeof window !== 'undefined' ? window.scrollY : 0
   });
 
-  // Принудительный показ для отладки
-  const shouldShow = hasProducts && showBars;
+  // ПРИНУДИТЕЛЬНЫЙ ПОКАЗ для тестирования - УДАЛИТЕ ПОСЛЕ ОТЛАДКИ
+  const forceShow = hasProducts; // Показываем без условия скролла
 
-  if (!shouldShow) return null;
+  if (!forceShow) return null;
 
   return (
     <div style={{
       position: 'sticky',
       top: '0px',
       zIndex: 899,
-      background: settings.backgroundColor || '#fdf0e2',
-      // УБРАЛИ уродские границы и отступы
+      background: settings.backgroundColor || '#fdf0e2'
     }}>
       <StickyDeliveryProgress 
         cart={cart}
@@ -308,33 +309,64 @@ const StickyProgressBars = ({ products, cart, settings, deliveryMode, onShowPopu
 const ActivationPopup = ({ type, isOpen, onClose, data, settings, onConfirm }) => {
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e) => {
+    // Закрываем только при клике на фон, не на контент
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  const handleConfirmClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onConfirm();
+  };
+
+  const handleCloseClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+  };
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0,0,0,0.6)',
-      zIndex: 2000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
-    }}>
-      <div style={{
-        background: type === 'flash' 
-          ? 'linear-gradient(135deg, #ff0844, #ff4081)'
-          : 'linear-gradient(135deg, #4caf50, #66bb6a)',
-        color: 'white',
-        padding: '24px',
-        borderRadius: '20px',
-        textAlign: 'center',
-        maxWidth: '350px',
-        width: '100%',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-        animation: 'popupBounce 0.5s ease-out'
-      }}>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.6)',
+        zIndex: 2000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}
+      onClick={handleBackdropClick}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+    >
+      <div 
+        style={{
+          background: type === 'flash' 
+            ? 'linear-gradient(135deg, #ff0844, #ff4081)'
+            : 'linear-gradient(135deg, #4caf50, #66bb6a)',
+          color: 'white',
+          padding: '24px',
+          borderRadius: '20px',
+          textAlign: 'center',
+          maxWidth: '350px',
+          width: '100%',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+          animation: 'popupBounce 0.5s ease-out'
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+      >
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>
           {type === 'flash' ? '⚡' : '🎉'}
         </div>
@@ -365,11 +397,8 @@ const ActivationPopup = ({ type, isOpen, onClose, data, settings, onConfirm }) =
           justifyContent: 'center'
         }}>
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onConfirm();
-            }}
+            onClick={handleConfirmClick}
+            onTouchEnd={handleConfirmClick}
             style={{
               background: 'rgba(255,255,255,0.9)',
               color: type === 'flash' ? '#ff0844' : '#4caf50',
@@ -378,18 +407,17 @@ const ActivationPopup = ({ type, isOpen, onClose, data, settings, onConfirm }) =
               padding: '12px 24px',
               fontSize: '16px',
               fontWeight: 'bold',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              minHeight: '48px', // Увеличиваем для мобильных
+              touchAction: 'manipulation'
             }}
           >
             {type === 'flash' ? 'Добавить в корзину!' : 'Активировать!'}
           </button>
           
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClose();
-            }}
+            onClick={handleCloseClick}
+            onTouchEnd={handleCloseClick}
             style={{
               background: 'transparent',
               color: 'white',
@@ -397,7 +425,9 @@ const ActivationPopup = ({ type, isOpen, onClose, data, settings, onConfirm }) =
               borderRadius: '12px',
               padding: '12px 24px',
               fontSize: '16px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              minHeight: '48px', // Увеличиваем для мобильных
+              touchAction: 'manipulation'
             }}
           >
             Позже
