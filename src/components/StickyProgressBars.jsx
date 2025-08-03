@@ -223,7 +223,7 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
 
 // Главный компонент закрепленных прогресс-баров
 const StickyProgressBars = ({ products, cart, settings, deliveryMode, onShowPopup }) => {
-  const [showBars, setShowBars] = useState(false);
+  const [showBars, setShowBars] = useState(true); // ПРИНУДИТЕЛЬНО TRUE для отладки
 
   // Показываем только если есть товары в корзине
   const hasProducts = cart.filter(item => !item.isDelivery).length > 0;
@@ -231,14 +231,12 @@ const StickyProgressBars = ({ products, cart, settings, deliveryMode, onShowPopu
   useEffect(() => {
     const handleScroll = () => {
       // Показываем тонкие бары после прокрутки на 200px
-      setShowBars(window.scrollY > 200);
+      setShowBars(window.scrollY > 50); // Уменьшил порог до 50px
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  if (!hasProducts || !showBars) return null;
 
   const handleActivation = (type, data) => {
     if (onShowPopup) {
@@ -246,27 +244,65 @@ const StickyProgressBars = ({ products, cart, settings, deliveryMode, onShowPopu
     }
   };
 
+  // ОТЛАДКА - показываем всегда если есть хоть один товар
+  console.log('StickyProgressBars render:', {
+    hasProducts,
+    showBars,
+    cartLength: cart.length,
+    deliveryMode,
+    scrollY: typeof window !== 'undefined' ? window.scrollY : 0
+  });
+
+  // Показываем компонент даже без условий для отладки
   return (
     <div style={{
       position: 'sticky',
-      top: '0px', // Прямо под категориями
-      zIndex: 899, // Ниже категорий (900), но выше остального контента
+      top: '0px',
+      zIndex: 899,
       background: settings.backgroundColor || '#fdf0e2',
-      borderBottom: '1px solid #e0e0e0'
+      borderBottom: '2px solid red', // Красная граница для видимости
+      padding: '10px' // Добавляем отступы
     }}>
-      <StickyDeliveryProgress 
-        cart={cart}
-        settings={settings}
-        deliveryMode={deliveryMode}
-        onActivate={handleActivation}
-      />
-      
-      <StickyFlashProgress 
-        products={products}
-        cart={cart}
-        settings={settings}
-        onActivate={handleActivation}
-      />
+      {/* ОТЛАДОЧНАЯ ИНФОРМАЦИЯ */}
+      <div style={{
+        background: 'yellow',
+        padding: '5px',
+        fontSize: '12px',
+        marginBottom: '5px'
+      }}>
+        ОТЛАДКА: товаров={hasProducts ? 'есть' : 'нет'}, скролл={showBars ? 'да' : 'нет'}, режим={deliveryMode}
+      </div>
+
+      {/* Показываем прогрессы принудительно если есть товары */}
+      {hasProducts && (
+        <>
+          <StickyDeliveryProgress 
+            cart={cart}
+            settings={settings}
+            deliveryMode={deliveryMode}
+            onActivate={handleActivation}
+          />
+          
+          <StickyFlashProgress 
+            products={products}
+            cart={cart}
+            settings={settings}
+            onActivate={handleActivation}
+          />
+        </>
+      )}
+
+      {/* Если нет товаров - показываем сообщение */}
+      {!hasProducts && (
+        <div style={{
+          background: 'orange',
+          padding: '10px',
+          color: 'black',
+          fontWeight: 'bold'
+        }}>
+          НЕТ ТОВАРОВ В КОРЗИНЕ - добавьте товары чтобы увидеть прогрессы
+        </div>
+      )}
     </div>
   );
 };
