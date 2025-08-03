@@ -8,7 +8,6 @@ import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 import ProductGrid from './components/ProductGrid';
 import { MainPageFlashOffer, MainPageDeliveryOffer } from './components/MainPageOffers';
 import FloatingButtons from './components/FloatingButtons';
-import { StickyProgressBars, ActivationPopup } from './components/StickyProgressBars';
 
 import { API_URL, CONFIG } from './config';
 
@@ -232,9 +231,6 @@ const ShopPage = () => {
   const [ratingPopup, setRatingPopup] = useState({ isOpen: false, product: null });
   const [userRatings, setUserRatings] = useState({});
   
-  // Состояние для попапов активации
-  const [activationPopup, setActivationPopup] = useState({ type: null, isOpen: false, data: null });
-  
   // Состояние для режима доставки
   const [deliveryMode, setDeliveryMode] = useState(() => {
     return localStorage.getItem('deliveryMode') || 'delivery';
@@ -414,36 +410,6 @@ const ShopPage = () => {
     setIsOrderFormOpen(true);
   };
 
-  // Функция для показа попапов активации
-  const handleShowActivationPopup = (type, data) => {
-    setActivationPopup({ type, isOpen: true, data });
-  };
-
-  // Функция подтверждения активации
-  const handleConfirmActivation = () => {
-    if (activationPopup.type === 'flash' && activationPopup.data) {
-      const flashItem = {
-        ...activationPopup.data.product,
-        id: `${activationPopup.data.product.id}_flash`,
-        name: `${activationPopup.data.product.name} ⚡`,
-        price: activationPopup.data.price,
-        originalPrice: activationPopup.data.product.price,
-        quantity: 1,
-        isFlashOffer: true,
-        isDiscounted: true,
-        violatesCondition: false
-      };
-      addToCart(flashItem);
-    } else if (activationPopup.type === 'delivery') {
-      setCart(prev => prev.map(item => 
-        item.id === 'delivery_service'
-          ? { ...item, price: 0, name: 'Доставка 🎉', isFreeDelivery: true }
-          : item
-      ));
-    }
-    setActivationPopup({ type: null, isOpen: false, data: null });
-  };
-
   return (
     <>
       <style>
@@ -607,15 +573,6 @@ const ShopPage = () => {
           </div>
         )}
 
-        {/* ✅ ТОНКИЕ ЗАКРЕПЛЕННЫЕ ПРОГРЕСС-БАРЫ ПОД КАТЕГОРИЯМИ */}
-        <StickyProgressBars 
-          products={products}
-          cart={cart}
-          settings={settings}
-          deliveryMode={deliveryMode}
-          onShowPopup={handleShowActivationPopup}
-        />
-
         {/* ✅ КОМПАКТНЫЕ ПРЕДЛОЖЕНИЯ НА ГЛАВНОЙ СТРАНИЦЕ */}
         <div style={{ padding: '0 1rem' }}>
           <MainPageDeliveryOffer 
@@ -686,16 +643,6 @@ const ShopPage = () => {
           cartItemsCount={cartItemsCount}
           onCartOpen={() => setIsCartOpen(true)}
           settings={settings}
-        />
-
-        {/* Попап активации предложений */}
-        <ActivationPopup 
-          type={activationPopup.type}
-          isOpen={activationPopup.isOpen}
-          onClose={() => setActivationPopup({ type: null, isOpen: false, data: null })}
-          data={activationPopup.data}
-          settings={settings}
-          onConfirm={handleConfirmActivation}
         />
 
         {/* Попап для голосования */}
