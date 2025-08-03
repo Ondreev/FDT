@@ -44,28 +44,44 @@ const FloatingButtons = ({ cartItemsCount, onCartOpen, settings }) => {
 
   // Touch события для перетаскивания
   const handleTouchStart = (e) => {
-    setIsDragging(true);
     const touch = e.touches[0];
     setDragStart({
       x: touch.clientX - position.x,
       y: touch.clientY - position.y
     });
-    e.preventDefault();
+    setIsDragging(false); // Начинаем с false
+    
+    // Запускаем таймер для определения перетаскивания
+    setTimeout(() => {
+      setIsDragging(true);
+    }, 150); // Задержка 150ms перед началом перетаскивания
   };
 
   const handleTouchMove = (e) => {
-    if (!isDragging) return;
-    
     const touch = e.touches[0];
-    const newPosition = constrainPosition(
-      touch.clientX - dragStart.x,
-      touch.clientY - dragStart.y
-    );
-    setPosition(newPosition);
-    e.preventDefault();
+    const deltaX = Math.abs(touch.clientX - (dragStart.x + position.x));
+    const deltaY = Math.abs(touch.clientY - (dragStart.y + position.y));
+    
+    // Если движение больше 10px - начинаем перетаскивание
+    if ((deltaX > 10 || deltaY > 10) && !isDragging) {
+      setIsDragging(true);
+    }
+    
+    if (isDragging) {
+      const newPosition = constrainPosition(
+        touch.clientX - dragStart.x,
+        touch.clientY - dragStart.y
+      );
+      setPosition(newPosition);
+      e.preventDefault();
+    }
   };
 
   const handleTouchEnd = (e) => {
+    // Если не было перетаскивания - разрешаем клик
+    if (!isDragging) {
+      return; // Позволяем событию клика сработать
+    }
     setIsDragging(false);
     e.preventDefault();
   };
@@ -108,6 +124,10 @@ const FloatingButtons = ({ cartItemsCount, onCartOpen, settings }) => {
 
   // Функция открытия WhatsApp
   const handleWhatsAppClick = (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      return;
+    }
     e.stopPropagation();
     const phoneNumber = '74951400557';
     const message = encodeURIComponent('Здравствуйте, у меня вопрос по заказу блюд.');
@@ -117,6 +137,10 @@ const FloatingButtons = ({ cartItemsCount, onCartOpen, settings }) => {
 
   // Функция открытия корзины
   const handleCartClick = (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      return;
+    }
     e.stopPropagation();
     onCartOpen();
   };
@@ -142,7 +166,7 @@ const FloatingButtons = ({ cartItemsCount, onCartOpen, settings }) => {
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
     >
-      {/* Кнопка корзины */}
+      {      /* Кнопка корзины */}
       <button
         onClick={handleCartClick}
         style={{
@@ -160,6 +184,11 @@ const FloatingButtons = ({ cartItemsCount, onCartOpen, settings }) => {
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           position: 'relative',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          outline: 'none',
+          WebkitTapHighlightColor: 'transparent',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          touchAction: 'manipulation'
         }}
         onMouseEnter={(e) => {
           if (!isDragging) {
@@ -218,7 +247,7 @@ const FloatingButtons = ({ cartItemsCount, onCartOpen, settings }) => {
         )}
       </button>
 
-      {/* Кнопка WhatsApp */}
+      {      /* Кнопка WhatsApp */}
       <button
         onClick={handleWhatsAppClick}
         style={{
@@ -235,6 +264,11 @@ const FloatingButtons = ({ cartItemsCount, onCartOpen, settings }) => {
           justifyContent: 'center',
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          outline: 'none',
+          WebkitTapHighlightColor: 'transparent',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          touchAction: 'manipulation'
         }}
         onMouseEnter={(e) => {
           if (!isDragging) {
