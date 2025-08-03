@@ -1165,7 +1165,7 @@ const ShopPage = () => {
           onRatingSubmit={handleRatingSubmit}
         />
 
-        {/* Компонент выглядывающих товаров с R */}
+        {/* Компонент выглядывающих товаров с W */}
         <PeekingPopup
           products={products}
           settings={settings}
