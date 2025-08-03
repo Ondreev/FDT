@@ -7,6 +7,7 @@ import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 import ProductGrid from './components/ProductGrid';
 import { MainPageFlashOffer, MainPageDeliveryOffer } from './components/MainPageOffers';
+import FloatingButtons from './components/FloatingButtons';
 
 import { API_URL, CONFIG } from './config';
 
@@ -516,51 +517,6 @@ const ShopPage = () => {
               {settings.projectTitle || 'Заголовок'}
             </h1>
           </div>
-          
-          <button
-            onClick={() => setIsCartOpen(true)}
-            style={{
-              position: 'fixed',
-              bottom: '20px',
-              right: '20px',
-              zIndex: 1000,
-              background: settings.primaryColor || '#ff7f32',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '60px',
-              height: '60px',
-              fontSize: '1.4rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            }}
-          >
-            🛒
-            {cartItemsCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
-                  background: '#e03636',
-                  color: 'white',
-                  borderRadius: '50%',
-                  width: '24px',
-                  height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                }}
-              >
-                {cartItemsCount}
-              </span>
-            )}
-          </button>
         </header>
 
         {categories.length > 0 && (
@@ -680,6 +636,13 @@ const ShopPage = () => {
             setIsOrderFormOpen(false);
             setDiscountData(null);
           }}
+        />
+
+        {/* Плавающие кнопки корзины и WhatsApp */}
+        <FloatingButtons
+          cartItemsCount={cartItemsCount}
+          onCartOpen={() => setIsCartOpen(true)}
+          settings={settings}
         />
 
         {/* Попап для голосования */}
