@@ -68,9 +68,9 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
   const getTransform = () => {
     switch (animationPhase) {
       case 'peeking':
-        return 'translateX(60%) rotate(-10deg)';
+        return 'translateX(25%) rotate(-10deg)';  // 75% видно
       case 'showing':
-        return 'translateX(20%) rotate(-10deg)';
+        return 'translateX(-20%) rotate(-10deg)'; // 80%+ видно
       case 'hiding':
         return 'translateX(100%) rotate(-10deg)';
       default:
