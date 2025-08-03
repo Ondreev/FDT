@@ -236,8 +236,10 @@ const ShopPage = () => {
     return localStorage.getItem('deliveryMode') || 'delivery';
   });
   
-  // Состояние для показа sticky баннеров
-  const [showStickyBanners, setShowStickyBanners] = useState(false);
+  // Состояния для попапов в меню
+  const [showFlashPopup, setShowFlashPopup] = useState(false);
+  const [showDeliveryPopup, setShowDeliveryPopup] = useState(false);
+  const [flashPopupData, setFlashPopupData] = useState(null);
   
   // Состояния для плавного свайпа
   const [touchStartX, setTouchStartX] = useState(0);
@@ -251,15 +253,41 @@ const ShopPage = () => {
     localStorage.setItem('deliveryMode', deliveryMode);
   }, [deliveryMode]);
 
-  // Отслеживаем скролл для sticky баннеров
+  // Проверяем условия для показа попапов в меню
   useEffect(() => {
-    const handleScroll = () => {
-      setShowStickyBanners(window.scrollY > 150);
-    };
+    // Проверка флеш-предложения
+    const flashProduct = products.find(p => String(p.id).includes('R2000'));
+    if (flashProduct) {
+      const productsSubtotal = cart
+        .filter(item => !item.isDelivery && !String(item.id).includes('S'))
+        .reduce((sum, item) => sum + item.price * item.quantity, 0);
+      
+      const flashItem = cart.find(item => item.id === `${flashProduct.id}_flash`);
+      const conditionMet = productsSubtotal >= 2000;
+      
+      // Показываем попап если условие выполнено и товар еще не добавлен
+      if (conditionMet && !flashItem && !showFlashPopup) {
+        const discountedPrice = Math.round(flashProduct.price * 0.01);
+        setFlashPopupData({ product: flashProduct, price: discountedPrice });
+        setShowFlashPopup(true);
+      }
+    }
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    // Проверка бесплатной доставки
+    if (deliveryMode === 'delivery') {
+      const productsSubtotal = cart
+        .filter(item => item.id !== 'delivery_service')
+        .reduce((sum, item) => sum + item.price * item.quantity, 0);
+      
+      const deliveryItem = cart.find(item => item.id === 'delivery_service');
+      const conditionMet = productsSubtotal >= 2000;
+      
+      // Показываем попап если условие выполнено и доставка еще платная
+      if (conditionMet && deliveryItem && !deliveryItem.isFreeDelivery && !showDeliveryPopup) {
+        setShowDeliveryPopup(true);
+      }
+    }
+  }, [cart, products, deliveryMode, showFlashPopup, showDeliveryPopup]);
 
   useEffect(() => {
     if (settings.font) {
@@ -486,6 +514,14 @@ const ShopPage = () => {
               box-shadow: 0 0 0 3px rgba(255, 165, 0, 0);
             }
           }
+
+          /* ✅ АНИМАЦИЯ ДЛЯ ПОПАПОВ */
+          @keyframes popupBounce {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.95); }
+            100% { transform: scale(1); opacity: 1; }
+          }
         `}
       </style>
       
@@ -586,7 +622,7 @@ const ShopPage = () => {
           </div>
         )}
 
-        {/* ✅ ОБЫЧНЫЕ БАННЕРЫ ВВЕРХУ */}
+        {/* ✅ КОМПАКТНЫЕ ПРЕДЛОЖЕНИЯ НА ГЛАВНОЙ СТРАНИЦЕ */}
         <div style={{ padding: '0 1rem' }}>
           <MainPageDeliveryOffer 
             cart={cart}
@@ -601,31 +637,6 @@ const ShopPage = () => {
             addToCart={addToCart}
           />
         </div>
-
-        {/* ✅ STICKY БАННЕРЫ ПРИ СКРОЛЛЕ */}
-        {showStickyBanners && (
-          <div style={{ 
-            position: 'sticky',
-            top: '0px', // Прямо под категориями
-            zIndex: 899, // Ниже категорий (900)
-            background: settings.backgroundColor || '#fdf0e2',
-            padding: '0 1rem',
-            borderBottom: '1px solid #e0e0e0'
-          }}>
-            <MainPageDeliveryOffer 
-              cart={cart}
-              settings={settings}
-              deliveryMode={deliveryMode}
-            />
-
-            <MainPageFlashOffer 
-              products={products}
-              cart={cart}
-              settings={settings}
-              addToCart={addToCart}
-            />
-          </div>
-        )}
 
         {/* ✅ ИСПОЛЬЗУЕМ НОВЫЙ КОМПОНЕНТ ProductGrid */}
         <ProductGrid
@@ -682,6 +693,197 @@ const ShopPage = () => {
           onCartOpen={() => setIsCartOpen(true)}
           settings={settings}
         />
+
+        {/* ✅ ПОПАП ФЛЕШ-ПРЕДЛОЖЕНИЯ В МЕНЮ */}
+        {showFlashPopup && flashPopupData && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.6)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #ff0844, #ff4081)',
+              color: 'white',
+              padding: '24px',
+              borderRadius: '20px',
+              textAlign: 'center',
+              maxWidth: '350px',
+              width: '100%',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              animation: 'popupBounce 0.5s ease-out'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚡</div>
+              
+              <h3 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                marginBottom: '12px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                ФЛЕШ ПРЕДЛОЖЕНИЕ!
+              </h3>
+              
+              <p style={{
+                fontSize: '16px',
+                marginBottom: '20px',
+                opacity: 0.95
+              }}>
+                {flashPopupData.product.name} всего за {flashPopupData.price}₽!
+              </p>
+              
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={() => {
+                    const flashItem = {
+                      ...flashPopupData.product,
+                      id: `${flashPopupData.product.id}_flash`,
+                      name: `${flashPopupData.product.name} ⚡`,
+                      price: flashPopupData.price,
+                      originalPrice: flashPopupData.product.price,
+                      quantity: 1,
+                      isFlashOffer: true,
+                      isDiscounted: true,
+                      violatesCondition: false
+                    };
+                    addToCart(flashItem);
+                    setShowFlashPopup(false);
+                  }}
+                  style={{
+                    background: 'rgba(255,255,255,0.9)',
+                    color: '#ff0844',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Добавить в корзину!
+                </button>
+                
+                <button
+                  onClick={() => setShowFlashPopup(false)}
+                  style={{
+                    background: 'transparent',
+                    color: 'white',
+                    border: '2px solid rgba(255,255,255,0.5)',
+                    borderRadius: '12px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Позже
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ ПОПАП БЕСПЛАТНОЙ ДОСТАВКИ В МЕНЮ */}
+        {showDeliveryPopup && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.6)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #4caf50, #66bb6a)',
+              color: 'white',
+              padding: '24px',
+              borderRadius: '20px',
+              textAlign: 'center',
+              maxWidth: '350px',
+              width: '100%',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              animation: 'popupBounce 0.5s ease-out'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
+              
+              <h3 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                marginBottom: '12px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                БЕСПЛАТНАЯ ДОСТАВКА!
+              </h3>
+              
+              <p style={{
+                fontSize: '16px',
+                marginBottom: '20px',
+                opacity: 0.95
+              }}>
+                Поздравляем! Вы получили бесплатную доставку!
+              </p>
+              
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={() => {
+                    setCart(prev => prev.map(item => 
+                      item.id === 'delivery_service'
+                        ? { ...item, price: 0, name: 'Доставка 🎉', isFreeDelivery: true }
+                        : item
+                    ));
+                    setShowDeliveryPopup(false);
+                  }}
+                  style={{
+                    background: 'rgba(255,255,255,0.9)',
+                    color: '#4caf50',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Активировать!
+                </button>
+                
+                <button
+                  onClick={() => setShowDeliveryPopup(false)}
+                  style={{
+                    background: 'transparent',
+                    color: 'white',
+                    border: '2px solid rgba(255,255,255,0.5)',
+                    borderRadius: '12px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Позже
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Попап для голосования */}
         <RatingPopup
