@@ -699,7 +699,7 @@ const ShopPage = () => {
           subtotal={subtotal} 
         />
         
-        <OrderingNowBanner products={products} settings={settings} addToCart={addToCart} />
+        {/* <OrderingNowBanner products={products} settings={settings} addToCart={addToCart} /> */}
         
         <Cart 
           isOpen={isCartOpen} 
