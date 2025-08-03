@@ -6,6 +6,7 @@ import OrderingNowBanner from './components/OrderingNowBanner';
 import AdminPage from './components/AdminPage';
 import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 import ProductGrid from './components/ProductGrid';
+import { MainPageFlashOffer, MainPageDeliveryOffer } from './components/MainPageOffers';
 
 import { API_URL, CONFIG } from './config';
 
@@ -615,6 +616,22 @@ const ShopPage = () => {
             ))}
           </div>
         )}
+
+        {/* ✅ КОМПАКТНЫЕ ПРЕДЛОЖЕНИЯ НА ГЛАВНОЙ СТРАНИЦЕ */}
+        <div style={{ padding: '0 1rem' }}>
+          <MainPageDeliveryOffer 
+            cart={cart}
+            settings={settings}
+            deliveryMode={deliveryMode}
+          />
+
+          <MainPageFlashOffer 
+            products={products}
+            cart={cart}
+            settings={settings}
+            addToCart={addToCart}
+          />
+        </div>
 
         {/* ✅ ИСПОЛЬЗУЕМ НОВЫЙ КОМПОНЕНТ ProductGrid */}
         <ProductGrid
