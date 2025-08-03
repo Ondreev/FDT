@@ -8,6 +8,7 @@ import { SimpleDeliveryManager } from './components/SimpleDeliveryManager';
 import ProductGrid from './components/ProductGrid';
 import { MainPageFlashOffer, MainPageDeliveryOffer } from './components/MainPageOffers';
 import FloatingButtons from './components/FloatingButtons';
+import PeekingPopup from './components/PeekingPopup';
 
 import { API_URL, CONFIG } from './config';
 
@@ -1162,6 +1163,14 @@ const ShopPage = () => {
           onClose={closeRatingPopup}
           productName={ratingPopup.product?.name}
           onRatingSubmit={handleRatingSubmit}
+        />
+
+        {/* Компонент выглядывающих товаров с R */}
+        <PeekingPopup
+          products={products}
+          settings={settings}
+          addToCart={addToCart}
+          cart={cart}
         />
       </div>
     </>
