@@ -125,19 +125,21 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      animation: isGlowing ? 'flashGlow 1s infinite' : 'none',
+      animation: conditionMet ? 'flashGlow 0.5s infinite, flashBlink 1s infinite' : 'none',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      border: conditionMet ? '2px solid #FFD700' : 'none',
+      boxShadow: conditionMet ? '0 0 15px rgba(255, 215, 0, 0.7)' : 'none'
     }}>
-      {/* Сверкающий эффект */}
+      {/* Усиленный сверкающий эффект */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: '-100%',
         width: '100%',
         height: '100%',
-        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-        animation: conditionMet ? 'shimmer 2s infinite' : 'none'
+        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
+        animation: conditionMet ? 'shimmer 1s infinite' : 'none'
       }} />
 
       <div style={{ 
@@ -148,10 +150,13 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
         position: 'relative',
         zIndex: 1
       }}>
-        <span style={{ fontSize: '12px' }}>⚡</span>
+        <span style={{ 
+          fontSize: '12px',
+          animation: conditionMet ? 'iconBounce 0.5s infinite' : 'none'
+        }}>⚡</span>
         <span style={{ fontWeight: '600' }}>
           {conditionMet 
-            ? `${flashProduct.name} за ${discountedPrice}₽!`
+            ? `🎉 ${flashProduct.name} за ${discountedPrice}₽! АКТИВНО!`
             : `До флеш-скидки: ${formatNumber(remaining)}₽`
           }
         </span>
@@ -169,7 +174,8 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
           fontFamily: 'monospace',
           fontSize: '10px',
           fontWeight: 'bold',
-          color: conditionMet ? '#fff' : '#ffd700'
+          color: conditionMet ? '#FFD700' : '#ffd700',
+          animation: conditionMet ? 'timerBlink 0.3s infinite' : 'none'
         }}>
           {formatTime(timeLeft)}
         </span>
@@ -190,7 +196,7 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
               : 'linear-gradient(90deg, #ffd700, #ffab00)',
             borderRadius: '10px',
             transition: 'width 0.3s ease',
-            animation: conditionMet ? 'pulse 1s infinite' : 'none'
+            animation: conditionMet ? 'progressPulse 0.5s infinite' : 'none'
           }} />
         </div>
       </div>
@@ -199,11 +205,16 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
         {`
           @keyframes flashGlow {
             0%, 100% { 
-              box-shadow: 0 0 5px rgba(255,215,0,0.5);
+              box-shadow: 0 0 10px rgba(255,215,0,0.7);
             }
             50% { 
-              box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,215,0,0.6);
+              box-shadow: 0 0 25px rgba(255,215,0,1), 0 0 35px rgba(255,215,0,0.8);
             }
+          }
+          
+          @keyframes flashBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
           }
           
           @keyframes shimmer {
@@ -211,9 +222,19 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
             100% { left: 100%; }
           }
           
-          @keyframes pulse {
+          @keyframes iconBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+          }
+          
+          @keyframes timerBlink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            50% { opacity: 0.5; }
+          }
+          
+          @keyframes progressPulse {
+            0%, 100% { opacity: 1; transform: scaleY(1); }
+            50% { opacity: 0.8; transform: scaleY(1.2); }
           }
         `}
       </style>
@@ -223,15 +244,15 @@ const StickyFlashProgress = ({ products, cart, settings, onActivate }) => {
 
 // Главный компонент закрепленных прогресс-баров
 const StickyProgressBars = ({ products, cart, settings, deliveryMode, onShowPopup }) => {
-  const [showBars, setShowBars] = useState(true); // ПРИНУДИТЕЛЬНО TRUE для отладки
+  const [showBars, setShowBars] = useState(false);
 
   // Показываем только если есть товары в корзине
-  const hasProducts = cart.filter(item => !item.isDelivery).length > 0;
+  const hasProducts = cart.length > 0; // ИСПРАВЛЕНО: считаем ВСЕ товары, включая доставку
 
   useEffect(() => {
     const handleScroll = () => {
-      // Показываем тонкие бары после прокрутки на 200px
-      setShowBars(window.scrollY > 50); // Уменьшил порог до 50px
+      // Показываем тонкие бары после прокрутки на 100px (уменьшил)
+      setShowBars(window.scrollY > 100);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -253,56 +274,32 @@ const StickyProgressBars = ({ products, cart, settings, deliveryMode, onShowPopu
     scrollY: typeof window !== 'undefined' ? window.scrollY : 0
   });
 
-  // Показываем компонент даже без условий для отладки
+  // Принудительный показ для отладки
+  const shouldShow = hasProducts && showBars;
+
+  if (!shouldShow) return null;
+
   return (
     <div style={{
       position: 'sticky',
       top: '0px',
       zIndex: 899,
       background: settings.backgroundColor || '#fdf0e2',
-      borderBottom: '2px solid red', // Красная граница для видимости
-      padding: '10px' // Добавляем отступы
+      // УБРАЛИ уродские границы и отступы
     }}>
-      {/* ОТЛАДОЧНАЯ ИНФОРМАЦИЯ */}
-      <div style={{
-        background: 'yellow',
-        padding: '5px',
-        fontSize: '12px',
-        marginBottom: '5px'
-      }}>
-        ОТЛАДКА: товаров={hasProducts ? 'есть' : 'нет'}, скролл={showBars ? 'да' : 'нет'}, режим={deliveryMode}
-      </div>
-
-      {/* Показываем прогрессы принудительно если есть товары */}
-      {hasProducts && (
-        <>
-          <StickyDeliveryProgress 
-            cart={cart}
-            settings={settings}
-            deliveryMode={deliveryMode}
-            onActivate={handleActivation}
-          />
-          
-          <StickyFlashProgress 
-            products={products}
-            cart={cart}
-            settings={settings}
-            onActivate={handleActivation}
-          />
-        </>
-      )}
-
-      {/* Если нет товаров - показываем сообщение */}
-      {!hasProducts && (
-        <div style={{
-          background: 'orange',
-          padding: '10px',
-          color: 'black',
-          fontWeight: 'bold'
-        }}>
-          НЕТ ТОВАРОВ В КОРЗИНЕ - добавьте товары чтобы увидеть прогрессы
-        </div>
-      )}
+      <StickyDeliveryProgress 
+        cart={cart}
+        settings={settings}
+        deliveryMode={deliveryMode}
+        onActivate={handleActivation}
+      />
+      
+      <StickyFlashProgress 
+        products={products}
+        cart={cart}
+        settings={settings}
+        onActivate={handleActivation}
+      />
     </div>
   );
 };
@@ -368,7 +365,11 @@ const ActivationPopup = ({ type, isOpen, onClose, data, settings, onConfirm }) =
           justifyContent: 'center'
         }}>
           <button
-            onClick={onConfirm}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onConfirm();
+            }}
             style={{
               background: 'rgba(255,255,255,0.9)',
               color: type === 'flash' ? '#ff0844' : '#4caf50',
@@ -384,7 +385,11 @@ const ActivationPopup = ({ type, isOpen, onClose, data, settings, onConfirm }) =
           </button>
           
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
             style={{
               background: 'transparent',
               color: 'white',
