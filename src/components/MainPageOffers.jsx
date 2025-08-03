@@ -192,18 +192,28 @@ export const MainPageDeliveryOffer = ({ cart, settings, deliveryMode }) => {
   // Показываем только при доставке
   if (deliveryMode !== 'delivery' || isDismissed) return null;
 
-  const productsSubtotal = cart
-    .filter(item => !item.isDelivery)
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Используем те же константы что в SimpleDeliveryManager
+  const FREE_DELIVERY_THRESHOLD = 2000;
+  const DELIVERY_ID = 'delivery_service';
 
-  const freeDeliveryThreshold = 1500;
-  const remaining = Math.max(0, freeDeliveryThreshold - productsSubtotal);
-  const progress = Math.min((productsSubtotal / freeDeliveryThreshold) * 100, 100);
-  const isEligible = productsSubtotal >= freeDeliveryThreshold;
+  // Считаем сумму товаров (исключая доставку) - как в SimpleDeliveryManager
+  const products = cart.filter(item => item.id !== DELIVERY_ID);
+  const productsSubtotal = products.reduce((sum, item) => 
+    sum + (item.price * item.quantity), 0
+  );
 
-  // Не показываем если корзина пуста или уже есть бесплатная доставка
-  const deliveryItem = cart.find(item => item.isDelivery);
-  if (cart.length === 0 || (deliveryItem && deliveryItem.isFreeDelivery)) return null;
+  const remaining = Math.max(0, FREE_DELIVERY_THRESHOLD - productsSubtotal);
+  const progress = Math.min((productsSubtotal / FREE_DELIVERY_THRESHOLD) * 100, 100);
+  const isEligible = productsSubtotal >= FREE_DELIVERY_THRESHOLD;
+
+  // Находим доставку в корзине
+  const deliveryItem = cart.find(item => item.id === DELIVERY_ID);
+
+  // Не показываем если:
+  // - корзина пуста (нет товаров кроме доставки)
+  // - уже есть бесплатная доставка
+  // - нет доставки вообще
+  if (products.length === 0 || !deliveryItem || deliveryItem.isFreeDelivery) return null;
 
   return (
     <div style={{
