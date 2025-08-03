@@ -5,10 +5,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [animationPhase, setAnimationPhase] = useState('hidden'); // hidden, peeking, showing, hiding
   const [shownProducts, setShownProducts] = useState(new Set()); // Запоминаем показанные товары
-  const [isDisabled, setIsDisabled] = useState(() => {
-    // Проверяем, отключил ли пользователь баннер
-    return localStorage.getItem('orderingBannerDisabled') === 'true';
-  });
+  const [isDisabled, setIsDisabled] = useState(false); // Отключается только до перезагрузки страницы
 
   useEffect(() => {
     if (products.length === 0 || isDisabled) return;
@@ -72,8 +69,8 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Первый показ через 15 секунд (позже чем PeekingPopup)
-    const initialTimer = setTimeout(showBanner, 15000);
+    // Первый показ через 1 минуту (60 секунд)
+    const initialTimer = setTimeout(showBanner, 60000);
     
     // Потом каждые 3 минуты (180 секунд)
     const interval = setInterval(() => {
@@ -105,8 +102,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
   };
 
   const handleDisable = () => {
-    // Сохраняем в localStorage что пользователь отключил баннер
-    localStorage.setItem('orderingBannerDisabled', 'true');
+    // Отключаем до перезагрузки страницы (не сохраняем в localStorage)
     setIsDisabled(true);
     setAnimationPhase('hiding');
     setTimeout(() => {
@@ -159,7 +155,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
         style={{
           position: 'fixed',
           right: '-80px', // Справа
-          bottom: '150px',
+          top: '100px', // Вверху страницы (под шапкой)
           zIndex: 1300, // Ниже PeekingPopup
           transform: getTransform(),
           transition: 'transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
@@ -187,7 +183,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
           style={{
             position: 'fixed',
             right: '20px', // Справа от товара
-            bottom: '420px', // Верх группы элементов
+            top: '70px', // Верх (над товаром)
             zIndex: 1500,
             background: 'rgba(0,0,0,0.7)',
             color: 'white',
@@ -213,7 +209,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
             e.target.style.transform = 'scale(1)';
             e.target.style.background = 'rgba(0,0,0,0.7)';
           }}
-          title="Отключить баннер навсегда"
+          title="Скрыть до перезагрузки страницы"
         >
           ✕
         </button>
@@ -225,7 +221,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
           style={{
             position: 'fixed',
             right: '80px', // Поверх левой части блюда
-            bottom: '380px', // Верх группы элементов
+            top: '330px', // Верхняя часть товара
             zIndex: 1500,
             fontSize: '22px',
             fontWeight: 'bold',
@@ -250,7 +246,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
           style={{
             position: 'fixed',
             right: '60px', // Чуть правее цены
-            bottom: '340px', // Под ценой
+            top: '370px', // Под ценой
             zIndex: 1500,
             fontSize: '14px',
             fontWeight: 'bold',
@@ -284,7 +280,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
           style={{
             position: 'fixed',
             right: '60px', // По центру группы
-            bottom: '280px', // Под названием
+            top: '410px', // Под названием
             zIndex: 1500,
             background: `linear-gradient(135deg, ${settings.primaryColor || '#ff7f32'}, ${settings.primaryColor || '#ff7f32'}dd)`,
             color: 'white',
@@ -320,7 +316,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
           style={{
             position: 'fixed',
             right: '40px',
-            bottom: '240px', // Под кнопкой
+            top: '470px', // Под кнопкой
             zIndex: 1500,
             fontSize: '12px',
             fontWeight: 'bold',
