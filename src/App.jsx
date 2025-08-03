@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Cart from './components/Cart';
 import OrderForm from './components/OrderForm';
@@ -250,6 +250,52 @@ const ShopPage = () => {
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // ✅ ДОБАВЛЯЕМ REF ДЛЯ ПАНЕЛИ КАТЕГОРИЙ
+  const categoriesRef = useRef(null);
+
+  // ✅ ФУНКЦИЯ АВТОСКРОЛЛА К АКТИВНОЙ КАТЕГОРИИ
+  const scrollToActiveCategory = () => {
+    if (!categoriesRef.current || categories.length === 0) return;
+    
+    const allCategories = [null, ...categories.map(cat => cat.id)];
+    const activeIndex = allCategories.indexOf(activeCategory);
+    
+    if (activeIndex === -1) return;
+    
+    const categoryButtons = categoriesRef.current.children;
+    const activeButton = categoryButtons[activeIndex];
+    
+    if (activeButton) {
+      const containerRect = categoriesRef.current.getBoundingClientRect();
+      const buttonRect = activeButton.getBoundingClientRect();
+      
+      // Рассчитываем нужную позицию скролла
+      const scrollLeft = categoriesRef.current.scrollLeft;
+      const buttonLeft = buttonRect.left - containerRect.left + scrollLeft;
+      const buttonWidth = buttonRect.width;
+      const containerWidth = containerRect.width;
+      
+      // Центрируем кнопку в видимой области
+      const targetScroll = buttonLeft - (containerWidth / 2) + (buttonWidth / 2);
+      
+      // Плавный скролл
+      categoriesRef.current.scrollTo({
+        left: Math.max(0, targetScroll),
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // ✅ АВТОСКРОЛЛ ПРИ ИЗМЕНЕНИИ АКТИВНОЙ КАТЕГОРИИ
+  useEffect(() => {
+    // Небольшая задержка чтобы DOM успел обновиться
+    const timer = setTimeout(() => {
+      scrollToActiveCategory();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [activeCategory, categories]);
 
   // Сохраняем режим доставки в localStorage
   useEffect(() => {
@@ -608,6 +654,7 @@ const ShopPage = () => {
 
         {categories.length > 0 && (
           <div
+            ref={categoriesRef}
             style={{
               position: 'sticky',
               top: 0,
