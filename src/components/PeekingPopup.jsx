@@ -24,9 +24,7 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
       
       // Фаза 2: полностью показывается через 1 сек (8 сек показа)
       setTimeout(() => {
-        if (isVisible) { // Проверяем что попап еще активен
-          setAnimationPhase('showing');
-        }
+        setAnimationPhase('showing');
       }, 1000);
       
       // Фаза 3: прячется через 8 сек показа
@@ -60,9 +58,7 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
     
     // Потом каждые 35-50 секунд
     const interval = setInterval(() => {
-      if (!isVisible) { // Запускаем только если не показываем уже
-        showRandomProduct();
-      }
+      showRandomProduct();
     }, Math.random() * 15000 + 35000); // 35-50 секунд
 
     return () => {
@@ -71,7 +67,7 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
       clearTimeout(scrollTimeout);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [specialProducts, isVisible]);
+  }, [specialProducts]); // Убрал isVisible из зависимостей
 
   if (!isVisible || !currentProduct) return null;
 
