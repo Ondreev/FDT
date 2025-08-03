@@ -181,6 +181,52 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
         />
       </div>
 
+      {/* Крестик для закрытия - ВСЕГДА видимый */}
+      {animationPhase === 'showing' && (
+        <button
+          onClick={() => {
+            setAnimationPhase('hiding');
+            setTimeout(() => {
+              setIsVisible(false);
+              setCurrentProduct(null);
+              setAnimationPhase('hidden');
+            }, 500);
+          }}
+          style={{
+            position: 'fixed',
+            left: '20px', // Слева от товара
+            bottom: '470px', // Над группой элементов
+            zIndex: 1500,
+            background: 'rgba(0,0,0,0.7)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            width: '30px',
+            height: '30px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            animation: 'fadeInFloat 0.5s ease-out',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'scale(1.1)';
+            e.target.style.background = 'rgba(255,0,0,0.8)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'scale(1)';
+            e.target.style.background = 'rgba(0,0,0,0.7)';
+          }}
+          title="Закрыть"
+        >
+          ✕
+        </button>
+      )}
+
       {/* Парящая цена - НА блюде */}
       {animationPhase === 'showing' && (
         <div
