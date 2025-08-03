@@ -5,9 +5,13 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [animationPhase, setAnimationPhase] = useState('hidden'); // hidden, peeking, showing, hiding
   const [shownProducts, setShownProducts] = useState(new Set()); // Запоминаем показанные товары
+  const [isDisabled, setIsDisabled] = useState(() => {
+    // Проверяем, отключил ли пользователь баннер
+    return localStorage.getItem('orderingBannerDisabled') === 'true';
+  });
 
   useEffect(() => {
-    if (products.length === 0) return;
+    if (products.length === 0 || isDisabled) return;
 
     const showBanner = () => {
       setShownProducts(currentShown => {
@@ -53,7 +57,7 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
       });
     };
 
-    // Отслеживаем скролл для ЗАПУСКА анимаций (как в PeekingPopup)
+    // Отслеживаем скролл для ЗАПУСКА анимаций
     let scrollTimeout;
     const handleScroll = () => {
       // Если уже показываем - не запускаем новую анимацию
@@ -63,18 +67,18 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
       scrollTimeout = setTimeout(() => {
         // Пользователь поскроллил и остановился - запускаем анимацию!
         showBanner();
-      }, 1500); // Через 1.5 секунды после остановки скролла
+      }, 2000); // Через 2 секунды после остановки скролла
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Первый показ через 5 секунд (чуть раньше чем PeekingPopup)
-    const initialTimer = setTimeout(showBanner, 5000);
+    // Первый показ через 15 секунд (позже чем PeekingPopup)
+    const initialTimer = setTimeout(showBanner, 15000);
     
-    // Потом каждые 20-30 секунд (чаще чем PeekingPopup)
+    // Потом каждые 3 минуты (180 секунд)
     const interval = setInterval(() => {
       showBanner();
-    }, Math.random() * 10000 + 20000); // 20-30 секунд
+    }, 180000); // 3 минуты = 180000 мс
 
     return () => {
       clearTimeout(initialTimer);
@@ -82,17 +86,17 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
       clearTimeout(scrollTimeout);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [products]);
+  }, [products, isDisabled]);
 
-  if (!isVisible || !currentProduct) return null;
+  if (!isVisible || !currentProduct || isDisabled) return null;
 
-  // Определяем позицию баннера в зависимости от фазы (СПРАВА)
+  // Определяем позицию товара в зависимости от фазы (СПРАВА)
   const getTransform = () => {
     switch (animationPhase) {
       case 'peeking':
-        return 'translateX(60%) rotate(-5deg)';   // Выглядывает справа
+        return 'translateX(50%) rotate(-10deg)';  // Выглядывает справа
       case 'showing':
-        return 'translateX(0%) rotate(-2deg)';    // Полностью виден с легким наклоном
+        return 'translateX(-10%) rotate(-10deg)'; // Почти полностью виден справа
       case 'hiding':
         return 'translateX(100%) rotate(-10deg)'; // Прячется вправо
       default:
@@ -100,167 +104,173 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
     }
   };
 
+  const handleDisable = () => {
+    // Сохраняем в localStorage что пользователь отключил баннер
+    localStorage.setItem('orderingBannerDisabled', 'true');
+    setIsDisabled(true);
+    setAnimationPhase('hiding');
+    setTimeout(() => {
+      setIsVisible(false);
+      setCurrentProduct(null);
+      setAnimationPhase('hidden');
+    }, 500);
+  };
+
   return (
     <>
       <style>
         {`
-          @keyframes bannerPulse {
+          @keyframes productPulseRight {
             0%, 100% { transform: ${getTransform()} scale(1); }
             50% { transform: ${getTransform()} scale(1.02); }
           }
           
-          @keyframes bannerGlow {
+          @keyframes buttonFloatRight {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-5px) scale(1.05); }
+          }
+          
+          @keyframes priceGlowRight {
             0%, 100% { 
-              box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+              text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+              transform: scale(1);
             }
             50% { 
-              box-shadow: 0 12px 30px rgba(255, 127, 50, 0.3);
+              text-shadow: 0 0 20px rgba(255, 215, 0, 0.9);
+              transform: scale(1.05);
             }
           }
           
-          @keyframes fadeInBounce {
+          @keyframes fadeInFloatRight {
             from { 
               opacity: 0; 
-              transform: translateY(20px) scale(0.9);
+              transform: translateY(20px) scale(0.8);
             }
             to { 
               opacity: 1; 
               transform: translateY(0) scale(1);
             }
           }
-          
-          @keyframes starSpin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
         `}
       </style>
 
+      {/* Основное изображение товара */}
       <div
         style={{
           position: 'fixed',
-          top: '20px',
-          right: '-50px', // Начинаем за экраном
-          zIndex: 1300, // Чуть ниже PeekingPopup (1400)
-          background: `linear-gradient(135deg, ${settings.backgroundColor || '#fdf0e2'}, #fff8f0)`,
-          color: '#2c1e0f',
-          padding: '1.5rem',
-          borderRadius: '25px',
-          maxWidth: '380px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          border: '3px solid #f0e6d2',
-          boxSizing: 'border-box',
+          right: '-80px', // Справа
+          bottom: '150px',
+          zIndex: 1300, // Ниже PeekingPopup
           transform: getTransform(),
           transition: 'transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-          animation: animationPhase === 'showing' ? 'bannerPulse 4s infinite, bannerGlow 3s infinite' : 'none',
-          filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.2))'
+          animation: animationPhase === 'showing' ? 'productPulseRight 3s infinite' : 'none',
+          pointerEvents: 'none'
         }}
       >
-        {/* Заголовок с анимированной звездочкой */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          animation: animationPhase === 'showing' ? 'fadeInBounce 0.6s ease-out' : 'none'
-        }}>
-          <div style={{ 
-            fontWeight: 'bold', 
-            fontSize: '1.1rem', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem',
-            color: '#2c1e0f'
-          }}>
-            <span style={{
-              animation: animationPhase === 'showing' ? 'starSpin 2s infinite linear' : 'none',
-              display: 'inline-block'
-            }}>⭐</span> 
-            <span style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>
-              Сейчас заказывают
-            </span>
-          </div>
-          <button
-            onClick={() => {
-              setAnimationPhase('hiding');
-              setTimeout(() => {
-                setIsVisible(false);
-                setCurrentProduct(null);
-                setAnimationPhase('hidden');
-              }, 800);
-            }}
-            style={{
-              background: 'rgba(153, 153, 153, 0.2)',
-              border: 'none',
-              color: '#999',
-              cursor: 'pointer',
-              fontSize: '20px',
-              borderRadius: '50%',
-              width: '30px',
-              height: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = 'rgba(153, 153, 153, 0.4)';
-              e.target.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'rgba(153, 153, 153, 0.2)';
-              e.target.style.transform = 'scale(1)';
-            }}
-          >
-            ✕
-          </button>
-        </div>
+        <img
+          src={currentProduct.imageUrl}
+          alt={currentProduct.name}
+          style={{
+            width: '200px',   // Чуть меньше чем PeekingPopup
+            height: '300px',  // Чуть меньше чем PeekingPopup
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.2))',
+            borderRadius: '12px'
+          }}
+        />
+      </div>
 
-        {/* Блок с товаром */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '1rem',
-          background: 'rgba(255, 255, 255, 0.5)',
-          padding: '1rem',
-          borderRadius: '15px',
-          border: '1px solid rgba(240, 230, 210, 0.5)',
-          animation: animationPhase === 'showing' ? 'fadeInBounce 0.8s ease-out' : 'none'
-        }}>
-          <img
-            src={currentProduct.imageUrl}
-            alt={currentProduct.name}
-            style={{ 
-              width: '80px', 
-              height: '80px', 
-              borderRadius: '15px', 
-              objectFit: 'cover',
-              border: '2px solid #f0e6d2',
-              filter: 'brightness(1.05)'
-            }}
-          />
-          <div style={{ flex: 1 }}>
-            <div style={{ 
-              fontWeight: 'bold', 
-              fontSize: '1.1rem', 
-              marginBottom: '0.5rem',
-              color: '#2c1e0f',
-              lineHeight: '1.3'
-            }}>
-              {currentProduct.name}
-            </div>
-            <div style={{ 
-              fontSize: '1.1rem', 
-              color: settings.primaryColor || '#ff7f32',
-              fontWeight: 'bold'
-            }}>
-              {currentProduct.price} {settings.currency || '₽'}
-            </div>
-          </div>
-        </div>
+      {/* Крестик для отключения - ВСЕГДА видимый */}
+      {animationPhase === 'showing' && (
+        <button
+          onClick={handleDisable}
+          style={{
+            position: 'fixed',
+            right: '20px', // Справа от товара
+            bottom: '420px', // Верх группы элементов
+            zIndex: 1500,
+            background: 'rgba(0,0,0,0.7)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            width: '30px',
+            height: '30px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            animation: 'fadeInFloatRight 0.5s ease-out',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'scale(1.1)';
+            e.target.style.background = 'rgba(255,0,0,0.8)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'scale(1)';
+            e.target.style.background = 'rgba(0,0,0,0.7)';
+          }}
+          title="Отключить баннер навсегда"
+        >
+          ✕
+        </button>
+      )}
 
-        {/* Кнопка заказа */}
+      {/* Парящая цена - НА блюде */}
+      {animationPhase === 'showing' && (
+        <div
+          style={{
+            position: 'fixed',
+            right: '80px', // Поверх левой части блюда
+            bottom: '380px', // Верх группы элементов
+            zIndex: 1500,
+            fontSize: '22px',
+            fontWeight: 'bold',
+            color: '#FFD700',
+            animation: 'priceGlowRight 2s infinite, fadeInFloatRight 0.6s ease-out',
+            background: 'rgba(0,0,0,0.7)',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            border: '2px solid #FFD700',
+            pointerEvents: 'none',
+            textAlign: 'center',
+            minWidth: '80px'
+          }}
+        >
+          {currentProduct.price}₽
+        </div>
+      )}
+
+      {/* Название товара - под ценой */}
+      {animationPhase === 'showing' && (
+        <div
+          style={{
+            position: 'fixed',
+            right: '60px', // Чуть правее цены
+            bottom: '340px', // Под ценой
+            zIndex: 1500,
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: 'white',
+            background: 'rgba(0,0,0,0.8)',
+            padding: '6px 12px',
+            borderRadius: '15px',
+            animation: 'fadeInFloatRight 1s ease-out',
+            pointerEvents: 'none',
+            textAlign: 'center',
+            maxWidth: '140px',
+            lineHeight: '1.2'
+          }}
+        >
+          {currentProduct.name}
+        </div>
+      )}
+
+      {/* Парящая кнопка заказа - под названием */}
+      {animationPhase === 'showing' && (
         <button
           onClick={() => {
             addToCart(currentProduct);
@@ -272,33 +282,61 @@ const OrderingNowBanner = ({ products, settings, addToCart }) => {
             }, 500);
           }}
           style={{
-            width: '100%',
-            padding: '1rem',
+            position: 'fixed',
+            right: '60px', // По центру группы
+            bottom: '280px', // Под названием
+            zIndex: 1500,
             background: `linear-gradient(135deg, ${settings.primaryColor || '#ff7f32'}, ${settings.primaryColor || '#ff7f32'}dd)`,
-            border: 'none',
-            borderRadius: '15px',
             color: 'white',
+            border: 'none',
+            borderRadius: '25px',
+            padding: '12px 20px',
+            fontSize: '16px',
             fontWeight: 'bold',
             cursor: 'pointer',
-            fontSize: '1.1rem',
+            boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+            animation: 'buttonFloatRight 2s infinite, fadeInFloatRight 0.8s ease-out',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
-            boxShadow: '0 4px 15px rgba(255, 127, 50, 0.3)',
-            transition: 'all 0.2s ease',
-            animation: animationPhase === 'showing' ? 'fadeInBounce 1s ease-out' : 'none'
+            minWidth: '120px',
+            textAlign: 'center'
           }}
           onMouseEnter={(e) => {
-            e.target.style.transform = 'translateY(-2px) scale(1.02)';
-            e.target.style.boxShadow = '0 6px 20px rgba(255, 127, 50, 0.4)';
+            e.target.style.transform = 'translateY(-5px) scale(1.1)';
+            e.target.style.boxShadow = '0 12px 30px rgba(0,0,0,0.4)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.transform = 'translateY(0) scale(1)';
-            e.target.style.boxShadow = '0 4px 15px rgba(255, 127, 50, 0.3)';
+            e.target.style.transform = 'translateY(-5px) scale(1.05)';
+            e.target.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
           }}
         >
-          🍽️ Хочешь? 😋
+          🛒 Заказать
         </button>
-      </div>
+      )}
+
+      {/* Маленький текст "Сейчас заказывают" */}
+      {animationPhase === 'showing' && (
+        <div
+          style={{
+            position: 'fixed',
+            right: '40px',
+            bottom: '240px', // Под кнопкой
+            zIndex: 1500,
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: '#666',
+            background: 'rgba(255,255,255,0.9)',
+            padding: '4px 8px',
+            borderRadius: '10px',
+            animation: 'fadeInFloatRight 1.2s ease-out',
+            pointerEvents: 'none',
+            textAlign: 'center',
+            opacity: 0.8
+          }}
+        >
+          ⭐ Сейчас заказывают
+        </div>
+      )}
     </>
   );
 };
