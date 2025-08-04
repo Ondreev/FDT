@@ -70,18 +70,18 @@ const PeekingPopup = ({ products, settings, addToCart, cart }) => {
       scrollTimeout = setTimeout(() => {
         // Пользователь поскроллил и остановился - запускаем анимацию!
         showRandomProduct();
-      }, 1000); // Через 1 секунду после остановки скролла
+      }, 5000); // Через 1 секунду после остановки скролла
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Первый показ через 10 секунд
-    const initialTimer = setTimeout(showRandomProduct, 10000);
+    // Первый показ через 50 секунд
+    const initialTimer = setTimeout(showRandomProduct, 50000);
     
-    // Потом каждые 35-50 секунд
+    // Потом каждые 60-90 секунд
     const interval = setInterval(() => {
       showRandomProduct();
-    }, Math.random() * 15000 + 35000); // 35-50 секунд
+    }, Math.random() * 60000 + 90000); // 60-90 секунд
 
     return () => {
       clearTimeout(initialTimer);
