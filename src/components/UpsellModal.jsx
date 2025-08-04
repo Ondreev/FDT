@@ -245,16 +245,17 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
                       </div>
                     )}
 
-                    {/* Изображение товара - квадратное и адаптивное */}
+                    {/* Изображение товара - фиксированная высота без сильной обрезки */}
                     {product.imageUrl && (
                       <img
                         src={product.imageUrl}
                         alt={product.name}
                         style={{
                           width: '100%',
-                          aspectRatio: '1',
+                          height: '120px',
                           borderRadius: '12px',
-                          objectFit: 'cover',
+                          objectFit: 'contain',
+                          backgroundColor: '#f8f9fa',
                           marginBottom: '0.75rem'
                         }}
                       />
