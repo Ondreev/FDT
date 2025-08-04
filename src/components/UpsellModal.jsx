@@ -84,20 +84,22 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
       zIndex: 3000,
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
-      padding: '1rem'
+      padding: '2rem 1rem 1rem 1rem',
+      overflowY: 'auto'
     }}>
       <div style={{
         backgroundColor: 'white',
         borderRadius: '20px',
         maxWidth: '500px',
         width: '100%',
-        maxHeight: '80vh',
+        maxHeight: 'calc(100vh - 4rem)',
         display: 'flex',
         flexDirection: 'column',
         boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-        animation: 'upsellSlideIn 0.3s ease-out'
+        animation: 'upsellSlideIn 0.3s ease-out',
+        marginTop: '1rem'
       }}>
         <style>
           {`
@@ -113,11 +115,11 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
           `}
         </style>
 
-        {/* Заголовок - более компактный */}
+        {/* Заголовок - компактный без смайликов */}
         <div style={{
           background: `linear-gradient(135deg, ${currentStepConfig.color}, ${currentStepConfig.color}dd)`,
           color: 'white',
-          padding: '1rem',
+          padding: '1rem 1rem 0.75rem 1rem',
           borderRadius: '20px 20px 0 0',
           textAlign: 'center',
           position: 'relative'
@@ -143,15 +145,12 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
           >
             ✕
           </button>
-
-          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-            {currentStepConfig.emoji}
-          </div>
           
           <h2 style={{ 
             margin: 0, 
             fontSize: '1.8rem', 
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            marginBottom: '0.75rem'
           }}>
             {currentStepConfig.title}
           </h2>
@@ -160,8 +159,7 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: '0.5rem',
-            marginTop: '1rem'
+            gap: '0.5rem'
           }}>
             {upsellSteps.map((_, index) => (
               <div
@@ -197,9 +195,7 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: '1rem',
-              maxHeight: '400px',
-              overflowY: 'auto'
+              gap: '1rem'
             }}>
               {stepProducts.map(product => {
                 const isSelected = selectedItems.find(item => item.id === product.id);
@@ -249,13 +245,13 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
                       </div>
                     )}
 
-                    {/* Изображение товара - крупнее */}
+                    {/* Изображение товара - на всю ширину карточки */}
                     {product.imageUrl && (
                       <img
                         src={product.imageUrl}
                         alt={product.name}
                         style={{
-                          width: '80px',
+                          width: '100%',
                           height: '80px',
                           borderRadius: '12px',
                           objectFit: 'cover',
@@ -296,20 +292,6 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
                     }}>
                       {product.price} ₽
                     </div>
-
-                    {/* Анимированная иконка при выборе */}
-                    {isSelected && (
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '0.5rem',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        fontSize: '1.2rem',
-                        animation: 'upsellItemPulse 1s infinite'
-                      }}>
-                        🎉
-                      </div>
-                    )}
                   </div>
                 );
               })}
