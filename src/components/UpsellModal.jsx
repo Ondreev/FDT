@@ -245,14 +245,14 @@ const UpsellModal = ({ isOpen, onClose, products, settings, addToCart, currentSt
                       </div>
                     )}
 
-                    {/* Изображение товара - на всю ширину карточки */}
+                    {/* Изображение товара - квадратное и адаптивное */}
                     {product.imageUrl && (
                       <img
                         src={product.imageUrl}
                         alt={product.name}
                         style={{
                           width: '100%',
-                          height: '80px',
+                          aspectRatio: '1',
                           borderRadius: '12px',
                           objectFit: 'cover',
                           marginBottom: '0.75rem'
