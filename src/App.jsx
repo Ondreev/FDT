@@ -121,8 +121,8 @@ const ShopPage = () => {
     // ✅ ЗАПУСКАЕМ UPSELL ТОЛЬКО ДЛЯ ОСНОВНЫХ БЛЮД
     if (!skipUpsell && !isUpsellOpen) {
       const productId = String(product.id);
-      const isMainDish = !productId.includes('X') && !productId.includes('Y') && 
-                        !productId.includes('Z') && !productId.includes('S') && 
+      const isMainDish = !productId.includes('Q') && !productId.includes('Y') && 
+                        !productId.includes('D') && !productId.includes('S') && 
                         !productId.includes('R2000') && !product.isFlashOffer && 
                         !product.isDelivery;
       
