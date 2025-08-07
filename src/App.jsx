@@ -17,6 +17,10 @@ import FlashItemManager from './components/FlashItemManager';
 import PopupsContainer from './components/PopupsContainer';
 import UpsellModal, { useUpsellFlow } from './components/UpsellModal';
 
+// ✅ КОМПОНЕНТЫ УПРАВЛЕНИЯ МАГАЗИНОМ
+import ShopClosedModal from './components/ShopClosedModal';
+import { useShopStatus } from './hooks/useShopStatus';
+
 import { API_URL, CONFIG } from './config';
 
 // Основной компонент магазина
@@ -63,6 +67,15 @@ const ShopPage = () => {
     closeUpsellFlow
   } = useUpsellFlow();
 
+  // ✅ УПРАВЛЕНИЕ СТАТУСОМ МАГАЗИНА
+  const {
+    isShopOpen,
+    isLoading: shopLoading,
+    showClosedModal,
+    canAddToCart,
+    closeModal
+  } = useShopStatus();
+
   // REF для панели категорий
   const categoriesRef = useRef(null);
 
@@ -104,8 +117,13 @@ const ShopPage = () => {
       .catch((err) => console.error(`Error fetching ${action}:`, err));
   };
 
-  // ✅ МОДИФИЦИРОВАННАЯ ФУНКЦИЯ addToCart С UPSELL
+  // ✅ МОДИФИЦИРОВАННАЯ ФУНКЦИЯ addToCart С ПРОВЕРКОЙ СТАТУСА МАГАЗИНА И UPSELL
   const addToCart = (product, skipUpsell = false) => {
+    // ПРОВЕРКА СТАТУСА МАГАЗИНА
+    if (!canAddToCart()) {
+      return; // Покажет попап закрытого магазина
+    }
+
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -121,8 +139,8 @@ const ShopPage = () => {
     // ✅ ЗАПУСКАЕМ UPSELL ТОЛЬКО ДЛЯ ОСНОВНЫХ БЛЮД
     if (!skipUpsell && !isUpsellOpen) {
       const productId = String(product.id);
-      const isMainDish = !productId.includes('Q') && !productId.includes('Y') && 
-                        !productId.includes('D') && !productId.includes('S') && 
+      const isMainDish = !productId.includes('X') && !productId.includes('Y') && 
+                        !productId.includes('Z') && !productId.includes('S') && 
                         !productId.includes('R2000') && !product.isFlashOffer && 
                         !product.isDelivery;
       
@@ -617,6 +635,13 @@ const ShopPage = () => {
           addToCart={addToCartWithoutUpsell}
           currentStep={currentUpsellStep}
           onNextStep={nextUpsellStep}
+        />
+
+        {/* ✅ ПОПАП ЗАКРЫТОГО МАГАЗИНА */}
+        <ShopClosedModal
+          isOpen={showClosedModal}
+          onClose={closeModal}
+          settings={settings}
         />
       </div>
     </>
