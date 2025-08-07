@@ -9,6 +9,7 @@ import {
   saveStatusChange,
   updateOrderStatusRequest
 } from './utils';
+import ShopManagementPanel from './ShopManagementPanel';
 
 const AdminDashboard = ({ admin, onLogout }) => {
   const [orders, setOrders] = useState([]);
