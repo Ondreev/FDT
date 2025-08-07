@@ -16,24 +16,37 @@ import RatingPopup from './components/RatingPopup';
 import FlashItemManager from './components/FlashItemManager';
 import PopupsContainer from './components/PopupsContainer';
 import UpsellModal, { useUpsellFlow } from './components/UpsellModal';
-
-// ✅ КОМПОНЕНТЫ УПРАВЛЕНИЯ МАГАЗИНОМ
 import ShopClosedModal from './components/ShopClosedModal';
+
+// ✅ ХУКИ
 import { useShopStatus } from './hooks/useShopStatus';
+import { useActiveProducts } from './hooks/useActiveProducts';
 
 import { API_URL, CONFIG } from './config';
 
 // Основной компонент магазина
 const ShopPage = () => {
+  // ✅ ПРОВЕРКА СТАТУСА МАГАЗИНА
+  const { 
+    isShopOpen, 
+    isLoading: shopStatusLoading, 
+    showClosedModal, 
+    canAddToCart, 
+    closeModal 
+  } = useShopStatus();
+
   // Основные состояния
   const [settings, setSettings] = useState({});
-  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
   const [discountData, setDiscountData] = useState(null);
+  
+  // ✅ ФИЛЬТРАЦИЯ АКТИВНЫХ ТОВАРОВ
+  const products = useActiveProducts(allProducts);
   
   // Состояния для рейтинга
   const [ratingPopup, setRatingPopup] = useState({ isOpen: false, product: null });
@@ -66,15 +79,6 @@ const ShopPage = () => {
     nextUpsellStep,
     closeUpsellFlow
   } = useUpsellFlow();
-
-  // ✅ УПРАВЛЕНИЕ СТАТУСОМ МАГАЗИНА
-  const {
-    isShopOpen,
-    isLoading: shopLoading,
-    showClosedModal,
-    canAddToCart,
-    closeModal
-  } = useShopStatus();
 
   // REF для панели категорий
   const categoriesRef = useRef(null);
@@ -117,11 +121,11 @@ const ShopPage = () => {
       .catch((err) => console.error(`Error fetching ${action}:`, err));
   };
 
-  // ✅ МОДИФИЦИРОВАННАЯ ФУНКЦИЯ addToCart С ПРОВЕРКОЙ СТАТУСА МАГАЗИНА И UPSELL
+  // ✅ МОДИФИЦИРОВАННАЯ ФУНКЦИЯ addToCart С ПРОВЕРКОЙ СТАТУСА МАГАЗИНА
   const addToCart = (product, skipUpsell = false) => {
-    // ПРОВЕРКА СТАТУСА МАГАЗИНА
+    // Проверяем, можно ли добавить товар в корзину
     if (!canAddToCart()) {
-      return; // Покажет попап закрытого магазина
+      return; // Если магазин закрыт, покажется модальное окно
     }
 
     setCart(prev => {
@@ -139,8 +143,8 @@ const ShopPage = () => {
     // ✅ ЗАПУСКАЕМ UPSELL ТОЛЬКО ДЛЯ ОСНОВНЫХ БЛЮД
     if (!skipUpsell && !isUpsellOpen) {
       const productId = String(product.id);
-      const isMainDish = !productId.includes('X') && !productId.includes('Y') && 
-                        !productId.includes('Z') && !productId.includes('S') && 
+      const isMainDish = !productId.includes('Q') && !productId.includes('Y') && 
+                        !productId.includes('D') && !productId.includes('S') && 
                         !productId.includes('R2000') && !product.isFlashOffer && 
                         !product.isDelivery;
       
@@ -365,9 +369,33 @@ const ShopPage = () => {
   
   useEffect(() => {
     fetchData('getSettings', setSettings);
-    fetchData('getProducts', setProducts);
+    fetchData('getProducts', setAllProducts); // ✅ Загружаем в allProducts
     fetchData('getCategories', setCategories);
   }, []);
+
+  // ✅ ПОКАЗЫВАЕМ ЗАГРУЗКУ ЕСЛИ ПРОВЕРЯЕТСЯ СТАТУС МАГАЗИНА
+  if (shopStatusLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '2rem',
+          borderRadius: '20px',
+          textAlign: 'center',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Проверяем статус магазина...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -637,7 +665,7 @@ const ShopPage = () => {
           onNextStep={nextUpsellStep}
         />
 
-        {/* ✅ ПОПАП ЗАКРЫТОГО МАГАЗИНА */}
+        {/* ✅ МОДАЛЬНОЕ ОКНО ЗАКРЫТОГО МАГАЗИНА */}
         <ShopClosedModal
           isOpen={showClosedModal}
           onClose={closeModal}
