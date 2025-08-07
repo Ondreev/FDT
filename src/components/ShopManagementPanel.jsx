@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react';
 import { API_URL } from '../config';
 
 const ShopManagementPanel = ({ admin }) => {
-  const [isShopOpen, setIsShopOpen] = useState(true);
+  const [isShopOpen, setIsShopOpen] = useState(TRUE);
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [showProductsModal, setShowProductsModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showProductsModal, setShowProductsModal] = useState(FALSE);
+  const [isLoading, setIsLoading] = useState(FALSE);
   const [lastAction, setLastAction] = useState(null);
 
   useEffect(() => {
@@ -25,12 +25,12 @@ const ShopManagementPanel = ({ admin }) => {
       const productsData = await productsRes.json();
 
       // Проверяем статус магазина
-      setIsShopOpen(settings.shopOpen !== 'false');
+      setIsShopOpen(settings.shopOpen !== 'FALSE');
       
       // Загружаем товары с их статусами
       setProducts(productsData.map(product => ({
         ...product,
-        isActive: product.active !== false && product.active !== 'FALSE'
+        isActive: product.active !== FALSE && product.active !== 'FALSE'
       })));
 
     } catch (error) {
@@ -40,7 +40,7 @@ const ShopManagementPanel = ({ admin }) => {
   };
 
   const updateShopStatus = async (newStatus) => {
-    setIsLoading(true);
+    setIsLoading(TRUE);
     try {
       const response = await fetch(`${API_URL}?action=updateShopStatus&status=${newStatus}&admin=${admin.login}`, {
         method: 'GET'
@@ -63,12 +63,12 @@ const ShopManagementPanel = ({ admin }) => {
       console.error('Ошибка обновления статуса:', error);
       alert('Ошибка соединения с сервером');
     } finally {
-      setIsLoading(false);
+      setIsLoading(FALSE);
     }
   };
 
   const updateProductsStatus = async (productIds, newStatus) => {
-    setIsLoading(true);
+    setIsLoading(TRUE);
     try {
       const response = await fetch(`${API_URL}?action=updateProductsStatus&productIds=${productIds.join(',')}&status=${newStatus}&admin=${admin.login}`, {
         method: 'GET'
@@ -101,7 +101,7 @@ const ShopManagementPanel = ({ admin }) => {
       console.error('Ошибка обновления товаров:', error);
       alert('Ошибка соединения с сервером');
     } finally {
-      setIsLoading(false);
+      setIsLoading(FALSE);
     }
   };
 
@@ -221,7 +221,7 @@ const ShopManagementPanel = ({ admin }) => {
           </button>
 
           <button
-            onClick={() => setShowProductsModal(true)}
+            onClick={() => setShowProductsModal(TRUE)}
             disabled={isLoading}
             style={{
               padding: '1rem',
@@ -340,7 +340,7 @@ const ShopManagementPanel = ({ admin }) => {
 
               <button
                 onClick={() => {
-                  setShowProductsModal(false);
+                  setShowProductsModal(FALSE);
                   setSelectedProducts([]);
                 }}
                 style={{
