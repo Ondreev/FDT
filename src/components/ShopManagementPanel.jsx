@@ -24,14 +24,21 @@ const ShopManagementPanel = ({ admin }) => {
       const settings = await settingsRes.json();
       const productsData = await productsRes.json();
 
-      // Проверяем статус магазина
-      setIsShopOpen(settings.shopOpen !== 'false');
+      // ✅ ИСПРАВЛЕНО: Проверяем статус магазина с учетом регистра
+      console.log('Settings shopOpen:', settings.shopOpen, typeof settings.shopOpen);
+      const shopOpenValue = settings.shopOpen;
+      const isOpen = shopOpenValue !== 'FALSE' && shopOpenValue !== 'false' && shopOpenValue !== false;
+      setIsShopOpen(isOpen);
       
-      // Загружаем товары с их статусами
-      setProducts(productsData.map(product => ({
-        ...product,
-        isActive: product.active !== false && product.active !== 'FALSE'
-      })));
+      // ✅ ИСПРАВЛЕНО: Загружаем товары с правильной проверкой активности
+      setProducts(productsData.map(product => {
+        console.log('Product active value:', product.active, typeof product.active);
+        const isActive = product.active !== 'FALSE' && product.active !== false && product.active !== 'false';
+        return {
+          ...product,
+          isActive: isActive
+        };
+      }));
 
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
@@ -42,11 +49,14 @@ const ShopManagementPanel = ({ admin }) => {
   const updateShopStatus = async (newStatus) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}?action=updateShopStatus&status=${newStatus}&admin=${admin.login}`, {
+      // ✅ ИСПРАВЛЕНО: Отправляем правильные значения для Google Sheets
+      const statusValue = newStatus === 'open' ? 'TRUE' : 'FALSE';
+      const response = await fetch(`${API_URL}?action=updateShopStatus&status=${statusValue}&admin=${admin.login}`, {
         method: 'GET'
       });
 
       const result = await response.json();
+      console.log('updateShopStatus result:', result);
       
       if (result.success) {
         setIsShopOpen(newStatus === 'open');
@@ -70,11 +80,14 @@ const ShopManagementPanel = ({ admin }) => {
   const updateProductsStatus = async (productIds, newStatus) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}?action=updateProductsStatus&productIds=${productIds.join(',')}&status=${newStatus}&admin=${admin.login}`, {
+      // ✅ ИСПРАВЛЕНО: Отправляем правильные значения для Google Sheets
+      const statusValue = newStatus === 'active' ? 'TRUE' : 'FALSE';
+      const response = await fetch(`${API_URL}?action=updateProductsStatus&productIds=${productIds.join(',')}&status=${statusValue}&admin=${admin.login}`, {
         method: 'GET'
       });
 
       const result = await response.json();
+      console.log('updateProductsStatus result:', result);
       
       if (result.success) {
         // Обновляем локальное состояние товаров
