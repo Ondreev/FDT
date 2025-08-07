@@ -45,7 +45,7 @@ const ShopPage = () => {
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
   const [discountData, setDiscountData] = useState(null);
   
-  // ✅ ФИЛЬТРАЦИЯ АКТИВНЫХ ТОВАРОВ
+  // ✅ ФИЛЬТРАЦИЯ АКТИВНЫХ ТОВАРОВ с автообновлением
   const products = useActiveProducts(allProducts);
   
   // Состояния для рейтинга
@@ -121,11 +121,37 @@ const ShopPage = () => {
       .catch((err) => console.error(`Error fetching ${action}:`, err));
   };
 
-  // ✅ МОДИФИЦИРОВАННАЯ ФУНКЦИЯ addToCart С ПРОВЕРКОЙ СТАТУСА МАГАЗИНА
-  const addToCart = (product, skipUpsell = false) => {
-    // Проверяем, можно ли добавить товар в корзину
+  // ✅ МОДИФИЦИРОВАННАЯ ФУНКЦИЯ addToCart С ДОПОЛНИТЕЛЬНОЙ ПРОВЕРКОЙ
+  const addToCart = async (product, skipUpsell = false) => {
+    // Проверяем, можно ли добавить товар в корзину (статус магазина)
     if (!canAddToCart()) {
       return; // Если магазин закрыт, покажется модальное окно
+    }
+
+    // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: товар активен ли сейчас?
+    try {
+      const response = await fetch(`${API_URL}?action=getProducts&t=${Date.now()}`);
+      const currentProducts = await response.json();
+      const currentProduct = currentProducts.find(p => p.id === product.id);
+      
+      if (!currentProduct) {
+        alert('❌ Товар не найден');
+        return;
+      }
+
+      const isProductActive = currentProduct.active !== 'FALSE' && 
+                            currentProduct.active !== false && 
+                            currentProduct.active !== 'false';
+
+      if (!isProductActive) {
+        alert('❌ К сожалению, этот товар временно недоступен');
+        // Принудительно обновляем список товаров
+        setAllProducts(currentProducts);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking product availability:', error);
+      // В случае ошибки разрешаем добавление
     }
 
     setCart(prev => {
@@ -367,10 +393,21 @@ const ShopPage = () => {
     }
   }, [settings.font]);
   
+  // ✅ ОБНОВЛЕННОЕ использование хука для товаров
   useEffect(() => {
     fetchData('getSettings', setSettings);
-    fetchData('getProducts', setAllProducts); // ✅ Загружаем в allProducts
+    fetchData('getProducts', setAllProducts); // ✅ Загружаем все товары
     fetchData('getCategories', setCategories);
+  }, []);
+
+  // ✅ ДОБАВЛЯЕМ проверку обновлений товаров каждые 60 секунд
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing products...');
+      fetchData('getProducts', setAllProducts);
+    }, 60000); // Обновляем каждые 60 секунд
+
+    return () => clearInterval(interval);
   }, []);
 
   // ✅ ПОКАЗЫВАЕМ ЗАГРУЗКУ ЕСЛИ ПРОВЕРЯЕТСЯ СТАТУС МАГАЗИНА
