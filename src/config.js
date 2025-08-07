@@ -2,7 +2,7 @@
 
 export const CONFIG = {
   // API настройки
-  API_URL: 'https://script.google.com/macros/s/AKfycbw4zYoJQirurRIKMAn6hi1ekDPeDcscwEKXaCzxiJ1T6ho4YjrSbcKM2SQkMYqiU-nTRg/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbz3-bbj-_NvRGFgXXbgwCuLa51i93rcfLc8ayMDbTcZ25o4B6aD4EMOTnXnWp3jpGE4_Q/exec',
   
   // Настройки приложения
   APP_NAME: 'Food Delivery',
