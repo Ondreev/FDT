@@ -49,9 +49,10 @@ const ShopManagementPanel = ({ admin }) => {
   const updateShopStatus = async (newStatus) => {
     setIsLoading(true);
     try {
-      // ✅ ИСПРАВЛЕНО: Отправляем правильные значения для Google Sheets
-      const statusValue = newStatus === 'open' ? 'TRUE' : 'FALSE';
-      const response = await fetch(`${API_URL}?action=updateShopStatus&status=${statusValue}&admin=${admin.login}`, {
+      console.log('updateShopStatus called with:', newStatus);
+      
+      // ✅ ИСПРАВЛЕНО: Передаем 'open'/'close', а не 'TRUE'/'FALSE'
+      const response = await fetch(`${API_URL}?action=updateShopStatus&status=${newStatus}&admin=${admin.login}`, {
         method: 'GET'
       });
 
@@ -80,9 +81,10 @@ const ShopManagementPanel = ({ admin }) => {
   const updateProductsStatus = async (productIds, newStatus) => {
     setIsLoading(true);
     try {
-      // ✅ ИСПРАВЛЕНО: Отправляем правильные значения для Google Sheets
-      const statusValue = newStatus === 'active' ? 'TRUE' : 'FALSE';
-      const response = await fetch(`${API_URL}?action=updateProductsStatus&productIds=${productIds.join(',')}&status=${statusValue}&admin=${admin.login}`, {
+      console.log('updateProductsStatus called with:', { productIds, newStatus });
+      
+      // ✅ ИСПРАВЛЕНО: Передаем 'active'/'inactive', а не 'TRUE'/'FALSE'
+      const response = await fetch(`${API_URL}?action=updateProductsStatus&productIds=${productIds.join(',')}&status=${newStatus}&admin=${admin.login}`, {
         method: 'GET'
       });
 
