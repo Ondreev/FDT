@@ -9,6 +9,9 @@ export const useShopStatus = () => {
 
   useEffect(() => {
     checkShopStatus();
+    // Проверяем статус каждые 30 секунд
+    const interval = setInterval(checkShopStatus, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const checkShopStatus = async () => {
@@ -16,7 +19,14 @@ export const useShopStatus = () => {
       const response = await fetch(`${API_URL}?action=getSettings&t=${Date.now()}`);
       const settings = await response.json();
       
-      const shopOpen = settings.shopOpen !== 'false';
+      console.log('Shop status check:', settings.shopOpen, typeof settings.shopOpen);
+      
+      // ✅ ИСПРАВЛЕНО: Правильная проверка регистра
+      const shopOpenValue = settings.shopOpen;
+      const shopOpen = shopOpenValue !== 'FALSE' && shopOpenValue !== 'false' && shopOpenValue !== false;
+      
+      console.log('Shop is open:', shopOpen);
+      
       setIsShopOpen(shopOpen);
       
     } catch (error) {
