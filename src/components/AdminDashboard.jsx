@@ -28,6 +28,97 @@ const formatDate = (dateStr) => {
   });
 };
 
+// Компонент панели управления магазином
+const ShopManagementPanel = ({ admin }) => {
+  return (
+    <div style={{
+      background: 'white',
+      borderRadius: '16px',
+      padding: '1.5rem',
+      marginBottom: '2rem',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+    }}>
+      <h3 style={{
+        fontSize: '1.4rem',
+        fontWeight: 'bold',
+        color: '#2c1e0f',
+        marginBottom: '1rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+      }}>
+        🏪 Панель управления магазином
+      </h3>
+      
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1rem'
+      }}>
+        <button style={{
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          color: 'white',
+          border: 'none',
+          padding: '1rem',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          fontSize: '1rem',
+          fontWeight: 'bold',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+        }}>
+          📦 Управление товарами
+        </button>
+        
+        <button style={{
+          background: 'linear-gradient(135deg, #4caf50, #45a049)',
+          color: 'white',
+          border: 'none',
+          padding: '1rem',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          fontSize: '1rem',
+          fontWeight: 'bold',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+        }}>
+          📊 Статистика продаж
+        </button>
+        
+        <button style={{
+          background: 'linear-gradient(135deg, #ff9800, #f57c00)',
+          color: 'white',
+          border: 'none',
+          padding: '1rem',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          fontSize: '1rem',
+          fontWeight: 'bold',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 4px 12px rgba(255, 152, 0, 0.3)'
+        }}>
+          ⚙️ Настройки
+        </button>
+        
+        <button style={{
+          background: 'linear-gradient(135deg, #e91e63, #c2185b)',
+          color: 'white',
+          border: 'none',
+          padding: '1rem',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          fontSize: '1rem',
+          fontWeight: 'bold',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 4px 12px rgba(233, 30, 99, 0.3)'
+        }}>
+          📈 Промо-акции
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Компонент карточки заказа
 const OrderCard = ({ order, statusLabels, onStatusChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -532,10 +623,11 @@ const AdminDashboard = ({ admin, onLogout }) => {
         </div>
       </div>
 
-      <div style={{
+      {/* Основной контейнер */}
+      <div className="container" style={{
         maxWidth: '800px',
         margin: '0 auto',
-        padding: '2rem'
+        padding: '1rem 2rem 2rem 2rem'
       }}>
         {/* Приветствие бота */}
         <div style={{
@@ -620,6 +712,9 @@ const AdminDashboard = ({ admin, onLogout }) => {
             }
           `}
         </style>
+
+        {/* 🏪 ПАНЕЛЬ УПРАВЛЕНИЯ МАГАЗИНОМ */}
+        <ShopManagementPanel admin={admin} />
 
         {/* Фильтры */}
         <div style={{
