@@ -751,6 +751,9 @@ const averageTimeStats = averageTimeStatsRaw || {
         margin: '0 auto',
         padding: '1rem 2rem 2rem 2rem'
       }}>
+        {/* 🏪 ПАНЕЛЬ УПРАВЛЕНИЯ МАГАЗИНОМ - ДОБАВЛЕНО! */}
+        <ShopManagementPanel admin={admin} />
+
         {/* Сообщение бота */}
         <div style={{
           display: 'flex',
@@ -943,9 +946,6 @@ const averageTimeStats = averageTimeStatsRaw || {
         </div>
       </div>
     </div>
-  );
-};
-
 const AdminPage = () => {
   const [admin, setAdmin] = useState(null);
 
