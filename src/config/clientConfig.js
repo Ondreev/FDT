@@ -46,7 +46,30 @@ const CLIENT_CONFIG = {
     reviews: true,
     discounts: true,
     adminPanel: true,
-    printReceipts: true
+    printReceipts: true,
+    upsell: true,
+    flashOffers: true,
+    promoActions: true // 1+1=3 и другие акции
+  },
+
+  // === НАСТРОЙКИ ТОВАРОВ И ID ПРЕФИКСОВ ===
+  products: {
+    // Можно переопределить конфигурацию префиксов через Google Sheets
+    // Ключи в формате: product_prefix_H_label, product_prefix_H_color и т.д.
+    enablePrefixSystem: true,
+    
+    // Настройки flash предложений
+    flash: {
+      discountPercent: 99, // Скидка для R2000 товаров
+      timerDuration: 120   // Длительность таймера в секундах
+    },
+    
+    // Настройки upsell
+    upsell: {
+      enabled: true,
+      delayMs: 300, // Задержка перед показом upsell
+      showForMainDishesOnly: true
+    }
   }
 };
 
@@ -225,6 +248,40 @@ class ClientConfigManager {
   isReady() {
     return this.isInitialized;
   }
+
+  /**
+   * Получить настройки товаров
+   */
+  getProductSettings() {
+    return {
+      enablePrefixSystem: this.get('enablePrefixSystem') || this.get('products.enablePrefixSystem', true),
+      flashDiscountPercent: parseFloat(this.get('flashDiscountPercent')) || this.get('products.flash.discountPercent', 99),
+      flashTimerDuration: parseInt(this.get('flashTimerDuration')) || this.get('products.flash.timerDuration', 120),
+      upsellEnabled: this.isFeatureEnabled('upsell') && (this.get('upsellEnabled') !== 'false'),
+      upsellDelay: parseInt(this.get('upsellDelay')) || this.get('products.upsell.delayMs', 300)
+    };
+  }
+
+  /**
+   * Получить конфигурацию префикса товара из Google Sheets или локальных настроек
+   */
+  getProductPrefixConfig(prefix) {
+    // Сначала проверяем Google Sheets (формат: product_prefix_H_label, product_prefix_H_color)
+    const label = this.get(`product_prefix_${prefix}_label`);
+    const color = this.get(`product_prefix_${prefix}_color`);
+    const emoji = this.get(`product_prefix_${prefix}_emoji`);
+
+    if (label || color || emoji) {
+      return {
+        label: label || `Префикс ${prefix}`,
+        color: color || '#666666',
+        emoji: emoji || '🏷️'
+      };
+    }
+
+    // Возвращаем null, если нет кастомной конфигурации (будет использоваться дефолтная из productUtils)
+    return null;
+  }
 }
 
 // Создаем экземпляр менеджера конфигурации
@@ -237,6 +294,8 @@ export const getTheme = () => clientConfig.getTheme();
 export const getBusiness = () => clientConfig.getBusiness();
 export const getDelivery = () => clientConfig.getDelivery();
 export const getApiUrl = () => clientConfig.getApiUrl();
+export const getProductSettings = () => clientConfig.getProductSettings();
+export const getProductPrefixConfig = (prefix) => clientConfig.getProductPrefixConfig(prefix);
 
 // Экспортируем для совместимости с существующим кодом
 export const config = clientConfig;
