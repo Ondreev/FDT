@@ -27,114 +27,57 @@ import { API_URL, CONFIG } from './config';
 // Основной компонент магазина
 const ShopPage = () => {
   // ✅ ПРОВЕРКА СТАТУСА МАГАЗИНА
+  // ✅ ОБНОВЛЯЕМ ДЕСТРУКТУРИЗАЦИЮ хука
   const { 
     isShopOpen, 
     isLoading: shopStatusLoading, 
     showClosedModal, 
     canAddToCart, 
-    closeModal 
+    closeModal,
+    setIsShopOpen,      // ✅ Добавлено
+    setShowClosedModal, // ✅ Добавлено
+    forceCloseShop      // ✅ Добавлено
   } = useShopStatus();
 
-  // Основные состояния
-  const [settings, setSettings] = useState({});
-  const [allProducts, setAllProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
-  const [discountData, setDiscountData] = useState(null);
-  
-  // ✅ ФИЛЬТРАЦИЯ АКТИВНЫХ ТОВАРОВ с автообновлением
-  const products = useActiveProducts(allProducts);
-  
-  // Состояния для рейтинга
-  const [ratingPopup, setRatingPopup] = useState({ isOpen: false, product: null });
-  const [userRatings, setUserRatings] = useState({});
-  
-  // Состояние для режима доставки
-  const [deliveryMode, setDeliveryMode] = useState(() => {
-    return localStorage.getItem('deliveryMode') || 'delivery';
-  });
-  
-  // Состояния для попапов в меню
-  const [showFlashPopup, setShowFlashPopup] = useState(false);
-  const [showDeliveryPopup, setShowDeliveryPopup] = useState(false);
-  const [flashPopupData, setFlashPopupData] = useState(null);
-  const [flashTimeLeft, setFlashTimeLeft] = useState(120);
-  const [deliveryTimeLeft, setDeliveryTimeLeft] = useState(180);
-  
-  // Состояния для плавного свайпа
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchStartY, setTouchStartY] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  // ✅ УПРАВЛЕНИЕ UPSELL
-  const {
-    isUpsellOpen,
-    currentUpsellStep,
-    startUpsellFlow,
-    nextUpsellStep,
-    closeUpsellFlow
-  } = useUpsellFlow();
-
-  // REF для панели категорий
-  const categoriesRef = useRef(null);
-
-  // ✅ ФУНКЦИЯ АВТОСКРОЛЛА К АКТИВНОЙ КАТЕГОРИИ
-  const scrollToActiveCategory = () => {
-    if (!categoriesRef.current || categories.length === 0) return;
-    
-    const allCategories = [null, ...categories.map(cat => cat.id)];
-    const activeIndex = allCategories.indexOf(activeCategory);
-    
-    if (activeIndex === -1) return;
-    
-    const categoryButtons = categoriesRef.current.children;
-    const activeButton = categoryButtons[activeIndex];
-    
-    if (activeButton) {
-      const containerRect = categoriesRef.current.getBoundingClientRect();
-      const buttonRect = activeButton.getBoundingClientRect();
-      
-      const scrollLeft = categoriesRef.current.scrollLeft;
-      const buttonLeft = buttonRect.left - containerRect.left + scrollLeft;
-      const buttonWidth = buttonRect.width;
-      const containerWidth = containerRect.width;
-      
-      const targetScroll = buttonLeft - (containerWidth / 2) + (buttonWidth / 2);
-      
-      categoriesRef.current.scrollTo({
-        left: Math.max(0, targetScroll),
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  // ОСНОВНЫЕ ФУНКЦИИ
-  const fetchData = (action, setter) => {
-    fetch(`${API_URL}?action=${action}`)
-      .then((res) => res.json())
-      .then((data) => setter(data))
-      .catch((err) => console.error(`Error fetching ${action}:`, err));
-  };
-
-  // ✅ МОДИФИЦИРОВАННАЯ ФУНКЦИЯ addToCart С ДОПОЛНИТЕЛЬНОЙ ПРОВЕРКОЙ
+  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ addToCart
   const addToCart = async (product, skipUpsell = false) => {
-    // Проверяем, можно ли добавить товар в корзину (статус магазина)
+    console.log('🛒 Attempting to add to cart:', product.name);
+
+    // ✅ ПЕРВАЯ ПРОВЕРКА: Базовая проверка статуса магазина
     if (!canAddToCart()) {
-      return; // Если магазин закрыт, покажется модальное окно
+      console.log('❌ Base check failed: shop is closed');
+      return; // Модальное окно уже показано в canAddToCart()
     }
 
-    // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: товар активен ли сейчас?
+    // ✅ ВТОРАЯ ПРОВЕРКА: Актуальная проверка в реальном времени
     try {
-      const response = await fetch(`${API_URL}?action=getProducts&t=${Date.now()}`);
-      const currentProducts = await response.json();
+      console.log('🔍 Double-checking shop and product status...');
+      const [settingsResponse, productsResponse] = await Promise.all([
+        fetch(`${API_URL}?action=getSettings&t=${Date.now()}`),
+        fetch(`${API_URL}?action=getProducts&t=${Date.now()}`)
+      ]);
+
+      const settings = await settingsResponse.json();
+      const currentProducts = await productsResponse.json();
+
+      // Проверяем статус магазина
+      const shopOpenValue = settings.shopOpen;
+      const isShopCurrentlyOpen = shopOpenValue !== 'FALSE' && 
+                                 shopOpenValue !== 'false' && 
+                                 shopOpenValue !== false;
+
+      if (!isShopCurrentlyOpen) {
+        console.log('🚨 Shop is closed right now!');
+        alert('🔒 Магазин только что закрылся. Заказы временно не принимаются.');
+        forceCloseShop(); // Используем функцию из хука
+        return;
+      }
+
+      // Проверяем актуальность товара
       const currentProduct = currentProducts.find(p => p.id === product.id);
       
       if (!currentProduct) {
+        console.log('❌ Product not found');
         alert('❌ Товар не найден');
         return;
       }
@@ -144,16 +87,22 @@ const ShopPage = () => {
                             currentProduct.active !== 'false';
 
       if (!isProductActive) {
+        console.log('❌ Product is inactive:', product.name);
         alert('❌ К сожалению, этот товар временно недоступен');
         // Принудительно обновляем список товаров
         setAllProducts(currentProducts);
         return;
       }
+
+      console.log('✅ All checks passed! Adding to cart...');
+
     } catch (error) {
-      console.error('Error checking product availability:', error);
-      // В случае ошибки разрешаем добавление
+      console.error('Error during verification:', error);
+      // В случае ошибки показываем предупреждение, но разрешаем добавление
+      console.log('⚠️ Verification failed, but allowing add to cart');
     }
 
+    // ✅ ДОБАВЛЯЕМ ТОВАР В КОРЗИНУ
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -294,7 +243,34 @@ const ShopPage = () => {
     setIsSwiping(false);
   };
 
-  const handleOpenOrderForm = (discountData) => {
+  const handleOpenOrderForm = async (discountData) => {
+    console.log('📝 Attempting to open order form...');
+
+    // ✅ ФИНАЛЬНАЯ ПРОВЕРКА перед оформлением заказа
+    try {
+      const response = await fetch(`${API_URL}?action=getSettings&t=${Date.now()}`);
+      const settings = await response.json();
+      
+      const shopOpenValue = settings.shopOpen;
+      const isShopCurrentlyOpen = shopOpenValue !== 'FALSE' && 
+                                 shopOpenValue !== 'false' && 
+                                 shopOpenValue !== false;
+
+      if (!isShopCurrentlyOpen) {
+        console.log('🚨 Shop closed during checkout!');
+        alert('🔒 Извините, магазин закрылся во время оформления заказа. Попробуйте позже.');
+        forceCloseShop(); // Используем функцию из хука
+        setIsCartOpen(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking shop status before checkout:', error);
+      // В случае ошибки предупреждаем, но разрешаем оформление
+      const proceed = confirm('⚠️ Не удалось проверить статус магазина. Продолжить оформление заказа?');
+      if (!proceed) return;
+    }
+
+    console.log('✅ Shop is open, proceeding with order...');
     setDiscountData(discountData);
     setIsCartOpen(false);
     setIsOrderFormOpen(true);
