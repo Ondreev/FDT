@@ -10,6 +10,8 @@ import ProductGrid from './components/ProductGrid';
 import { MainPageFlashOffer, MainPageDeliveryOffer } from './components/MainPageOffers';
 import FloatingButtons from './components/FloatingButtons';
 import PeekingPopup from './components/PeekingPopup';
+import RestaurantSelector from './components/RestaurantSelector';
+import RestaurantConfigAdmin from './components/RestaurantConfigAdmin';
 
 // ✅ НОВЫЕ КОМПОНЕНТЫ
 import RatingPopup from './components/RatingPopup';
@@ -17,7 +19,8 @@ import FlashItemManager from './components/FlashItemManager';
 import PopupsContainer from './components/PopupsContainer';
 import UpsellModal, { useUpsellFlow } from './components/UpsellModal';
 
-import { API_URL, CONFIG } from './config';
+import { API_URL, CONFIG, restaurantConfig } from './config';
+import { googleSheetsIntegration } from './config/googleSheetsIntegration';
 
 // Основной компонент магазина
 const ShopPage = () => {
@@ -62,6 +65,9 @@ const ShopPage = () => {
     nextUpsellStep,
     closeUpsellFlow
   } = useUpsellFlow();
+  
+  // Состояния для админ панели конфигурации
+  const [showConfigAdmin, setShowConfigAdmin] = useState(false);
 
   // REF для панели категорий
   const categoriesRef = useRef(null);
@@ -346,9 +352,31 @@ const ShopPage = () => {
   }, [settings.font]);
   
   useEffect(() => {
-    fetchData('getSettings', setSettings);
-    fetchData('getProducts', setProducts);
-    fetchData('getCategories', setCategories);
+    // Загружаем настройки текущего ресторана
+    const loadRestaurantData = async () => {
+      try {
+        // Загружаем конфигурацию из Google таблицы
+        const config = await restaurantConfig.loadGoogleSheetsConfig();
+        setSettings(config);
+        
+        // Загружаем данные специфичные для ресторана
+        const [products, categories] = await Promise.all([
+          googleSheetsIntegration.getRestaurantProducts(restaurantConfig.currentRestaurantId),
+          googleSheetsIntegration.getRestaurantCategories(restaurantConfig.currentRestaurantId)
+        ]);
+        
+        setProducts(products);
+        setCategories(categories);
+      } catch (error) {
+        console.error('Error loading restaurant data:', error);
+        // Fallback к старому методу
+        fetchData('getSettings', setSettings);
+        fetchData('getProducts', setProducts);
+        fetchData('getCategories', setCategories);
+      }
+    };
+    
+    loadRestaurantData();
   }, []);
 
   return (
@@ -453,6 +481,47 @@ const ShopPage = () => {
             >
               {settings.projectTitle || 'Заголовок'}
             </h1>
+          </div>
+          
+          {/* Селектор ресторана и кнопка настроек */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <RestaurantSelector 
+              currentRestaurantId={restaurantConfig.currentRestaurantId}
+              onRestaurantChange={(id) => {
+                // Обновляем данные при смене ресторана
+                window.location.reload();
+              }}
+            />
+            
+            {/* Кнопка настроек (только для админов) */}
+            <button
+              onClick={() => setShowConfigAdmin(true)}
+              style={{
+                padding: '8px',
+                backgroundColor: '#fff',
+                border: '2px solid #e0e0e0',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                color: '#666',
+                transition: 'all 0.2s ease'
+              }}
+              title="Настройки ресторана"
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#007bff';
+                e.target.style.color = '#007bff';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#e0e0e0';
+                e.target.style.color = '#666';
+              }}
+            >
+              ⚙️
+            </button>
           </div>
         </header>
 
@@ -592,6 +661,12 @@ const ShopPage = () => {
           deliveryTimeLeft={deliveryTimeLeft}
           addToCartWithoutUpsell={addToCartWithoutUpsell}
           setCart={setCart}
+        />
+
+        {/* Админ панель конфигурации ресторанов */}
+        <RestaurantConfigAdmin
+          isOpen={showConfigAdmin}
+          onClose={() => setShowConfigAdmin(false)}
         />
 
         <RatingPopup
