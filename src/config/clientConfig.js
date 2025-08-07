@@ -1,278 +1,250 @@
-// clientConfig.js - ЕДИНСТВЕННЫЙ ФАЙЛ ДЛЯ НАСТРОЙКИ НОВОГО ЗАКАЗЧИКА
-// =====================================================================
-// ИНСТРУКЦИЯ ДЛЯ РАЗРАБОТЧИКА:
-// 1. Скопируйте этот файл для нового проекта
-// 2. Измените настройки ниже под требования заказчика
-// 3. Никаких других файлов менять НЕ НУЖНО!
-// =====================================================================
+// clientConfig.js - ЕДИНСТВЕННЫЙ ФАЙЛ ДЛЯ НАСТРОЙКИ НОВОГО КЛИЕНТА
+// Адаптировано под реальную структуру Google Sheets
 
-import { createClientConfig, PRESET_CONFIGS } from './universalConfig.js';
+import { initializeGoogleSheetsIntegration } from './googleSheetsIntegration.js';
 
-// =====================================================================
-// БЫСТРЫЙ СТАРТ: Выберите готовый пресет или создайте свой
-// =====================================================================
-
-// Доступные пресеты: 'pizzeria', 'sushi', 'burger' или создайте свой
-const USE_PRESET = null; // Установите 'pizzeria' для быстрого старта
-
-// Если используете пресет, раскомментируйте эту строку:
-// export const clientConfig = createClientConfig(PRESET_CONFIGS.pizzeria);
-
-// =====================================================================
-// КАСТОМНАЯ КОНФИГУРАЦИЯ ЗАКАЗЧИКА
-// =====================================================================
-
-const CLIENT_SETTINGS = {
-  // 🏢 ИНФОРМАЦИЯ О БИЗНЕСЕ
-  business: {
-    name: 'Food Delivery',                    // Название ресторана
-    appName: 'Food Delivery',                 // Название приложения
-    projectTitle: 'Заказать еду онлайн',      // Заголовок на странице
-    logoUrl: null,                            // URL логотипа или null
-    description: 'Лучшая еда в городе',       // Описание бизнеса
-  },
-
-  // 📞 КОНТАКТНАЯ ИНФОРМАЦИЯ
-  contact: {
-    phone: '+7 (999) 123-45-67',             // Телефон для заказов
-    email: 'info@restaurant.com',            // Email
-    address: 'ул. Главная, 1',               // Адрес ресторана
-    workingHours: 'Ежедневно с 10:00 до 23:00', // Время работы
-    website: null,                            // Сайт или null
-    socialMedia: {                            // Социальные сети
-      instagram: null,
-      facebook: null,
-      vk: null,
-      telegram: null
-    }
-  },
-
-  // 🎨 ВИЗУАЛЬНАЯ ТЕМА
-  theme: {
-    scheme: 'orange',                         // Цветовая схема: 'orange', 'blue', 'green', 'purple', 'red'
-    typography: 'casual',                     // Шрифты: 'casual', 'professional', 'elegant', 'modern'
-    
-    // Кастомные цвета (необязательно)
-    colors: {
-      // primary: '#ff7f32',                  // Основной цвет
-      // background: '#fdf0e2',               // Цвет фона
-      // text: '#2c1e0f'                      // Цвет текста
-    }
-  },
-
-  // 🚚 НАСТРОЙКИ ДОСТАВКИ
-  delivery: {
-    enabled: true,                            // Включить доставку
-    threshold: 2000,                          // Минимальная сумма для бесплатной доставки
-    cost: 200,                                // Стоимость доставки
-    currency: '₽',                            // Валюта
-    freeDeliveryText: 'Бесплатная доставка от 2000 ₽', // Текст о бесплатной доставке
-    estimatedTime: '30-60 минут',             // Время доставки
-  },
-
-  // 🏪 НАСТРОЙКИ САМОВЫВОЗА
-  pickup: {
-    enabled: true,                            // Включить самовывоз
-    estimatedTime: '15-30 минут',             // Время готовности заказа
-  },
-
-  // 📦 НАСТРОЙКИ ЗАКАЗОВ
-  orders: {
-    minAmount: 500,                           // Минимальная сумма заказа
-    maxAmount: 50000,                         // Максимальная сумма заказа
-  },
-
-  // 🏷️ МАРКЕРЫ ТОВАРОВ
-  products: {
-    markers: {
-      flash: 'FLASH',                         // Маркер flash-товаров
-      hot: 'HOT',                             // Маркер горячих товаров
-      new: 'NEW',                             // Маркер новых товаров
-      popular: 'POPULAR',                     // Маркер популярных товаров
-      spicy: 'ОСТРОЕ',                        // Маркер острых блюд
-      vegetarian: 'ВЕГ',                      // Маркер вегетарианских блюд
+/**
+ * ОСНОВНАЯ КОНФИГУРАЦИЯ КЛИЕНТА
+ * Измените только эти настройки для нового клиента
+ */
+const CLIENT_CONFIG = {
+  // === API НАСТРОЙКИ ===
+  // URL вашего Google Apps Script (замените на свой)
+  apiUrl: 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE',
+  
+  // === ОСНОВНЫЕ НАСТРОЙКИ ПРИЛОЖЕНИЯ ===
+  appName: 'Food Delivery',
+  
+  // === ЛОКАЛЬНЫЕ НАСТРОЙКИ (не из Google Sheets) ===
+  // Эти настройки применяются до загрузки данных из Google Sheets
+  local: {
+    // Тема по умолчанию
+    theme: {
+      primaryColor: '#e74c3c',
+      secondaryColor: '#2c3e50',
+      backgroundColor: '#ffffff',
+      textColor: '#333333'
     },
-    timers: {
-      flashOfferDuration: 120,                // Длительность flash-предложения (секунды)
-      deliveryOfferDuration: 180,             // Длительность предложения доставки (секунды)
-    }
-  },
-
-  // 💰 СИСТЕМА СКИДОК
-  discounts: {
-    enabled: true,                            // Включить скидки
-    levels: [                                 // Уровни скидок
-      { threshold: 1000, percent: 5, label: 'Скидка 5%' },
-      { threshold: 2000, percent: 10, label: 'Скидка 10%' },
-      { threshold: 3000, percent: 15, label: 'Скидка 15%' },
-    ]
-  },
-
-  // 📊 СТАТУСЫ ЗАКАЗОВ
-  orderStatuses: {
-    // Включенные статусы (можно убрать ненужные)
-    enabled: ['pending', 'cooking', 'delivering', 'delivered', 'cancelled'],
     
-    // Кастомные названия статусов (необязательно)
-    custom: {
-      // pending: { label: 'Принят' },
-      // cooking: { label: 'На кухне' },
-      // delivering: { label: 'В пути' }
+    // Настройки загрузки
+    loading: {
+      showSpinner: true,
+      loadingText: 'Загрузка...'
+    },
+    
+    // Настройки кэширования
+    cache: {
+      enabled: true,
+      duration: 5 * 60 * 1000 // 5 минут
     }
   },
 
-  // ⚙️ ФУНКЦИОНАЛЬНЫЕ ВОЗМОЖНОСТИ
+  // === ФУНКЦИИ ВКЛЮЧЕНЫ/ВЫКЛЮЧЕНЫ ===
   features: {
-    // Основные функции
-    ENABLE_CART: true,                        // Корзина
-    ENABLE_CHECKOUT: true,                    // Оформление заказа
-    ENABLE_USER_REGISTRATION: false,          // Регистрация пользователей
-    
-    // Доставка
-    ENABLE_DELIVERY: true,                    // Доставка
-    ENABLE_PICKUP: true,                      // Самовывоз
-    ENABLE_DELIVERY_TRACKING: false,          // Отслеживание доставки
-    
-    // Платежи
-    ENABLE_ONLINE_PAYMENT: false,             // Онлайн-оплата
-    ENABLE_CASH_PAYMENT: true,                // Оплата наличными
-    ENABLE_CARD_PAYMENT: false,               // Оплата картой
-    
-    // Маркетинг
-    ENABLE_DISCOUNTS: true,                   // Скидки
-    ENABLE_FLASH_OFFERS: true,                // Flash-предложения
-    ENABLE_LOYALTY_PROGRAM: false,            // Программа лояльности
-    ENABLE_COUPONS: false,                    // Купоны
-    
-    // Социальные функции
-    ENABLE_REVIEWS: true,                     // Отзывы
-    ENABLE_RATINGS: true,                     // Рейтинги
-    ENABLE_SHARING: false,                    // Поделиться
-    
-    // Уведомления
-    ENABLE_WHATSAPP_NOTIFICATIONS: true,      // WhatsApp уведомления
-    ENABLE_SMS_NOTIFICATIONS: false,          // SMS уведомления
-    ENABLE_EMAIL_NOTIFICATIONS: false,        // Email уведомления
-    
-    // Административные функции
-    ENABLE_ADMIN_PANEL: true,                 // Админ-панель
-    ENABLE_INVENTORY_MANAGEMENT: false,       // Управление товарами
-    ENABLE_REPORTING: false,                  // Отчеты
-    
-    // Аналитика
-    ENABLE_ANALYTICS: false,                  // Аналитика
-    
-    // Интеграции
-    ENABLE_GOOGLE_MAPS: false,                // Google Maps
-  },
-
-  // 🔗 API И ИНТЕГРАЦИИ
-  api: {
-    baseUrl: 'https://script.google.com/macros/s/AKfycbzzjx5LgoYFNYW3FITXl26O7H3tXUSu71gQgHsyz607DD8Vnw_i_Wg8zdyqeVARAR_E/exec',
-    timeout: 10000,                           // Таймаут запросов (мс)
-  },
-
-  integrations: {
-    googleSheets: {
-      enabled: true,                          // Интеграция с Google Sheets
-      spreadsheetId: null,                    // ID таблицы (необязательно)
-    },
-    analytics: {
-      enabled: false,                         // Google Analytics
-      googleAnalyticsId: null,                // ID аналитики
-    }
-  },
-
-  // 🔧 СИСТЕМНЫЕ НАСТРОЙКИ (редко нужно менять)
-  system: {
-    AUTO_REFRESH_INTERVAL: 30000,             // Интервал обновления данных (мс)
-    REQUEST_TIMEOUT: 10000,                   // Таймаут запросов (мс)
-    CACHE_EXPIRY: 300000,                     // Время жизни кэша (мс)
-    DEBUG: false,                             // Режим отладки
-    ENABLE_LOGGING: true,                     // Логирование
+    delivery: true,
+    pickup: true,
+    reviews: true,
+    discounts: true,
+    adminPanel: true,
+    printReceipts: true
   }
 };
 
-// =====================================================================
-// ЭКСПОРТ КОНФИГУРАЦИИ
-// =====================================================================
+/**
+ * Класс для управления конфигурацией клиента
+ */
+class ClientConfigManager {
+  constructor(config) {
+    this.config = config;
+    this.googleSheets = null;
+    this.settings = {};
+    this.isInitialized = false;
+  }
 
-// Если используете пресет:
-if (USE_PRESET && PRESET_CONFIGS[USE_PRESET]) {
-  // Объединяем пресет с кастомными настройками
-  const presetConfig = PRESET_CONFIGS[USE_PRESET];
-  const mergedConfig = {
-    ...presetConfig,
-    ...CLIENT_SETTINGS,
-    // Глубокое слияние для вложенных объектов
-    business: { ...presetConfig.business, ...CLIENT_SETTINGS.business },
-    contact: { ...presetConfig.contact, ...CLIENT_SETTINGS.contact },
-    theme: { ...presetConfig.theme, ...CLIENT_SETTINGS.theme },
-    delivery: { ...presetConfig.delivery, ...CLIENT_SETTINGS.delivery },
-    features: { ...presetConfig.features, ...CLIENT_SETTINGS.features },
-  };
-  export const clientConfig = createClientConfig(mergedConfig);
-} else {
-  // Используем только кастомные настройки
-  export const clientConfig = createClientConfig(CLIENT_SETTINGS);
+  /**
+   * Инициализация - подключение к Google Sheets
+   */
+  async initialize() {
+    if (this.isInitialized) return;
+
+    try {
+      // Инициализируем Google Sheets интеграцию
+      this.googleSheets = initializeGoogleSheetsIntegration(this.config.apiUrl);
+      
+      // Загружаем настройки из Google Sheets
+      await this.loadSettingsFromGoogleSheets();
+      
+      this.isInitialized = true;
+      console.log('✅ Client Config initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize Client Config:', error);
+      // Продолжаем работу с локальными настройками
+      this.isInitialized = true;
+    }
+  }
+
+  /**
+   * Загрузка настроек из Google Sheets
+   */
+  async loadSettingsFromGoogleSheets() {
+    try {
+      this.settings = await this.googleSheets.getSettings();
+      console.log('📊 Settings loaded from Google Sheets:', Object.keys(this.settings).length, 'keys');
+    } catch (error) {
+      console.warn('⚠️ Could not load settings from Google Sheets, using local config:', error.message);
+      this.settings = {};
+    }
+  }
+
+  /**
+   * Получить значение настройки (сначала из Google Sheets, потом из локальной конфигурации)
+   */
+  get(key, defaultValue = null) {
+    // Сначала проверяем Google Sheets настройки
+    if (this.settings && this.settings.hasOwnProperty(key)) {
+      return this.settings[key];
+    }
+
+    // Затем локальные настройки
+    const keys = key.split('.');
+    let value = this.config;
+    
+    for (const k of keys) {
+      if (value && typeof value === 'object' && value.hasOwnProperty(k)) {
+        value = value[k];
+      } else {
+        return defaultValue;
+      }
+    }
+    
+    return value;
+  }
+
+  /**
+   * Получить все настройки как объект
+   */
+  getAll() {
+    return {
+      ...this.config,
+      sheets: this.settings
+    };
+  }
+
+  /**
+   * Проверить включена ли функция
+   */
+  isFeatureEnabled(featureName) {
+    // Сначала проверяем в Google Sheets (с префиксом feature_)
+    const sheetKey = `feature_${featureName}`;
+    if (this.settings && this.settings.hasOwnProperty(sheetKey)) {
+      return this.settings[sheetKey] === 'true' || this.settings[sheetKey] === true;
+    }
+
+    // Затем в локальных настройках
+    return this.get(`features.${featureName}`, false);
+  }
+
+  /**
+   * Получить тему
+   */
+  getTheme() {
+    const theme = {
+      primaryColor: this.get('primaryColor') || this.get('local.theme.primaryColor'),
+      secondaryColor: this.get('secondaryColor') || this.get('local.theme.secondaryColor'),
+      backgroundColor: this.get('backgroundColor') || this.get('local.theme.backgroundColor'),
+      textColor: this.get('textColor') || this.get('local.theme.textColor'),
+      
+      // Дополнительные цвета из Google Sheets
+      accentColor: this.get('accentColor'),
+      errorColor: this.get('errorColor'),
+      successColor: this.get('successColor'),
+      warningColor: this.get('warningColor')
+    };
+
+    // Убираем undefined значения
+    return Object.fromEntries(
+      Object.entries(theme).filter(([_, value]) => value !== undefined && value !== null)
+    );
+  }
+
+  /**
+   * Получить настройки бизнеса
+   */
+  getBusiness() {
+    return {
+      name: this.get('businessName') || this.get('appName'),
+      phone: this.get('businessPhone'),
+      email: this.get('businessEmail'),
+      address: this.get('businessAddress'),
+      workingHours: this.get('workingHours'),
+      description: this.get('businessDescription')
+    };
+  }
+
+  /**
+   * Получить настройки доставки
+   */
+  getDelivery() {
+    return {
+      enabled: this.isFeatureEnabled('delivery'),
+      minOrder: parseFloat(this.get('deliveryMinOrder')) || 0,
+      fee: parseFloat(this.get('deliveryFee')) || 0,
+      freeFrom: parseFloat(this.get('deliveryFreeFrom')) || 0,
+      zones: this.get('deliveryZones'),
+      time: this.get('deliveryTime') || '30-60 минут'
+    };
+  }
+
+  /**
+   * Получить API URL
+   */
+  getApiUrl() {
+    return this.config.apiUrl;
+  }
+
+  /**
+   * Получить экземпляр Google Sheets интеграции
+   */
+  getGoogleSheets() {
+    return this.googleSheets;
+  }
+
+  /**
+   * Обновить кэш настроек
+   */
+  async refreshSettings() {
+    if (this.googleSheets) {
+      this.googleSheets.clearCache();
+      await this.loadSettingsFromGoogleSheets();
+    }
+  }
+
+  /**
+   * Получить статус инициализации
+   */
+  isReady() {
+    return this.isInitialized;
+  }
 }
 
-// Экспорт для удобства разработки
-export const config = clientConfig.getConfig();
-export const theme = clientConfig.getComponentConfig('theme');
-export const business = clientConfig.getComponentConfig('business');
-export const features = clientConfig.getComponentConfig('features');
+// Создаем экземпляр менеджера конфигурации
+export const clientConfig = new ClientConfigManager(CLIENT_CONFIG);
 
-// =====================================================================
-// ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ В КОДЕ:
-// =====================================================================
-/*
+// Удобные экспорты для быстрого доступа
+export const getConfig = (key, defaultValue) => clientConfig.get(key, defaultValue);
+export const isFeatureEnabled = (feature) => clientConfig.isFeatureEnabled(feature);
+export const getTheme = () => clientConfig.getTheme();
+export const getBusiness = () => clientConfig.getBusiness();
+export const getDelivery = () => clientConfig.getDelivery();
+export const getApiUrl = () => clientConfig.getApiUrl();
 
-// Получить конфигурацию
-import { clientConfig, config, theme, features } from './config/clientConfig.js';
+// Экспортируем для совместимости с существующим кодом
+export const config = clientConfig;
+export const theme = getTheme;
+export const business = getBusiness;
+export const features = { isEnabled: isFeatureEnabled };
 
-// Проверить включена ли функция
-if (clientConfig.isFeatureEnabled('ENABLE_DISCOUNTS')) {
-  // Показать скидки
-}
+// Автоматическая инициализация при импорте
+clientConfig.initialize().catch(console.error);
 
-// Получить цвет из темы
-const primaryColor = clientConfig.getThemeColor('primary');
-
-// Получить размер шрифта
-const fontSize = clientConfig.getFontSize('lg');
-
-// Получить полную конфигурацию
-const fullConfig = clientConfig.getConfig();
-
-// Получить конфигурацию компонента
-const deliveryConfig = clientConfig.getComponentConfig('delivery');
-
-*/
-
-// =====================================================================
-// ИНСТРУКЦИЯ ПО РАЗВЕРТЫВАНИЮ:
-// =====================================================================
-/*
-
-1. НАСТРОЙКА GOOGLE SHEETS:
-   - Создайте Google таблицу
-   - Настройте Google Apps Script
-   - Укажите URL в api.baseUrl
-
-2. НАСТРОЙКА ДОМЕНА:
-   - Загрузите файлы на хостинг
-   - Настройте домен
-   - Проверьте HTTPS
-
-3. ТЕСТИРОВАНИЕ:
-   - Проверьте все функции
-   - Протестируйте на мобильных устройствах
-   - Убедитесь в работе интеграций
-
-4. ЗАПУСК:
-   - Включите нужные функции в features
-   - Настройте аналитику (если нужно)
-   - Обучите персонал работе с админ-панелью
-
-*/
+export default clientConfig;

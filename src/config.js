@@ -1,12 +1,32 @@
-// config.js - Централизованные настройки проекта (УСТАРЕЛ - используйте restaurantConfig.js)
+// config.js - Главный файл конфигурации приложения
+// Адаптирован под реальную структуру Google Sheets API
 
-// Импортируем новую систему конфигурации
-import { restaurantConfig, BASE_CONFIG, API_URL as NEW_API_URL, CONFIG as NEW_CONFIG } from './config/restaurantConfig.js';
+// === ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ОСНОВНОЙ И ТЕСТОВОЙ КОНФИГУРАЦИЕЙ ===
+// Для тестирования раскомментируйте строку ниже и закомментируйте основную:
+// import { clientConfig, config, theme, business, features } from './config/testConfig.js';
 
-// Экспортируем для обратной совместимости
-export const CONFIG = NEW_CONFIG;
-export const API_URL = NEW_API_URL;
-export const APP_NAME = () => restaurantConfig.getCurrentConfig().appName || 'Food Delivery';
+// Основная конфигурация:
+import { clientConfig, config, theme, business, features, getConfig, isFeatureEnabled, getTheme, getBusiness, getDelivery, getApiUrl } from './config/clientConfig.js';
 
-// Экспортируем новый менеджер конфигурации
-export { restaurantConfig };
+// Экспортируем для обратной совместимости с существующим кодом
+export const CONFIG = config;
+export const API_URL = getApiUrl();
+export const APP_NAME = () => getConfig('appName', 'Food Delivery');
+
+// Новые экспорты
+export { 
+  clientConfig,
+  config,
+  theme, 
+  business, 
+  features,
+  getConfig,
+  isFeatureEnabled,
+  getTheme,
+  getBusiness,
+  getDelivery,
+  getApiUrl
+};
+
+// Экспортируем менеджер конфигурации как основной экспорт
+export default clientConfig;

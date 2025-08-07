@@ -1,25 +1,23 @@
-// googleSheetsIntegration.js - Интеграция с Google таблицами для управления настройками ресторанов
+// googleSheetsIntegration.js - Интеграция с Google таблицами
+// Адаптировано под реальную структуру Google Apps Script API
 
-import { BASE_CONFIG } from './restaurantConfig.js';
+import { useState, useEffect } from 'react';
 
 /**
- * Класс для работы с Google таблицами
- * Управляет настройками ресторанов через Google Sheets API
+ * Класс для работы с Google таблицами через Apps Script API
  */
 export class GoogleSheetsIntegration {
-  constructor(apiUrl = BASE_CONFIG.API_URL) {
+  constructor(apiUrl) {
     this.apiUrl = apiUrl;
     this.cache = new Map();
     this.cacheExpiry = 5 * 60 * 1000; // 5 минут
   }
 
   /**
-   * Получить настройки ресторана из Google таблицы
-   * @param {string} restaurantId - ID ресторана
-   * @returns {Promise<Object>} Настройки ресторана
+   * Базовый метод для выполнения запросов к API
    */
-  async getRestaurantSettings(restaurantId) {
-    const cacheKey = `settings_${restaurantId}`;
+  async makeRequest(action, params = {}) {
+    const cacheKey = `${action}_${JSON.stringify(params)}`;
     
     // Проверяем кэш
     if (this.cache.has(cacheKey)) {
@@ -30,7 +28,13 @@ export class GoogleSheetsIntegration {
     }
 
     try {
-      const url = `${this.apiUrl}?action=getRestaurantSettings&restaurantId=${restaurantId}&t=${Date.now()}`;
+      const urlParams = new URLSearchParams({
+        action,
+        ...params,
+        t: Date.now() // Предотвращение кэширования
+      });
+      
+      const url = `${this.apiUrl}?${urlParams}`;
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -38,6 +42,10 @@ export class GoogleSheetsIntegration {
       }
       
       const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
       
       // Кэшируем результат
       this.cache.set(cacheKey, {
@@ -47,18 +55,15 @@ export class GoogleSheetsIntegration {
       
       return data;
     } catch (error) {
-      console.error('Error fetching restaurant settings:', error);
-      return {};
+      console.error(`Error in ${action}:`, error);
+      throw error;
     }
   }
 
   /**
-   * Сохранить настройки ресторана в Google таблицу
-   * @param {string} restaurantId - ID ресторана
-   * @param {Object} settings - Настройки для сохранения
-   * @returns {Promise<boolean>} Успешность операции
+   * POST запрос к API
    */
-  async saveRestaurantSettings(restaurantId, settings) {
+  async makePostRequest(action, data) {
     try {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
@@ -66,250 +71,274 @@ export class GoogleSheetsIntegration {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'updateRestaurantSettings',
-          restaurantId,
-          settings,
-          timestamp: Date.now()
+          action,
+          ...data
         })
       });
-
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+      
       const result = await response.json();
       
-      // Очищаем кэш для этого ресторана
-      this.cache.delete(`settings_${restaurantId}`);
+      if (result.error) {
+        throw new Error(result.error);
+      }
       
-      return result.success || false;
+      return result;
     } catch (error) {
-      console.error('Error saving restaurant settings:', error);
-      return false;
+      console.error(`Error in POST ${action}:`, error);
+      throw error;
     }
   }
 
+  // === НАСТРОЙКИ (settings лист - ключ-значение) ===
+  
   /**
-   * Получить список всех ресторанов из Google таблицы
-   * @returns {Promise<Array>} Список ресторанов
+   * Получить все настройки из листа settings
    */
-  async getRestaurantsList() {
-    const cacheKey = 'restaurants_list';
+  async getSettings() {
+    return this.makeRequest('getSettings');
+  }
+
+  // === ПРОДУКТЫ ===
+  
+  /**
+   * Получить все продукты
+   */
+  async getProducts() {
+    return this.makeRequest('getProducts');
+  }
+
+  // === КАТЕГОРИИ ===
+  
+  /**
+   * Получить все категории
+   */
+  async getCategories() {
+    return this.makeRequest('getCategories');
+  }
+
+  // === СКИДКИ ===
+  
+  /**
+   * Получить все скидки
+   */
+  async getDiscounts() {
+    return this.makeRequest('getDiscounts');
+  }
+
+  // === СТАТУСЫ ЗАКАЗОВ ===
+  
+  /**
+   * Получить метки статусов
+   */
+  async getStatusLabels() {
+    return this.makeRequest('getStatusLabels');
+  }
+
+  // === АДМИНИСТРАТОРЫ ===
+  
+  /**
+   * Получить список администраторов
+   */
+  async getAdmins() {
+    return this.makeRequest('getAdmins');
+  }
+
+  // === ЗАКАЗЫ ===
+  
+  /**
+   * Получить все заказы
+   */
+  async getOrders() {
+    return this.makeRequest('getOrders');
+  }
+
+  /**
+   * Создать новый заказ
+   */
+  async createOrder(orderData) {
+    // Очищаем кэш заказов после создания
+    this.clearCacheByPattern('getOrders');
     
-    // Проверяем кэш
-    if (this.cache.has(cacheKey)) {
-      const cached = this.cache.get(cacheKey);
-      if (Date.now() - cached.timestamp < this.cacheExpiry) {
-        return cached.data;
-      }
-    }
-
-    try {
-      const url = `${this.apiUrl}?action=getRestaurantsList&t=${Date.now()}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Кэшируем результат
-      this.cache.set(cacheKey, {
-        data,
-        timestamp: Date.now()
-      });
-      
-      return data;
-    } catch (error) {
-      console.error('Error fetching restaurants list:', error);
-      return [];
-    }
+    return this.makePostRequest('createOrder', orderData);
   }
 
   /**
-   * Создать новый ресторан в Google таблице
-   * @param {Object} restaurantData - Данные нового ресторана
-   * @returns {Promise<boolean>} Успешность операции
+   * Обновить статус заказа
    */
-  async createRestaurant(restaurantData) {
-    try {
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'createRestaurant',
-          restaurantData,
-          timestamp: Date.now()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      // Очищаем кэш списка ресторанов
-      this.cache.delete('restaurants_list');
-      
-      return result.success || false;
-    } catch (error) {
-      console.error('Error creating restaurant:', error);
-      return false;
-    }
+  async updateOrderStatus(orderId, status) {
+    // Очищаем кэш заказов после обновления
+    this.clearCacheByPattern('getOrders');
+    
+    return this.makeRequest('updateOrderStatus', { orderId, status });
   }
 
+  // === ШАБЛОНЫ ПЕЧАТИ ===
+  
   /**
-   * Удалить ресторан из Google таблицы
-   * @param {string} restaurantId - ID ресторана
-   * @returns {Promise<boolean>} Успешность операции
+   * Получить шаблоны печати
    */
-  async deleteRestaurant(restaurantId) {
-    try {
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'deleteRestaurant',
-          restaurantId,
-          timestamp: Date.now()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      // Очищаем кэш
-      this.cache.delete(`settings_${restaurantId}`);
-      this.cache.delete('restaurants_list');
-      
-      return result.success || false;
-    } catch (error) {
-      console.error('Error deleting restaurant:', error);
-      return false;
-    }
+  async getPrintTemplate() {
+    return this.makeRequest('getPrintTemplate');
   }
 
+  // === ОТЗЫВЫ ===
+  
   /**
-   * Получить продукты для конкретного ресторана
-   * @param {string} restaurantId - ID ресторана
-   * @returns {Promise<Array>} Список продуктов
+   * Получить отзывы
    */
-  async getRestaurantProducts(restaurantId) {
-    try {
-      const url = `${this.apiUrl}?action=getProducts&restaurantId=${restaurantId}&t=${Date.now()}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching restaurant products:', error);
-      return [];
-    }
+  async getReviews() {
+    return this.makeRequest('getReviews');
   }
 
+  // === УТИЛИТЫ ===
+  
   /**
-   * Получить категории для конкретного ресторана
-   * @param {string} restaurantId - ID ресторана
-   * @returns {Promise<Array>} Список категорий
-   */
-  async getRestaurantCategories(restaurantId) {
-    try {
-      const url = `${this.apiUrl}?action=getCategories&restaurantId=${restaurantId}&t=${Date.now()}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching restaurant categories:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Получить заказы для конкретного ресторана
-   * @param {string} restaurantId - ID ресторана
-   * @returns {Promise<Array>} Список заказов
-   */
-  async getRestaurantOrders(restaurantId) {
-    try {
-      const url = `${this.apiUrl}?action=getOrders&restaurantId=${restaurantId}&t=${Date.now()}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching restaurant orders:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Очистить кэш
+   * Очистить весь кэш
    */
   clearCache() {
     this.cache.clear();
   }
 
   /**
-   * Получить статус подключения к Google таблице
-   * @returns {Promise<boolean>} Статус подключения
+   * Очистить кэш по паттерну
+   */
+  clearCacheByPattern(pattern) {
+    for (const key of this.cache.keys()) {
+      if (key.includes(pattern)) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Тест соединения с API
    */
   async testConnection() {
     try {
-      const url = `${this.apiUrl}?action=ping&t=${Date.now()}`;
-      const response = await fetch(url);
-      return response.ok;
+      const settings = await this.getSettings();
+      return { 
+        success: true, 
+        message: 'Соединение успешно установлено',
+        settingsCount: Object.keys(settings).length
+      };
     } catch (error) {
-      console.error('Connection test failed:', error);
-      return false;
+      return { 
+        success: false, 
+        message: `Ошибка соединения: ${error.message}` 
+      };
     }
   }
 }
 
+// Создаем экземпляр интеграции (будет переопределен в clientConfig)
+let googleSheetsIntegration = null;
+
 /**
- * Хук для работы с Google таблицами в React компонентах
- * @param {string} restaurantId - ID ресторана
- * @returns {Object} Объект с методами и состоянием
+ * Инициализация интеграции с Google Sheets
  */
-export function useGoogleSheetsIntegration(restaurantId) {
-  const integration = new GoogleSheetsIntegration();
-  
-  return {
-    // Методы
-    getSettings: () => integration.getRestaurantSettings(restaurantId),
-    saveSettings: (settings) => integration.saveRestaurantSettings(restaurantId, settings),
-    getProducts: () => integration.getRestaurantProducts(restaurantId),
-    getCategories: () => integration.getRestaurantCategories(restaurantId),
-    getOrders: () => integration.getRestaurantOrders(restaurantId),
-    
-    // Административные методы
-    getRestaurantsList: () => integration.getRestaurantsList(),
-    createRestaurant: (data) => integration.createRestaurant(data),
-    deleteRestaurant: (id) => integration.deleteRestaurant(id),
-    
-    // Утилиты
-    clearCache: () => integration.clearCache(),
-    testConnection: () => integration.testConnection()
-  };
+export function initializeGoogleSheetsIntegration(apiUrl) {
+  googleSheetsIntegration = new GoogleSheetsIntegration(apiUrl);
+  return googleSheetsIntegration;
 }
 
-// Создаем глобальный экземпляр для использования в приложении
-export const googleSheetsIntegration = new GoogleSheetsIntegration();
+/**
+ * Получить экземпляр интеграции
+ */
+export function getGoogleSheetsIntegration() {
+  if (!googleSheetsIntegration) {
+    throw new Error('Google Sheets Integration not initialized. Call initializeGoogleSheetsIntegration first.');
+  }
+  return googleSheetsIntegration;
+}
+
+/**
+ * React хук для работы с Google Sheets
+ */
+export function useGoogleSheetsIntegration() {
+  return getGoogleSheetsIntegration();
+}
+
+/**
+ * React хук для загрузки данных из Google Sheets
+ */
+export function useGoogleSheetsData(dataType, dependencies = []) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const integration = useGoogleSheetsIntegration();
+
+  useEffect(() => {
+    let mounted = true;
+    
+    async function loadData() {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        let result;
+        switch (dataType) {
+          case 'settings':
+            result = await integration.getSettings();
+            break;
+          case 'products':
+            result = await integration.getProducts();
+            break;
+          case 'categories':
+            result = await integration.getCategories();
+            break;
+          case 'discounts':
+            result = await integration.getDiscounts();
+            break;
+          case 'statusLabels':
+            result = await integration.getStatusLabels();
+            break;
+          case 'admins':
+            result = await integration.getAdmins();
+            break;
+          case 'orders':
+            result = await integration.getOrders();
+            break;
+          case 'printTemplate':
+            result = await integration.getPrintTemplate();
+            break;
+          case 'reviews':
+            result = await integration.getReviews();
+            break;
+          default:
+            throw new Error(`Unknown data type: ${dataType}`);
+        }
+        
+        if (mounted) {
+          setData(result);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err.message);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+    
+    loadData();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [dataType, integration, ...dependencies]);
+
+  return { data, loading, error, refetch: () => {
+    integration.clearCacheByPattern(dataType);
+    // Перезагрузка произойдет автоматически через useEffect
+  }};
+}
+
+// Экспортируем экземпляр для обратной совместимости
+export { googleSheetsIntegration };
