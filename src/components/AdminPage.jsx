@@ -946,6 +946,9 @@ const averageTimeStats = averageTimeStatsRaw || {
         </div>
       </div>
     </div>
+    );
+}; // <-- закрыли AdminDashboard
+
 const AdminPage = () => {
   const [admin, setAdmin] = useState(null);
 
