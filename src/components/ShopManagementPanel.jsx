@@ -205,7 +205,7 @@ const ShopManagementPanel = ({ admin }) => {
           }}>
             <h3 style={{
               margin: 0,
-              fontSize: '1.2rem',
+              fontSize: '1.1rem',
               fontWeight: 'bold',
               color: '#2c1e0f'
             }}>
@@ -227,6 +227,74 @@ const ShopManagementPanel = ({ admin }) => {
               }}
             >
               ✕
+            </button>
+          </div>
+
+          {/* ✅ 3 КНОПКИ В РЯД адаптивные */}
+          <div style={{
+            padding: '1rem 1.5rem',
+            borderBottom: '1px solid #e0e0e0',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: '0.5rem'
+          }}>
+            <button
+              onClick={() => updateProductsStatus('inactive')}
+              disabled={selectedProducts.length === 0 || isUpdatingProducts}
+              style={{
+                padding: '0.75rem 0.5rem',
+                background: selectedProducts.length === 0 ? '#ccc' : '#f44336',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: window.innerWidth <= 400 ? '0.7rem' : '0.8rem',
+                fontWeight: 'bold',
+                cursor: selectedProducts.length === 0 ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              🛑 СТОП
+            </button>
+            
+            <button
+              onClick={() => updateProductsStatus('active')}
+              disabled={selectedProducts.length === 0 || isUpdatingProducts}
+              style={{
+                padding: '0.75rem 0.5rem',
+                background: selectedProducts.length === 0 ? '#ccc' : '#4caf50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: window.innerWidth <= 400 ? '0.7rem' : '0.8rem',
+                fontWeight: 'bold',
+                cursor: selectedProducts.length === 0 ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              ✅ АКТИВ
+            </button>
+
+            <button
+              onClick={() => setSelectedProducts([])}
+              style={{
+                padding: '0.75rem 0.5rem',
+                background: '#666',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: window.innerWidth <= 400 ? '0.7rem' : '0.8rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              🗑️ ОЧИСТИТЬ
             </button>
           </div>
 
@@ -253,76 +321,24 @@ const ShopManagementPanel = ({ admin }) => {
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ color: '#2196f3', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                {products.length}
+                {selectedProducts.length}
               </div>
-              <div style={{ color: '#666', fontSize: '0.8rem' }}>Всего</div>
+              <div style={{ color: '#666', fontSize: '0.8rem' }}>Выбрано</div>
             </div>
           </div>
 
-          {/* Кнопки быстрого выбора */}
-          <div style={{
-            padding: '1rem 1.5rem',
-            borderBottom: '1px solid #e0e0e0',
-            display: 'flex',
-            gap: '0.5rem',
-            flexWrap: 'wrap'
-          }}>
-            <button
-              onClick={() => selectAllProducts(inactiveProducts)}
-              disabled={inactiveProducts.length === 0}
-              style={{
-                padding: '0.5rem 1rem',
-                background: '#4caf50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                cursor: inactiveProducts.length === 0 ? 'not-allowed' : 'pointer',
-                opacity: inactiveProducts.length === 0 ? 0.5 : 1
-              }}
-            >
-              ✓ Отключенные ({inactiveProducts.length})
-            </button>
-            
-            <button
-              onClick={() => selectAllProducts(activeProducts)}
-              disabled={activeProducts.length === 0}
-              style={{
-                padding: '0.5rem 1rem',
-                background: '#f44336',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                cursor: activeProducts.length === 0 ? 'not-allowed' : 'pointer',
-                opacity: activeProducts.length === 0 ? 0.5 : 1
-              }}
-            >
-              ✓ Активные ({activeProducts.length})
-            </button>
-
-            <button
-              onClick={() => setSelectedProducts([])}
-              style={{
-                padding: '0.5rem 1rem',
-                background: '#666',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                cursor: 'pointer'
-              }}
-            >
-              Очистить
-            </button>
-          </div>
-
-          {/* ✅ УЛУЧШЕННЫЙ Список товаров с картинками и прокруткой */}
-          <div style={{
-            flex: 1,
-            overflow: 'auto',
-            padding: '0'
-          }}>
+          {/* ✅ ИСПРАВЛЕННАЯ ПРОКРУТКА - убираем все что мешает */}
+          <div 
+            style={{
+              flex: 1,
+              overflow: 'auto',
+              WebkitOverflowScrolling: 'touch', // ✅ Важно для iOS
+              padding: 0,
+              margin: 0
+            }}
+            onTouchStart={(e) => e.stopPropagation()} // ✅ Останавливаем всплытие событий
+            onTouchMove={(e) => e.stopPropagation()}   // ✅ Останавливаем всплытие событий
+          >
             {products.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>
                 Товары не найдены
@@ -330,7 +346,8 @@ const ShopManagementPanel = ({ admin }) => {
             ) : (
               <div style={{ 
                 display: 'flex', 
-                flexDirection: 'column'
+                flexDirection: 'column',
+                minHeight: 'min-content' // ✅ Позволяет контенту определять высоту
               }}>
                 {products.map(product => {
                   const isActive = product.active !== 'FALSE' && product.active !== false && product.active !== 'false';
@@ -350,10 +367,12 @@ const ShopManagementPanel = ({ admin }) => {
                         borderBottom: '1px solid #f0f0f0',
                         borderLeft: isSelected ? '4px solid #2196f3' : '4px solid transparent',
                         transition: 'all 0.2s ease',
-                        position: 'relative'
+                        position: 'relative',
+                        minHeight: '70px', // ✅ Минимальная высота для удобного тапа
+                        userSelect: 'none' // ✅ Отключаем выделение текста
                       }}
                     >
-                      {/* ✅ Картинка товара */}
+                      {/* Картинка товара */}
                       <img
                         src={product.imageUrl || '/placeholder-food.jpg'}
                         alt={product.name}
@@ -362,14 +381,15 @@ const ShopManagementPanel = ({ admin }) => {
                           height: '50px',
                           borderRadius: '8px',
                           objectFit: 'cover',
-                          border: '2px solid #e0e0e0'
+                          border: '2px solid #e0e0e0',
+                          flexShrink: 0
                         }}
                         onError={(e) => {
                           e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yNSAyMEMyNyAyMCAyOSAyMiAyOSAyNEMyOSAyNiAyNyAyOCAyNSAyOEMyMyAyOCAyMSAyNiAyMSAyNEMyMSAyMiAyMyAyMCAyNSAyMFoiIGZpbGw9IiNDQ0NDQ0MiLz4KPC9zdmc+';
                         }}
                       />
                       
-                      {/* ✅ Чекбокс */}
+                      {/* Чекбокс */}
                       <div style={{
                         width: '24px',
                         height: '24px',
@@ -386,7 +406,7 @@ const ShopManagementPanel = ({ admin }) => {
                         {isSelected ? '✓' : ''}
                       </div>
                       
-                      {/* ✅ Информация о товаре */}
+                      {/* Информация о товаре */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                           fontWeight: 'bold',
@@ -412,7 +432,7 @@ const ShopManagementPanel = ({ admin }) => {
                         </div>
                       </div>
                       
-                      {/* ✅ Статус товара */}
+                      {/* Статус товара */}
                       <div style={{
                         padding: '0.3rem 0.6rem',
                         borderRadius: '12px',
@@ -420,7 +440,8 @@ const ShopManagementPanel = ({ admin }) => {
                         fontWeight: 'bold',
                         background: isActive ? '#e8f5e8' : '#ffebee',
                         color: isActive ? '#2e7d32' : '#c62828',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
                       }}>
                         {isActive ? 'АКТИВЕН' : 'СТОП'}
                       </div>
@@ -430,51 +451,6 @@ const ShopManagementPanel = ({ admin }) => {
               </div>
             )}
           </div>
-
-          {/* Кнопки управления */}
-          <div style={{
-            padding: '1.5rem',
-            borderTop: '1px solid #e0e0e0',
-            background: '#f8f9fa',
-            display: 'flex',
-            gap: '1rem'
-          }}>
-            <button
-              onClick={() => updateProductsStatus('active')}
-              disabled={selectedProducts.length === 0 || isUpdatingProducts}
-              style={{
-                flex: 1,
-                padding: '1rem',
-                background: selectedProducts.length === 0 ? '#ccc' : '#4caf50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '0.9rem',
-                fontWeight: 'bold',
-                cursor: selectedProducts.length === 0 ? 'not-allowed' : 'pointer'
-              }}
-            >
-              ✅ Включить ({selectedProducts.length})
-            </button>
-            
-            <button
-              onClick={() => updateProductsStatus('inactive')}
-              disabled={selectedProducts.length === 0 || isUpdatingProducts}
-              style={{
-                flex: 1,
-                padding: '1rem',
-                background: selectedProducts.length === 0 ? '#ccc' : '#f44336',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '0.9rem',
-                fontWeight: 'bold',
-                cursor: selectedProducts.length === 0 ? 'not-allowed' : 'pointer'
-              }}
-            >
-              🛑 Отключить ({selectedProducts.length})
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -482,38 +458,30 @@ const ShopManagementPanel = ({ admin }) => {
 
   return (
     <>
-      {/* ✅ Кнопка "Управление" с учетом прокрутки */}
+      {/* ✅ ИКОНКА УПРАВЛЕНИЯ рядом с именем админа */}
       <button
         onClick={() => setIsPopupOpen(true)}
         style={{
-          position: 'fixed',
-          top: window.innerWidth <= 768 ? '80px' : '20px', // ✅ Ниже на мобильных
-          right: '1rem',
-          zIndex: 999, // ✅ Ниже sticky категорий (zIndex: 900)
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-          color: 'white',
+          background: 'none',
           border: 'none',
-          borderRadius: '12px',
-          padding: window.innerWidth <= 768 ? '0.6rem 0.8rem' : '0.75rem 1rem',
-          fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.9rem',
-          fontWeight: 'bold',
           cursor: 'pointer',
-          boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
+          padding: '0.25rem',
+          borderRadius: '6px',
+          fontSize: '1rem',
+          color: '#667eea',
           transition: 'all 0.2s ease'
         }}
         onMouseEnter={(e) => {
-          e.target.style.transform = 'translateY(-2px)';
-          e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+          e.target.style.background = 'rgba(102, 126, 234, 0.1)';
+          e.target.style.transform = 'scale(1.1)';
         }}
         onMouseLeave={(e) => {
-          e.target.style.transform = 'translateY(0)';
-          e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
+          e.target.style.background = 'none';
+          e.target.style.transform = 'scale(1)';
         }}
+        title="Управление рестораном"
       >
-        ⚙️ Управление
+        ⚙️
       </button>
 
       {/* Попап панель управления */}
@@ -563,16 +531,38 @@ const ShopManagementPanel = ({ admin }) => {
               ✕
             </button>
 
-            {/* Заголовок */}
+            {/* ✅ ЗАГОЛОВОК СЛЕВА мелким шрифтом */}
             <h2 style={{
-              fontSize: '1.5rem',
+              fontSize: '1.1rem',
               fontWeight: 'bold',
               color: '#2c1e0f',
-              marginBottom: '1.5rem',
-              textAlign: 'center'
+              marginBottom: '0.5rem',
+              textAlign: 'left'
             }}>
-              ⚙️ Управление рестораном
+              Управление рестораном
             </h2>
+
+            {/* ✅ СТАТУС ВЫШЕ мелким шрифтом */}
+            <div style={{
+              fontSize: '0.8rem',
+              color: '#666',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              Статус:
+              <span style={{
+                background: shopStatus ? '#e8f5e8' : '#ffebee',
+                color: shopStatus ? '#2e7d32' : '#c62828',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '12px',
+                fontSize: '0.7rem',
+                fontWeight: 'bold'
+              }}>
+                {shopStatus ? 'ОТКРЫТ' : 'ЗАКРЫТ'}
+              </span>
+            </div>
 
             {isLoading ? (
               <div style={{
@@ -585,74 +575,46 @@ const ShopManagementPanel = ({ admin }) => {
               </div>
             ) : (
               <>
-                {/* ✅ КОМПАКТНЫЙ Статус ресторана */}
+                {/* Кнопки открыть/закрыть */}
                 <div style={{
-                  background: '#f8f9fa',
-                  borderRadius: '12px',
-                  padding: '1rem',
-                  marginBottom: '1.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '0.5rem',
+                  marginBottom: '1.5rem'
                 }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem'
-                  }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: shopStatus ? '#4caf50' : '#f44336'
-                    }} />
-                    <span style={{
-                      fontSize: '1rem',
+                  <button
+                    onClick={() => updateShopStatus(true)}
+                    disabled={shopStatus === true}
+                    style={{
+                      padding: '0.75rem',
+                      background: shopStatus === true ? '#ccc' : '#4caf50',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '0.9rem',
                       fontWeight: 'bold',
-                      color: shopStatus ? '#4caf50' : '#f44336'
-                    }}>
-                      {shopStatus ? 'ОТКРЫТ' : 'ЗАКРЫТ'}
-                    </span>
-                  </div>
-
-                  <div style={{
-                    display: 'flex',
-                    gap: '0.5rem'
-                  }}>
-                    <button
-                      onClick={() => updateShopStatus(true)}
-                      disabled={shopStatus === true}
-                      style={{
-                        padding: '0.5rem 0.75rem',
-                        background: shopStatus === true ? '#ccc' : '#4caf50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '0.8rem',
-                        fontWeight: 'bold',
-                        cursor: shopStatus === true ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      🟢 Открыть
-                    </button>
-                    
-                    <button
-                      onClick={() => updateShopStatus(false)}
-                      disabled={shopStatus === false}
-                      style={{
-                        padding: '0.5rem 0.75rem',
-                        background: shopStatus === false ? '#ccc' : '#f44336',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '0.8rem',
-                        fontWeight: 'bold',
-                        cursor: shopStatus === false ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      🔴 Закрыть
-                    </button>
-                  </div>
+                      cursor: shopStatus === true ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    🟢 Открыть
+                  </button>
+                  
+                  <button
+                    onClick={() => updateShopStatus(false)}
+                    disabled={shopStatus === false}
+                    style={{
+                      padding: '0.75rem',
+                      background: shopStatus === false ? '#ccc' : '#f44336',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold',
+                      cursor: shopStatus === false ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    🔴 Закрыть
+                  </button>
                 </div>
 
                 {/* Статистика товаров */}
@@ -662,16 +624,6 @@ const ShopManagementPanel = ({ admin }) => {
                   padding: '1.5rem',
                   marginBottom: '1.5rem'
                 }}>
-                  <div style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                    color: '#2c1e0f',
-                    marginBottom: '1rem',
-                    textAlign: 'center'
-                  }}>
-                    Товары
-                  </div>
-                  
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr 1fr',
@@ -747,7 +699,7 @@ const ShopManagementPanel = ({ admin }) => {
       {/* Модальное окно управления товарами */}
       <ProductsManagementModal />
 
-      {/* ✅ Стильные уведомления */}
+      {/* Стильные уведомления */}
       <NotificationToast />
     </>
   );
