@@ -126,24 +126,11 @@ const ShopManagementPanel = ({ admin }) => {
   };
 
   const toggleProductSelection = (productId) => {
-    // ✅ Сохраняем текущую позицию скролла ПЕРЕД изменением состояния
-    const scrollContainer = window.productsScrollContainer;
-    const currentScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-    
-    setSelectedProducts(prev => {
-      const newSelection = prev.includes(productId) 
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
         ? prev.filter(id => id !== productId)
-        : [...prev, productId];
-      
-      // ✅ Восстанавливаем позицию скролла ПОСЛЕ изменения состояния
-      setTimeout(() => {
-        if (scrollContainer) {
-          scrollContainer.scrollTop = currentScrollTop;
-        }
-      }, 0);
-      
-      return newSelection;
-    });
+        : [...prev, productId]
+    );
   };
 
   const selectAllProducts = (productsList) => {
@@ -354,28 +341,15 @@ const ShopManagementPanel = ({ admin }) => {
 
           {/* Список товаров с исправленной прокруткой */}
           <div 
-            ref={(el) => {
-              // ✅ Сохраняем ссылку на контейнер для управления скроллом
-              if (el) {
-                window.productsScrollContainer = el;
-              }
-            }}
             style={{
               flex: 1,
               overflow: 'auto',
               WebkitOverflowScrolling: 'touch',
               padding: 0,
-              margin: 0,
-              // ✅ Дополнительные стили для стабильного скролла
-              scrollBehavior: 'auto',
-              overscrollBehavior: 'contain'
+              margin: 0
             }}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
-            onScroll={(e) => {
-              // ✅ Сохраняем позицию скролла
-              window.lastScrollPosition = e.target.scrollTop;
-            }}
           >
             {products.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>
@@ -394,17 +368,7 @@ const ShopManagementPanel = ({ admin }) => {
                   return (
                     <div
                       key={product.id}
-                      onClick={(e) => {
-                        // ✅ Предотвращаем всплытие события и потерю фокуса
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleProductSelection(String(product.id));
-                      }}
-                      onTouchEnd={(e) => {
-                        // ✅ Дополнительная защита для мобильных устройств
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
+                      onClick={() => toggleProductSelection(String(product.id))}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -414,13 +378,10 @@ const ShopManagementPanel = ({ admin }) => {
                         cursor: 'pointer',
                         borderBottom: '1px solid #f0f0f0',
                         borderLeft: isSelected ? '4px solid #2196f3' : '4px solid transparent',
-                        transition: 'background-color 0.2s ease', // ✅ Убрали transition для позиции
+                        transition: 'all 0.2s ease',
                         position: 'relative',
                         minHeight: '70px',
-                        userSelect: 'none',
-                        // ✅ Дополнительные стили для стабильности
-                        WebkitTapHighlightColor: 'transparent',
-                        touchAction: 'manipulation'
+                        userSelect: 'none'
                       }}
                     >
                       {/* Картинка товара */}
