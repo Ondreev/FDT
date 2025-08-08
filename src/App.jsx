@@ -125,76 +125,66 @@ const ShopPage = () => {
       .catch((err) => console.error(`Error fetching ${action}:`, err));
   };
 
-  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ addToCart С ПОДДЕРЖКОЙ ФЛЕШ-ТОВАРОВ
-  const addToCart = async (product, skipUpsell = false) => {
-    // Проверяем, можно ли добавить товар в корзину (статус магазина)
-    if (!canAddToCart()) {
-      return; // Если магазин закрыт, покажется модальное окно
+  // ✅ ОПТИМИЗИРОВАННАЯ ФУНКЦИЯ addToCart - БЕЗ ЛИШНИХ ЗАПРОСОВ
+const addToCart = async (product, skipUpsell = false) => {
+  // Проверяем, можно ли добавить товар в корзину (статус магазина)
+  if (!canAddToCart()) {
+    return; // Если магазин закрыт, покажется модальное окно
+  }
+
+  // ✅ УПРОЩЕННАЯ ПРОВЕРКА: товар есть в списке активных товаров?
+  const isFlashOffer = product.isFlashOffer || String(product.id).includes('_flash');
+  const isDeliveryService = product.id === 'delivery_service' || product.isDelivery;
+
+  // ✅ Для обычных товаров проверяем через уже загруженные активные товары
+  if (!isDeliveryService && !isFlashOffer) {
+    const originalId = String(product.id);
+    const currentProduct = products.find(p => String(p.id) === originalId);
+    
+    if (!currentProduct) {
+      alert('❌ К сожалению, этот товар временно недоступен');
+      return;
     }
+  }
 
-    // ✅ ПРОВЕРКА ДЛЯ ФЛЕШ-ТОВАРОВ И СПЕЦИАЛЬНЫХ ПРЕДЛОЖЕНИЙ
-    const isFlashOffer = product.isFlashOffer || String(product.id).includes('_flash');
-    const isDeliveryService = product.id === 'delivery_service' || product.isDelivery;
-
-    // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: товар активен ли сейчас?
-    // Для флеш-товаров проверяем оригинальный товар, для обычных - как есть
-    if (!isDeliveryService) { // Пропускаем проверку только для доставки
-      try {
-        const response = await fetch(`${API_URL}?action=getProducts&t=${Date.now()}`);
-        const currentProducts = await response.json();
-        
-        // ✅ Для флеш-товаров ищем оригинальный товар (убираем суффикс _flash)
-        const originalId = isFlashOffer ? String(product.id).replace('_flash', '') : String(product.id);
-        const currentProduct = currentProducts.find(p => String(p.id) === originalId);
-        
-        if (!currentProduct) {
-          alert('❌ Товар не найден');
-          return;
-        }
-
-        const isProductActive = currentProduct.active !== 'FALSE' && 
-                              currentProduct.active !== false && 
-                              currentProduct.active !== 'false';
-
-        if (!isProductActive) {
-          alert('❌ К сожалению, этот товар временно недоступен');
-          // Принудительно обновляем список товаров
-          setAllProducts(currentProducts);
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking product availability:', error);
-        // В случае ошибки разрешаем добавление
-      }
+  // ✅ Для флеш-товаров проверяем базовый товар
+  if (isFlashOffer && !isDeliveryService) {
+    const originalId = String(product.id).replace('_flash', '');
+    const baseProduct = products.find(p => String(p.id) === originalId);
+    
+    if (!baseProduct) {
+      alert('❌ К сожалению, этот товар временно недоступен');
+      return;
     }
+  }
 
-    // ✅ ДОБАВЛЯЕМ ТОВАР В КОРЗИНУ
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
-
-    // ✅ ЗАПУСКАЕМ UPSELL ТОЛЬКО ДЛЯ ОСНОВНЫХ БЛЮД (не для флеш-товаров и спецпредложений)
-    if (!skipUpsell && !isUpsellOpen && !isFlashOffer && !isDeliveryService) {
-      const productId = String(product.id);
-      const isMainDish = !productId.includes('Q') && !productId.includes('Y') && 
-                        !productId.includes('D') && !productId.includes('S') && 
-                        !productId.includes('R2000');
-      
-      if (isMainDish) {
-        setTimeout(() => {
-          startUpsellFlow();
-        }, 300);
-      }
+  // ✅ ДОБАВЛЯЕМ ТОВАР В КОРЗИНУ
+  setCart(prev => {
+    const existing = prev.find(item => item.id === product.id);
+    if (existing) {
+      return prev.map(item =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
     }
-  };
+    return [...prev, { ...product, quantity: 1 }];
+  });
+
+  // ✅ ЗАПУСКАЕМ UPSELL ТОЛЬКО ДЛЯ ОСНОВНЫХ БЛЮД (не для флеш-товаров и спецпредложений)
+  if (!skipUpsell && !isUpsellOpen && !isFlashOffer && !isDeliveryService) {
+    const productId = String(product.id);
+    const isMainDish = !productId.includes('Q') && !productId.includes('Y') && 
+                      !productId.includes('D') && !productId.includes('S') && 
+                      !productId.includes('R2000');
+    
+    if (isMainDish) {
+      setTimeout(() => {
+        startUpsellFlow();
+      }, 300);
+    }
+  }
+};
 
   // ✅ ФУНКЦИЯ ДЛЯ ДОБАВЛЕНИЯ БЕЗ UPSELL
   const addToCartWithoutUpsell = (product) => {
