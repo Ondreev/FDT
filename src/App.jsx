@@ -57,6 +57,10 @@ const ShopPage = () => {
     return localStorage.getItem('deliveryMode') || 'delivery';
   });
   
+  // ✅ ОБЩИЕ СОСТОЯНИЯ ДЛЯ ФЛЕШ-ПРЕДЛОЖЕНИЯ
+  const [flashOfferDismissed, setFlashOfferDismissed] = useState(false);
+  const [flashOfferShown, setFlashOfferShown] = useState(false);
+  
   // Состояния для попапов в меню
   const [showFlashPopup, setShowFlashPopup] = useState(false);
   const [showDeliveryPopup, setShowDeliveryPopup] = useState(false);
@@ -122,80 +126,96 @@ const ShopPage = () => {
   };
 
   // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ addToCart С ПОДДЕРЖКОЙ ФЛЕШ-ТОВАРОВ
-const addToCart = async (product, skipUpsell = false) => {
-  // Проверяем, можно ли добавить товар в корзину (статус магазина)
-  if (!canAddToCart()) {
-    return; // Если магазин закрыт, покажется модальное окно
-  }
+  const addToCart = async (product, skipUpsell = false) => {
+    // Проверяем, можно ли добавить товар в корзину (статус магазина)
+    if (!canAddToCart()) {
+      return; // Если магазин закрыт, покажется модальное окно
+    }
 
-  // ✅ ПРОВЕРКА ДЛЯ ФЛЕШ-ТОВАРОВ И СПЕЦИАЛЬНЫХ ПРЕДЛОЖЕНИЙ
-  const isFlashOffer = product.isFlashOffer || String(product.id).includes('_flash');
-  const isDeliveryService = product.id === 'delivery_service' || product.isDelivery;
-  const isSpecialOffer = isFlashOffer || isDeliveryService;
+    // ✅ ПРОВЕРКА ДЛЯ ФЛЕШ-ТОВАРОВ И СПЕЦИАЛЬНЫХ ПРЕДЛОЖЕНИЙ
+    const isFlashOffer = product.isFlashOffer || String(product.id).includes('_flash');
+    const isDeliveryService = product.id === 'delivery_service' || product.isDelivery;
 
-  // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: товар активен ли сейчас?
-  // Для флеш-товаров проверяем оригинальный товар, для обычных - как есть
-  if (!isDeliveryService) { // Пропускаем проверку только для доставки
-    try {
-      const response = await fetch(`${API_URL}?action=getProducts&t=${Date.now()}`);
-      const currentProducts = await response.json();
-      
-      // ✅ Для флеш-товаров ищем оригинальный товар (убираем суффикс _flash)
-      const originalId = isFlashOffer ? String(product.id).replace('_flash', '') : String(product.id);
-      const currentProduct = currentProducts.find(p => String(p.id) === originalId);
-      
-      if (!currentProduct) {
-        alert('❌ Товар не найден');
-        return;
+    // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: товар активен ли сейчас?
+    // Для флеш-товаров проверяем оригинальный товар, для обычных - как есть
+    if (!isDeliveryService) { // Пропускаем проверку только для доставки
+      try {
+        const response = await fetch(`${API_URL}?action=getProducts&t=${Date.now()}`);
+        const currentProducts = await response.json();
+        
+        // ✅ Для флеш-товаров ищем оригинальный товар (убираем суффикс _flash)
+        const originalId = isFlashOffer ? String(product.id).replace('_flash', '') : String(product.id);
+        const currentProduct = currentProducts.find(p => String(p.id) === originalId);
+        
+        if (!currentProduct) {
+          alert('❌ Товар не найден');
+          return;
+        }
+
+        const isProductActive = currentProduct.active !== 'FALSE' && 
+                              currentProduct.active !== false && 
+                              currentProduct.active !== 'false';
+
+        if (!isProductActive) {
+          alert('❌ К сожалению, этот товар временно недоступен');
+          // Принудительно обновляем список товаров
+          setAllProducts(currentProducts);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking product availability:', error);
+        // В случае ошибки разрешаем добавление
       }
+    }
 
-      const isProductActive = currentProduct.active !== 'FALSE' && 
-                            currentProduct.active !== false && 
-                            currentProduct.active !== 'false';
-
-      if (!isProductActive) {
-        alert('❌ К сожалению, этот товар временно недоступен');
-        // Принудительно обновляем список товаров
-        setAllProducts(currentProducts);
-        return;
+    // ✅ ДОБАВЛЯЕМ ТОВАР В КОРЗИНУ
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
       }
-    } catch (error) {
-      console.error('Error checking product availability:', error);
-      // В случае ошибки разрешаем добавление
-    }
-  }
+      return [...prev, { ...product, quantity: 1 }];
+    });
 
-  // ✅ ДОБАВЛЯЕМ ТОВАР В КОРЗИНУ
-  setCart(prev => {
-    const existing = prev.find(item => item.id === product.id);
-    if (existing) {
-      return prev.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      );
+    // ✅ ЗАПУСКАЕМ UPSELL ТОЛЬКО ДЛЯ ОСНОВНЫХ БЛЮД (не для флеш-товаров и спецпредложений)
+    if (!skipUpsell && !isUpsellOpen && !isFlashOffer && !isDeliveryService) {
+      const productId = String(product.id);
+      const isMainDish = !productId.includes('Q') && !productId.includes('Y') && 
+                        !productId.includes('D') && !productId.includes('S') && 
+                        !productId.includes('R2000');
+      
+      if (isMainDish) {
+        setTimeout(() => {
+          startUpsellFlow();
+        }, 300);
+      }
     }
-    return [...prev, { ...product, quantity: 1 }];
-  });
-
-  // ✅ ЗАПУСКАЕМ UPSELL ТОЛЬКО ДЛЯ ОСНОВНЫХ БЛЮД (не для флеш-товаров и спецпредложений)
-  if (!skipUpsell && !isUpsellOpen && !isSpecialOffer) {
-    const productId = String(product.id);
-    const isMainDish = !productId.includes('Q') && !productId.includes('Y') && 
-                      !productId.includes('D') && !productId.includes('S') && 
-                      !productId.includes('R2000');
-    
-    if (isMainDish) {
-      setTimeout(() => {
-        startUpsellFlow();
-      }, 300);
-    }
-  }
-};
+  };
 
   // ✅ ФУНКЦИЯ ДЛЯ ДОБАВЛЕНИЯ БЕЗ UPSELL
   const addToCartWithoutUpsell = (product) => {
     addToCart(product, true);
+  };
+
+  // ✅ ФУНКЦИЯ ОТКЛОНЕНИЯ ФЛЕШ-ПРЕДЛОЖЕНИЯ
+  const dismissFlashOffer = () => {
+    setFlashOfferDismissed(true);
+    setShowFlashPopup(false);
+    localStorage.setItem('flashOfferDismissed', 'true');
+  };
+
+  // ✅ ФУНКЦИЯ ПОКАЗА ФЛЕШ-ПОПАПА
+  const showFlashOfferPopup = (productData) => {
+    if (flashOfferDismissed) return;
+    
+    setFlashPopupData(productData);
+    setFlashTimeLeft(120);
+    setShowFlashPopup(true);
+    setFlashOfferShown(true);
   };
 
   const updateQuantity = (id, newQuantity) => {
@@ -360,7 +380,15 @@ const addToCart = async (product, skipUpsell = false) => {
     return () => clearInterval(deliveryTimer);
   }, [showDeliveryPopup, deliveryTimeLeft]);
 
+  // ✅ ОБНОВЛЕННЫЙ useEffect для флеш-предложения
   useEffect(() => {
+    // Проверяем было ли отклонено в этой сессии
+    const dismissed = localStorage.getItem('flashOfferDismissed');
+    if (dismissed === 'true') {
+      setFlashOfferDismissed(true);
+      return;
+    }
+
     // Проверка флеш-предложения
     const flashProduct = products.find(p => String(p.id).includes('R2000'));
     if (flashProduct) {
@@ -371,15 +399,13 @@ const addToCart = async (product, skipUpsell = false) => {
       const flashItem = cart.find(item => item.id === `${flashProduct.id}_flash`);
       const conditionMet = productsSubtotal >= 2000;
       
-      if (conditionMet && !flashItem && !showFlashPopup) {
+      if (conditionMet && !flashItem && !showFlashPopup && !flashOfferShown && !flashOfferDismissed) {
         const discountedPrice = Math.round(flashProduct.price * 0.01);
-        setFlashPopupData({ product: flashProduct, price: discountedPrice });
-        setFlashTimeLeft(120);
-        setShowFlashPopup(true);
+        showFlashOfferPopup({ product: flashProduct, price: discountedPrice });
       }
     }
 
-    // Проверка бесплатной доставки
+    // Проверка бесплатной доставки (без изменений)
     if (deliveryMode === 'delivery') {
       const productsSubtotal = cart
         .filter(item => item.id !== 'delivery_service')
@@ -393,7 +419,12 @@ const addToCart = async (product, skipUpsell = false) => {
         setShowDeliveryPopup(true);
       }
     }
-  }, [cart, products, deliveryMode, showFlashPopup, showDeliveryPopup]);
+  }, [cart, products, deliveryMode, showFlashPopup, flashOfferShown, flashOfferDismissed]);
+
+  // ✅ СБРОС состояния при загрузке страницы
+  useEffect(() => {
+    localStorage.removeItem('flashOfferDismissed');
+  }, []);
 
   useEffect(() => {
     if (settings.font) {
@@ -613,11 +644,14 @@ const addToCart = async (product, skipUpsell = false) => {
             deliveryMode={deliveryMode}
           />
 
+          {/* ✅ ПЕРЕДАЕМ СОСТОЯНИЯ В MainPageFlashOffer */}
           <MainPageFlashOffer 
             products={products}
             cart={cart}
             settings={settings}
             addToCart={addToCartWithoutUpsell}
+            isDismissed={flashOfferDismissed}
+            onDismiss={dismissFlashOffer}
           />
         </div>
 
@@ -676,6 +710,7 @@ const addToCart = async (product, skipUpsell = false) => {
         />
 
         {/* ✅ НОВЫЕ КОМПОНЕНТЫ */}
+        {/* ✅ ПЕРЕДАЕМ СОСТОЯНИЯ В PopupsContainer */}
         <PopupsContainer
           showFlashPopup={showFlashPopup}
           setShowFlashPopup={setShowFlashPopup}
@@ -686,6 +721,7 @@ const addToCart = async (product, skipUpsell = false) => {
           deliveryTimeLeft={deliveryTimeLeft}
           addToCartWithoutUpsell={addToCartWithoutUpsell}
           setCart={setCart}
+          onDismissFlash={dismissFlashOffer}
         />
 
         <RatingPopup
