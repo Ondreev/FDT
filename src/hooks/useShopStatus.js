@@ -9,8 +9,8 @@ export const useShopStatus = () => {
 
   useEffect(() => {
     checkShopStatus();
-    // ✅ УМЕНЬШИЛ интервал проверки до 10 секунд для быстрого реагирования
-    const interval = setInterval(checkShopStatus, 10000);
+    // Проверяем статус каждые 30 секунд
+    const interval = setInterval(checkShopStatus, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -19,15 +19,21 @@ export const useShopStatus = () => {
       const response = await fetch(`${API_URL}?action=getSettings&t=${Date.now()}`);
       const settings = await response.json();
       
-      console.log('🏪 Shop status check:', settings.shopOpen, typeof settings.shopOpen);
+      console.log('🏪 Raw shop status from API:', settings.shopOpen, typeof settings.shopOpen);
       
-      // ✅ ИСПРАВЛЕНО: Правильная проверка регистра
+      // ✅ ИСПРАВЛЕННАЯ ЛОГИКА: Проверяем все возможные варианты "закрыто"
       const shopOpenValue = settings.shopOpen;
-      const shopOpen = shopOpenValue !== 'FALSE' && shopOpenValue !== 'false' && shopOpenValue !== false;
+      const shopClosed = shopOpenValue === 'FALSE' || 
+                        shopOpenValue === 'false' || 
+                        shopOpenValue === false ||
+                        shopOpenValue === 0 ||
+                        shopOpenValue === '0';
       
-      console.log('🏪 Shop is open:', shopOpen);
+      const shopOpen = !shopClosed;
       
-      // ✅ ДОБАВЛЕНО: Если магазин только что закрылся, сразу показываем уведомление
+      console.log('🏪 Calculated shop status - Open:', shopOpen, 'Closed:', shopClosed);
+      
+      // ✅ Если магазин только что закрылся и мы не в процессе загрузки
       if (isShopOpen && !shopOpen && !isLoading) {
         console.log('🚨 Shop just closed! Showing modal immediately');
         setShowClosedModal(true);
@@ -37,22 +43,24 @@ export const useShopStatus = () => {
       
     } catch (error) {
       console.error('Ошибка проверки статуса магазина:', error);
-      // В случае ошибки считаем магазин открытым
+      // В случае ошибки считаем магазин открытым, чтобы не блокировать работу
       setIsShopOpen(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Функция для проверки можно ли добавить товар в корзину
+  // ✅ ИСПРАВЛЕННАЯ функция для проверки можно ли добавить товар в корзину
   const canAddToCart = () => {
+    console.log('🔍 canAddToCart check:', { isLoading, isShopOpen });
+    
     if (isLoading) {
       console.log('⏳ Cannot add to cart: still loading shop status');
       return false;
     }
     
     if (!isShopOpen) {
-      console.log('🚫 Cannot add to cart: shop is closed');
+      console.log('🚫 Cannot add to cart: shop is closed, showing modal');
       setShowClosedModal(true);
       return false;
     }
@@ -65,11 +73,10 @@ export const useShopStatus = () => {
     setShowClosedModal(false);
   };
 
-  // ✅ ПРИНУДИТЕЛЬНОЕ закрытие магазина (для использования в addToCart)
-  const forceCloseShop = () => {
-    console.log('🔒 Forcing shop to close');
-    setIsShopOpen(false);
-    setShowClosedModal(true);
+  // ✅ Принудительная проверка статуса (для использования в критических моментах)
+  const forceCheckShopStatus = async () => {
+    await checkShopStatus();
+    return isShopOpen;
   };
 
   return {
@@ -78,9 +85,7 @@ export const useShopStatus = () => {
     showClosedModal,
     canAddToCart,
     closeModal,
-    checkShopStatus, // Для принудительной проверки
-    setIsShopOpen,   // ✅ Экспортируем для внешнего использования
-    setShowClosedModal, // ✅ Экспортируем для внешнего использования
-    forceCloseShop   // ✅ Удобная функция для закрытия
+    checkShopStatus,
+    forceCheckShopStatus
   };
 };
