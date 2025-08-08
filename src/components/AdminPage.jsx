@@ -33,7 +33,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // ✅ ДОБАВИТЬ ЭТО:
   useEffect(() => {
     document.title = 'Дашборд - Админ панель';
   }, []);
@@ -206,35 +205,34 @@ const AdminDashboard = ({ admin, onLogout }) => {
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
-  try {
-    console.log('=== handleStatusChange START ===');
-    console.log('orderId:', orderId, 'newStatus:', newStatus);
-    
-    const currentOrder = orders.find(order => order.orderId === orderId);
-    const oldStatus = currentOrder ? currentOrder.status : null;
-    
-    // Используем специальную JSONP функцию
-    const response = await updateOrderStatusRequest(orderId, newStatus);
-    console.log('Response received:', response);
-    
-    if (response.ok) {
-      if (oldStatus !== newStatus) {
-        await saveStatusChange(orderId, newStatus, oldStatus);
-      }
+    try {
+      console.log('=== handleStatusChange START ===');
+      console.log('orderId:', orderId, 'newStatus:', newStatus);
       
-      setOrders(prev => prev.map(order => 
-        order.orderId === orderId 
-          ? { ...order, status: newStatus }
-          : order
-      ));
-    } else {
-      alert('Ошибка обновления статуса. Попробуйте еще раз.');
+      const currentOrder = orders.find(order => order.orderId === orderId);
+      const oldStatus = currentOrder ? currentOrder.status : null;
+      
+      const response = await updateOrderStatusRequest(orderId, newStatus);
+      console.log('Response received:', response);
+      
+      if (response.ok) {
+        if (oldStatus !== newStatus) {
+          await saveStatusChange(orderId, newStatus, oldStatus);
+        }
+        
+        setOrders(prev => prev.map(order => 
+          order.orderId === orderId 
+            ? { ...order, status: newStatus }
+            : order
+        ));
+      } else {
+        alert('Ошибка обновления статуса. Попробуйте еще раз.');
+      }
+    } catch (error) {
+      console.error('Error in handleStatusChange:', error);
+      alert('Ошибка соединения. Проверьте интернет.');
     }
-  } catch (error) {
-    console.error('Error in handleStatusChange:', error);
-    alert('Ошибка соединения. Проверьте интернет.');
-  }
-};
+  };
 
   const filterOrders = (orders, filter) => {
     const activeOrders = orders.filter(order => !['done', 'archived'].includes(order.status));
@@ -254,16 +252,13 @@ const AdminDashboard = ({ admin, onLogout }) => {
         filteredOrders = activeOrders;
     }
     
-    // ✅ СОРТИРУЕМ: САМОВЫВОЗ В НАЧАЛО СПИСКА
     return filteredOrders.sort((a, b) => {
       const aIsPickup = a.address && a.address.toLowerCase().includes('самовывоз');
       const bIsPickup = b.address && b.address.toLowerCase().includes('самовывоз');
       
-      // Если один заказ самовывоз, а другой нет - самовывоз идет первым
       if (aIsPickup && !bIsPickup) return -1;
       if (!aIsPickup && bIsPickup) return 1;
       
-      // Если оба самовывоз или оба не самовывоз - сортируем по дате (новые сверху)
       const parseDate = (dateStr) => {
         if (!dateStr) return 0;
         try {
@@ -287,20 +282,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const filteredOrders = filterOrders(orders, activeFilter);
   const pendingCount = orders.filter(order => order.status === 'pending').length;
   const averageTimeStatsRaw = calculateAverageTime(orders);
-const averageTimeStats = averageTimeStatsRaw || {
-  averageMinutes: null,
-  avgCookingTime: null,
-  avgDeliveryTime: null,
-  completedCount: 0,
-  activeCount: orders.filter(o => ['pending', 'cooking', 'delivering'].includes(o.status)).length,
-  note: 'Нет завершённых заказов сегодня'
-};
+  const averageTimeStats = averageTimeStatsRaw || {
+    averageMinutes: null,
+    avgCookingTime: null,
+    avgDeliveryTime: null,
+    completedCount: 0,
+    activeCount: orders.filter(o => ['pending', 'cooking', 'delivering'].includes(o.status)).length,
+    note: 'Нет завершённых заказов сегодня'
+  };
   
-  // Правильный расчет трафика и среднего чека с московским временем
   const todayOrders = orders.filter(order => {
     if (!order.date) return false;
     try {
-      // Правильный расчет московского времени
       const now = new Date();
       const moscowTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
       const today = moscowTime.toISOString().split('T')[0];
@@ -500,6 +493,9 @@ const averageTimeStats = averageTimeStatsRaw || {
           }
         `}
       </style>
+      
+      {/* ✅ КОМПАКТНАЯ ПАНЕЛЬ УПРАВЛЕНИЯ МАГАЗИНОМ */}
+      <ShopManagementPanel admin={admin} />
       
       <div className="container" style={{
         background: 'white',
@@ -751,9 +747,6 @@ const averageTimeStats = averageTimeStatsRaw || {
         margin: '0 auto',
         padding: '1rem 2rem 2rem 2rem'
       }}>
-        {/* 🏪 ПАНЕЛЬ УПРАВЛЕНИЯ МАГАЗИНОМ - ДОБАВЛЕНО! */}
-        <ShopManagementPanel admin={admin} />
-
         {/* Сообщение бота */}
         <div style={{
           display: 'flex',
@@ -947,7 +940,7 @@ const averageTimeStats = averageTimeStatsRaw || {
       </div>
     </div>
     );
-}; // <-- закрыли AdminDashboard
+}; 
 
 const AdminPage = () => {
   const [admin, setAdmin] = useState(null);
