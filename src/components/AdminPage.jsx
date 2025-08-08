@@ -518,14 +518,19 @@ const AdminDashboard = ({ admin, onLogout }) => {
           }}>
             👑 Админ панель
           </h1>
+          {/* ✅ ИКОНКА УПРАВЛЕНИЯ рядом с именем админа */}
           <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
             fontSize: '0.8rem',
             color: '#999',
             background: '#f8f9fa',
             padding: '0.3rem 0.8rem',
             borderRadius: '12px'
           }}>
-            {admin.login}
+            <span>{admin.login}</span>
+            <ShopManagementPanel admin={admin} />
           </div>
         </div>
 
