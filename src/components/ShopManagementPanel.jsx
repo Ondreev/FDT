@@ -1,6 +1,7 @@
 // components/ShopManagementPanel.jsx
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../config';
+import AddProductModal from './AddProductModal'; // ✅ ИМПОРТ ГОТОВОГО КОМПОНЕНТА
 
 const ShopManagementPanel = ({ admin }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -12,22 +13,9 @@ const ShopManagementPanel = ({ admin }) => {
   const [isUpdatingProducts, setIsUpdatingProducts] = useState(false);
   const [notification, setNotification] = useState(null);
   
-  // ✅ НОВЫЕ СОСТОЯНИЯ для добавления товара
+  // ✅ СОСТОЯНИЯ для добавления товара
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
-  const [newProductData, setNewProductData] = useState({
-    id: '',
-    name: '',
-    description: '',
-    imageUrl: '',
-    price: '',
-    weight: '',
-    category: '',
-    isPromo: false,
-    rating: 5,
-    active: true
-  });
 
   // Загружаем данные при открытии попапа
   useEffect(() => {
@@ -64,10 +52,6 @@ const ShopManagementPanel = ({ admin }) => {
       // Обрабатываем товары
       if (Array.isArray(productsData)) {
         setProducts(productsData);
-        
-        // ✅ Устанавливаем рекомендуемый ID для нового товара
-        const nextId = getNextRecommendedId(productsData);
-        setNewProductData(prev => ({ ...prev, id: nextId.toString() }));
       }
 
       // ✅ Обрабатываем категории
@@ -152,91 +136,6 @@ const ShopManagementPanel = ({ admin }) => {
   const selectAllProducts = (productsList) => {
     const productIds = productsList.map(p => String(p.id));
     setSelectedProducts(productIds);
-  };
-
-  // ✅ ФУНКЦИЯ генерации следующего ID
-  const getNextRecommendedId = (products) => {
-    // Извлекаем только числовые ID
-    const numericIds = products
-      .map(p => String(p.id))
-      .filter(id => /^\d+$/.test(id)) // только цифры
-      .map(id => parseInt(id))
-      .filter(id => !isNaN(id))
-      .sort((a, b) => a - b);
-    
-    const maxId = numericIds.length > 0 ? Math.max(...numericIds) : 0;
-    return maxId + 1;
-  };
-
-  // ✅ ФУНКЦИЯ создания товара
-  const createProduct = async () => {
-    // Валидация
-    if (!newProductData.name.trim()) {
-      showNotification('Введите название товара', 'warning');
-      return;
-    }
-    if (!newProductData.price || parseFloat(newProductData.price) <= 0) {
-      showNotification('Введите корректную цену', 'warning');
-      return;
-    }
-    if (!newProductData.category) {
-      showNotification('Выберите категорию', 'warning');
-      return;
-    }
-
-    try {
-      setIsCreatingProduct(true);
-      
-      const formData = new FormData();
-      formData.append('action', 'createProduct');
-      formData.append('id', newProductData.id);
-      formData.append('name', newProductData.name.trim());
-      formData.append('description', newProductData.description.trim());
-      formData.append('imageUrl', newProductData.imageUrl.trim());
-      formData.append('price', newProductData.price);
-      formData.append('weight', newProductData.weight.trim());
-      formData.append('category', newProductData.category);
-      formData.append('isPromo', newProductData.isPromo.toString());
-      formData.append('rating', newProductData.rating.toString());
-      formData.append('active', newProductData.active.toString());
-      formData.append('admin', admin.login);
-
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        body: formData
-      });
-      
-      const result = await response.json();
-
-      if (result.success) {
-        showNotification(result.message || 'Товар успешно создан!');
-        setShowAddProductModal(false);
-        
-        // Сбрасываем форму и обновляем данные
-        const nextId = getNextRecommendedId([...products, { id: newProductData.id }]);
-        setNewProductData({
-          id: nextId.toString(),
-          name: '',
-          description: '',
-          imageUrl: '',
-          price: '',
-          weight: '',
-          category: '',
-          isPromo: false,
-          rating: 5,
-          active: true
-        });
-        
-        loadShopData(); // Перезагружаем данные
-      } else {
-        showNotification(result.error || 'Ошибка создания товара', 'error');
-      }
-    } catch (error) {
-      console.error('Ошибка создания товара:', error);
-      showNotification('Ошибка соединения', 'error');
-    } finally {
-      setIsCreatingProduct(false);
-    }
   };
 
   // Компонент уведомлений
@@ -569,322 +468,6 @@ const ShopManagementPanel = ({ admin }) => {
     );
   };
 
-  // ✅ КОМПОНЕНТ модального окна добавления товара
-  const AddProductModal = () => {
-    if (!showAddProductModal) return null;
-
-    return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        zIndex: 10000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          maxWidth: '600px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* Заголовок */}
-          <div style={{
-            padding: '1.5rem',
-            borderBottom: '1px solid #e0e0e0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: '#f8f9fa'
-          }}>
-            <h3 style={{
-              margin: 0,
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              color: '#2c1e0f'
-            }}>
-              ➕ Добавить товар
-            </h3>
-            <button
-              onClick={() => setShowAddProductModal(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: '#666',
-                padding: '0.5rem',
-                borderRadius: '50%'
-              }}
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Форма */}
-          <div 
-            style={{
-              flex: 1,
-              overflow: 'auto',
-              padding: '1.5rem',
-              WebkitOverflowScrolling: 'touch'
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* ID товара */}
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
-                }}>
-                  ID товара *
-                </label>
-                <input
-                  type="text"
-                  value={newProductData.id}
-                  onChange={(e) => setNewProductData(prev => ({ ...prev, id: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder="132 (можно добавить буквы: 132S)"
-                />
-                <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
-                  Рекомендуется: {getNextRecommendedId(products)}. Можно добавить буквы для спец. товаров
-                </div>
-              </div>
-
-              {/* Название */}
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
-                }}>
-                  Название * (будет в ВЕРХНЕМ РЕГИСТРЕ)
-                </label>
-                <input
-                  type="text"
-                  value={newProductData.name}
-                  onChange={(e) => setNewProductData(prev => ({ ...prev, name: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder="Введите название товара"
-                />
-              </div>
-
-              {/* Описание */}
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
-                }}>
-                  Описание
-                </label>
-                <textarea
-                  value={newProductData.description}
-                  onChange={(e) => setNewProductData(prev => ({ ...prev, description: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    minHeight: '80px',
-                    resize: 'vertical',
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder="Описание товара"
-                />
-              </div>
-
-              {/* Цена и Вес в одну строку */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem', 
-                    fontWeight: 'bold', 
-                    fontSize: '0.9rem' 
-                  }}>
-                    Цена * (₽)
-                  </label>
-                  <input
-                    type="number"
-                    value={newProductData.price}
-                    onChange={(e) => setNewProductData(prev => ({ ...prev, price: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: '1px solid #ddd',
-                      fontSize: '1rem',
-                      boxSizing: 'border-box'
-                    }}
-                    placeholder="350"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem', 
-                    fontWeight: 'bold', 
-                    fontSize: '0.9rem' 
-                  }}>
-                    Вес
-                  </label>
-                  <input
-                    type="text"
-                    value={newProductData.weight}
-                    onChange={(e) => setNewProductData(prev => ({ ...prev, weight: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: '1px solid #ddd',
-                      fontSize: '1rem',
-                      boxSizing: 'border-box'
-                    }}
-                    placeholder="130 г"
-                  />
-                </div>
-              </div>
-
-              {/* Категория */}
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
-                }}>
-                  Категория *
-                </label>
-                <select
-                  value={newProductData.category}
-                  onChange={(e) => setNewProductData(prev => ({ ...prev, category: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    backgroundColor: 'white',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  <option value="">Выберите категорию</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* URL изображения */}
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
-                }}>
-                  URL изображения
-                </label>
-                <input
-                  type="url"
-                  value={newProductData.imageUrl}
-                  onChange={(e) => setNewProductData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder="https://..."
-                />
-                <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
-                  💡 Рекомендуется изображение до 150 КБ для быстрой загрузки
-                </div>
-                {/* Предпросмотр изображения */}
-                {newProductData.imageUrl && (
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <img
-                      src={newProductData.imageUrl}
-                      alt="Предпросмотр"
-                      style={{
-                        width: '100px',
-                        height: '100px',
-                        borderRadius: '8px',
-                        objectFit: 'cover',
-                        border: '2px solid #e0e0e0'
-                      }}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Кнопка создания */}
-              <button
-                onClick={createProduct}
-                disabled={isCreatingProduct}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  background: isCreatingProduct ? '#ccc' : 'linear-gradient(135deg, #4caf50, #45a049)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  cursor: isCreatingProduct ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  marginTop: '1rem'
-                }}
-              >
-                {isCreatingProduct ? '⏳ Создание...' : '✅ Создать товар'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <>
       {/* ✅ ИКОНКА УПРАВЛЕНИЯ рядом с именем админа */}
@@ -1120,7 +703,7 @@ const ShopManagementPanel = ({ admin }) => {
                     📦 Управление товарами
                   </button>
 
-                  {/* Кнопка добавления товара */}
+                  {/* ✅ КНОПКА ДОБАВЛЕНИЯ ТОВАРА - использует готовый компонент */}
                   <button
                     onClick={() => setShowAddProductModal(true)}
                     style={{
@@ -1151,8 +734,15 @@ const ShopManagementPanel = ({ admin }) => {
       {/* Модальное окно управления товарами */}
       <ProductsManagementModal />
 
-      {/* Модальное окно добавления товара */}
-      <AddProductModal />
+      {/* ✅ ГОТОВЫЙ КОМПОНЕНТ AddProductModal со всеми пропсами */}
+      <AddProductModal
+        isOpen={showAddProductModal}
+        onClose={() => setShowAddProductModal(false)}
+        onSuccess={loadShopData} // Перезагружаем данные при успешном создании
+        products={products}
+        categories={categories}
+        admin={admin}
+      />
 
       {/* Стильные уведомления */}
       <NotificationToast />
