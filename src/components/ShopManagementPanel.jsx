@@ -10,6 +10,7 @@ const ShopManagementPanel = ({ admin }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [showProductsModal, setShowProductsModal] = useState(false);
   const [isUpdatingProducts, setIsUpdatingProducts] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   // Загружаем данные при открытии попапа
   useEffect(() => {
@@ -17,6 +18,11 @@ const ShopManagementPanel = ({ admin }) => {
       loadShopData();
     }
   }, [isPopupOpen]);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const loadShopData = async () => {
     try {
@@ -31,7 +37,7 @@ const ShopManagementPanel = ({ admin }) => {
       const settings = await settingsRes.json();
       const productsData = await productsRes.json();
 
-      // Определяем статус магазина
+      // Определяем статус ресторана
       const shopOpenValue = settings.shopOpen;
       const isOpen = shopOpenValue !== 'FALSE' && shopOpenValue !== 'false' && shopOpenValue !== false;
       setShopStatus(isOpen);
@@ -42,8 +48,8 @@ const ShopManagementPanel = ({ admin }) => {
       }
 
     } catch (error) {
-      console.error('Ошибка загрузки данных магазина:', error);
-      alert('Ошибка загрузки данных');
+      console.error('Ошибка загрузки данных ресторана:', error);
+      showNotification('Ошибка загрузки данных', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -59,13 +65,13 @@ const ShopManagementPanel = ({ admin }) => {
 
       if (result.success) {
         setShopStatus(newStatus);
-        alert(newStatus ? '✅ Магазин открыт!' : '🔒 Магазин закрыт!');
+        showNotification(newStatus ? '✅ Ресторан открыт!' : '🔒 Ресторан закрыт!');
       } else {
-        alert('Ошибка обновления статуса магазина');
+        showNotification('Ошибка обновления статуса ресторана', 'error');
       }
     } catch (error) {
       console.error('Ошибка обновления статуса:', error);
-      alert('Ошибка соединения');
+      showNotification('Ошибка соединения', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +79,7 @@ const ShopManagementPanel = ({ admin }) => {
 
   const updateProductsStatus = async (status) => {
     if (selectedProducts.length === 0) {
-      alert('Выберите товары для обновления');
+      showNotification('Выберите товары для обновления', 'warning');
       return;
     }
 
@@ -85,15 +91,15 @@ const ShopManagementPanel = ({ admin }) => {
       const result = await response.json();
 
       if (result.success) {
-        alert(`✅ Обновлено товаров: ${result.updatedCount}`);
+        showNotification(`✅ Обновлено товаров: ${result.updatedCount}`);
         setSelectedProducts([]);
         loadShopData(); // Перезагружаем данные
       } else {
-        alert('Ошибка обновления товаров');
+        showNotification('Ошибка обновления товаров', 'error');
       }
     } catch (error) {
       console.error('Ошибка обновления товаров:', error);
-      alert('Ошибка соединения');
+      showNotification('Ошибка соединения', 'error');
     } finally {
       setIsUpdatingProducts(false);
     }
@@ -120,6 +126,43 @@ const ShopManagementPanel = ({ admin }) => {
     setSelectedProducts(productIds);
   };
 
+  // Компонент уведомлений
+  const NotificationToast = () => {
+    if (!notification) return null;
+
+    const bgColor = {
+      success: '#4caf50',
+      error: '#f44336',
+      warning: '#ff9800'
+    }[notification.type];
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        zIndex: 15000,
+        background: bgColor,
+        color: 'white',
+        padding: '1rem 1.5rem',
+        borderRadius: '12px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        animation: 'slideInFromRight 0.3s ease-out',
+        maxWidth: '300px'
+      }}>
+        <style>
+          {`
+            @keyframes slideInFromRight {
+              from { transform: translateX(100%); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+          `}
+        </style>
+        {notification.message}
+      </div>
+    );
+  };
+
   // Компонент модального окна управления товарами
   const ProductsManagementModal = () => {
     if (!showProductsModal) return null;
@@ -134,7 +177,7 @@ const ShopManagementPanel = ({ admin }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -146,7 +189,7 @@ const ShopManagementPanel = ({ admin }) => {
           borderRadius: '20px',
           maxWidth: '600px',
           width: '100%',
-          maxHeight: '80vh',
+          maxHeight: '85vh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
@@ -157,7 +200,8 @@ const ShopManagementPanel = ({ admin }) => {
             borderBottom: '1px solid #e0e0e0',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            background: '#f8f9fa'
           }}>
             <h3 style={{
               margin: 0,
@@ -178,7 +222,8 @@ const ShopManagementPanel = ({ admin }) => {
                 fontSize: '1.5rem',
                 cursor: 'pointer',
                 color: '#666',
-                padding: '0.5rem'
+                padding: '0.5rem',
+                borderRadius: '50%'
               }}
             >
               ✕
@@ -198,23 +243,23 @@ const ShopManagementPanel = ({ admin }) => {
               <div style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '1.2rem' }}>
                 {activeProducts.length}
               </div>
-              <div style={{ color: '#666' }}>Активных</div>
+              <div style={{ color: '#666', fontSize: '0.8rem' }}>Активных</div>
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ color: '#f44336', fontWeight: 'bold', fontSize: '1.2rem' }}>
                 {inactiveProducts.length}
               </div>
-              <div style={{ color: '#666' }}>Отключенных</div>
+              <div style={{ color: '#666', fontSize: '0.8rem' }}>Отключенных</div>
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ color: '#2196f3', fontWeight: 'bold', fontSize: '1.2rem' }}>
                 {products.length}
               </div>
-              <div style={{ color: '#666' }}>Всего</div>
+              <div style={{ color: '#666', fontSize: '0.8rem' }}>Всего</div>
             </div>
           </div>
 
-          {/* Кнопки действий */}
+          {/* Кнопки быстрого выбора */}
           <div style={{
             padding: '1rem 1.5rem',
             borderBottom: '1px solid #e0e0e0',
@@ -236,7 +281,7 @@ const ShopManagementPanel = ({ admin }) => {
                 opacity: inactiveProducts.length === 0 ? 0.5 : 1
               }}
             >
-              ✓ Выбрать отключенные ({inactiveProducts.length})
+              ✓ Отключенные ({inactiveProducts.length})
             </button>
             
             <button
@@ -253,7 +298,7 @@ const ShopManagementPanel = ({ admin }) => {
                 opacity: activeProducts.length === 0 ? 0.5 : 1
               }}
             >
-              ✓ Выбрать активные ({activeProducts.length})
+              ✓ Активные ({activeProducts.length})
             </button>
 
             <button
@@ -268,22 +313,25 @@ const ShopManagementPanel = ({ admin }) => {
                 cursor: 'pointer'
               }}
             >
-              Очистить выбор
+              Очистить
             </button>
           </div>
 
-          {/* Список товаров */}
+          {/* ✅ УЛУЧШЕННЫЙ Список товаров с картинками и прокруткой */}
           <div style={{
             flex: 1,
             overflow: 'auto',
-            padding: '1rem 1.5rem'
+            padding: '0'
           }}>
             {products.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>
                 Товары не найдены
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column'
+              }}>
                 {products.map(product => {
                   const isActive = product.active !== 'FALSE' && product.active !== false && product.active !== 'false';
                   const isSelected = selectedProducts.includes(String(product.id));
@@ -295,55 +343,86 @@ const ShopManagementPanel = ({ admin }) => {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '0.75rem',
-                        background: isSelected ? '#e3f2fd' : '#f8f9fa',
-                        borderRadius: '8px',
+                        gap: '1rem',
+                        padding: '1rem 1.5rem',
+                        background: isSelected ? '#e3f2fd' : 'white',
                         cursor: 'pointer',
-                        border: isSelected ? '2px solid #2196f3' : '1px solid #e0e0e0',
-                        transition: 'all 0.2s ease'
+                        borderBottom: '1px solid #f0f0f0',
+                        borderLeft: isSelected ? '4px solid #2196f3' : '4px solid transparent',
+                        transition: 'all 0.2s ease',
+                        position: 'relative'
                       }}
                     >
+                      {/* ✅ Картинка товара */}
+                      <img
+                        src={product.imageUrl || '/placeholder-food.jpg'}
+                        alt={product.name}
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '8px',
+                          objectFit: 'cover',
+                          border: '2px solid #e0e0e0'
+                        }}
+                        onError={(e) => {
+                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yNSAyMEMyNyAyMCAyOSAyMiAyOSAyNEMyOSAyNiAyNyAyOCAyNSAyOEMyMyAyOCAyMSAyNiAyMSAyNEMyMSAyMiAyMyAyMCAyNSAyMFoiIGZpbGw9IiNDQ0NDQ0MiLz4KPC9zdmc+';
+                        }}
+                      />
+                      
+                      {/* ✅ Чекбокс */}
                       <div style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '4px',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
                         background: isSelected ? '#2196f3' : 'white',
                         border: '2px solid #2196f3',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: 'white',
-                        fontSize: '12px'
+                        fontSize: '14px',
+                        flexShrink: 0
                       }}>
                         {isSelected ? '✓' : ''}
                       </div>
                       
-                      <div style={{ flex: 1 }}>
+                      {/* ✅ Информация о товаре */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                           fontWeight: 'bold',
-                          fontSize: '0.9rem',
-                          color: '#2c1e0f'
+                          fontSize: '0.95rem',
+                          color: '#2c1e0f',
+                          marginBottom: '4px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
                         }}>
                           {product.name}
                         </div>
                         <div style={{
                           fontSize: '0.8rem',
-                          color: '#666'
+                          color: '#666',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
                         }}>
-                          ID: {product.id} • {product.price}₽
+                          <span>ID: {product.id}</span>
+                          <span>•</span>
+                          <span style={{ fontWeight: 'bold' }}>{product.price}₽</span>
                         </div>
                       </div>
                       
+                      {/* ✅ Статус товара */}
                       <div style={{
-                        padding: '0.25rem 0.5rem',
+                        padding: '0.3rem 0.6rem',
                         borderRadius: '12px',
                         fontSize: '0.7rem',
                         fontWeight: 'bold',
                         background: isActive ? '#e8f5e8' : '#ffebee',
-                        color: isActive ? '#2e7d32' : '#c62828'
+                        color: isActive ? '#2e7d32' : '#c62828',
+                        whiteSpace: 'nowrap'
                       }}>
-                        {isActive ? 'АКТИВЕН' : 'ОТКЛЮЧЕН'}
+                        {isActive ? 'АКТИВЕН' : 'СТОП'}
                       </div>
                     </div>
                   );
@@ -356,6 +435,7 @@ const ShopManagementPanel = ({ admin }) => {
           <div style={{
             padding: '1.5rem',
             borderTop: '1px solid #e0e0e0',
+            background: '#f8f9fa',
             display: 'flex',
             gap: '1rem'
           }}>
@@ -374,7 +454,7 @@ const ShopManagementPanel = ({ admin }) => {
                 cursor: selectedProducts.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
-              ✅ Включить выбранные ({selectedProducts.length})
+              ✅ Включить ({selectedProducts.length})
             </button>
             
             <button
@@ -392,7 +472,7 @@ const ShopManagementPanel = ({ admin }) => {
                 cursor: selectedProducts.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
-              🛑 Отключить выбранные ({selectedProducts.length})
+              🛑 Отключить ({selectedProducts.length})
             </button>
           </div>
         </div>
@@ -402,20 +482,20 @@ const ShopManagementPanel = ({ admin }) => {
 
   return (
     <>
-      {/* Компактная кнопка "Управление" */}
+      {/* ✅ Кнопка "Управление" с учетом прокрутки */}
       <button
         onClick={() => setIsPopupOpen(true)}
         style={{
           position: 'fixed',
-          top: '1rem',
+          top: window.innerWidth <= 768 ? '80px' : '20px', // ✅ Ниже на мобильных
           right: '1rem',
-          zIndex: 1000,
+          zIndex: 999, // ✅ Ниже sticky категорий (zIndex: 900)
           background: 'linear-gradient(135deg, #667eea, #764ba2)',
           color: 'white',
           border: 'none',
           borderRadius: '12px',
-          padding: '0.75rem 1rem',
-          fontSize: '0.9rem',
+          padding: window.innerWidth <= 768 ? '0.6rem 0.8rem' : '0.75rem 1rem',
+          fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.9rem',
           fontWeight: 'bold',
           cursor: 'pointer',
           boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
@@ -444,7 +524,7 @@ const ShopManagementPanel = ({ admin }) => {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
           zIndex: 5000,
           display: 'flex',
           alignItems: 'center',
@@ -491,7 +571,7 @@ const ShopManagementPanel = ({ admin }) => {
               marginBottom: '1.5rem',
               textAlign: 'center'
             }}>
-              ⚙️ Управление магазином
+              ⚙️ Управление рестораном
             </h2>
 
             {isLoading ? (
@@ -505,38 +585,29 @@ const ShopManagementPanel = ({ admin }) => {
               </div>
             ) : (
               <>
-                {/* Статус магазина */}
+                {/* ✅ КОМПАКТНЫЙ Статус ресторана */}
                 <div style={{
                   background: '#f8f9fa',
-                  borderRadius: '15px',
-                  padding: '1.5rem',
+                  borderRadius: '12px',
+                  padding: '1rem',
                   marginBottom: '1.5rem',
-                  textAlign: 'center'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
                 }}>
-                  <div style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                    color: '#2c1e0f',
-                    marginBottom: '1rem'
-                  }}>
-                    Статус магазина
-                  </div>
-                  
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '1rem',
-                    marginBottom: '1rem'
+                    gap: '0.75rem'
                   }}>
                     <div style={{
-                      width: '20px',
-                      height: '20px',
+                      width: '12px',
+                      height: '12px',
                       borderRadius: '50%',
                       background: shopStatus ? '#4caf50' : '#f44336'
                     }} />
                     <span style={{
-                      fontSize: '1.2rem',
+                      fontSize: '1rem',
                       fontWeight: 'bold',
                       color: shopStatus ? '#4caf50' : '#f44336'
                     }}>
@@ -545,20 +616,19 @@ const ShopManagementPanel = ({ admin }) => {
                   </div>
 
                   <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
+                    display: 'flex',
                     gap: '0.5rem'
                   }}>
                     <button
                       onClick={() => updateShopStatus(true)}
                       disabled={shopStatus === true}
                       style={{
-                        padding: '0.75rem',
+                        padding: '0.5rem 0.75rem',
                         background: shopStatus === true ? '#ccc' : '#4caf50',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '10px',
-                        fontSize: '0.9rem',
+                        borderRadius: '8px',
+                        fontSize: '0.8rem',
                         fontWeight: 'bold',
                         cursor: shopStatus === true ? 'not-allowed' : 'pointer'
                       }}
@@ -570,12 +640,12 @@ const ShopManagementPanel = ({ admin }) => {
                       onClick={() => updateShopStatus(false)}
                       disabled={shopStatus === false}
                       style={{
-                        padding: '0.75rem',
+                        padding: '0.5rem 0.75rem',
                         background: shopStatus === false ? '#ccc' : '#f44336',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '10px',
-                        fontSize: '0.9rem',
+                        borderRadius: '8px',
+                        fontSize: '0.8rem',
                         fontWeight: 'bold',
                         cursor: shopStatus === false ? 'not-allowed' : 'pointer'
                       }}
@@ -676,6 +746,9 @@ const ShopManagementPanel = ({ admin }) => {
 
       {/* Модальное окно управления товарами */}
       <ProductsManagementModal />
+
+      {/* ✅ Стильные уведомления */}
+      <NotificationToast />
     </>
   );
 };
