@@ -2,9 +2,15 @@ import React, { useState } from 'react';
 import { formatNumber } from './SimpleDeliveryManager';
 
 // Компактная карточка флеш-предложения для главной страницы
-export const MainPageFlashOffer = ({ products, cart, settings, addToCart }) => {
-  const [isDismissed, setIsDismissed] = useState(false);
-
+export const MainPageFlashOffer = ({ 
+  products, 
+  cart, 
+  settings, 
+  addToCart, 
+  isDismissed, 
+  onDismiss 
+}) => {
+  // ✅ Используем пропс isDismissed вместо локального состояния
   if (isDismissed) return null;
 
   const flashProduct = products.find(p => String(p.id).includes('R2000'));
@@ -23,6 +29,10 @@ export const MainPageFlashOffer = ({ products, cart, settings, addToCart }) => {
   // Проверяем, есть ли уже flash товар в корзине
   const flashItem = cart.find(item => item.id === `${flashProduct.id}_flash`);
   if (flashItem) return null;
+
+  // ✅ ПОКАЗЫВАЕМ ТОЛЬКО ДО ВЫПОЛНЕНИЯ УСЛОВИЯ
+  // После выполнения условия показываем попап, а эта карточка исчезает
+  if (conditionMet) return null;
 
   const handleAddToCart = () => {
     const flashItemToAdd = {
@@ -66,8 +76,9 @@ export const MainPageFlashOffer = ({ products, cart, settings, addToCart }) => {
           <span>⚡</span>
           <span>ФЛЕШ ПРЕДЛОЖЕНИЕ</span>
         </div>
+        {/* ✅ Используем onDismiss из пропсов */}
         <button
-          onClick={() => setIsDismissed(true)}
+          onClick={onDismiss}
           style={{
             background: 'rgba(255,255,255,0.2)',
             border: 'none',
@@ -152,39 +163,27 @@ export const MainPageFlashOffer = ({ products, cart, settings, addToCart }) => {
         </button>
       </div>
 
-      {/* Компактный прогресс */}
+      {/* Компактный прогресс - показываем только когда условие не выполнено */}
       <div style={{ fontSize: '12px', marginBottom: '6px' }}>
-        {conditionMet ? (
-          <span style={{ 
-            color: 'white', 
-            fontWeight: 'bold',
-            fontSize: '13px'
-          }}>
-            ✓ Условие выполнено! Добавляйте за {discountedPrice}₽
-          </span>
-        ) : (
-          <span style={{ color: 'rgba(255,255,255,0.9)' }}>
-            При заказе от 2000₽ • Ещё {formatNumber(remaining)}₽
-          </span>
-        )}
+        <span style={{ color: 'rgba(255,255,255,0.9)' }}>
+          При заказе от 2000₽ • Ещё {formatNumber(remaining)}₽
+        </span>
       </div>
       
-      {!conditionMet && (
+      <div style={{
+        background: 'rgba(255,255,255,0.2)',
+        borderRadius: '6px',
+        height: '4px',
+        overflow: 'hidden'
+      }}>
         <div style={{
-          background: 'rgba(255,255,255,0.2)',
+          width: `${Math.max(progress, 5)}%`,
+          height: '100%',
+          background: '#FFD700',
           borderRadius: '6px',
-          height: '4px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            width: `${Math.max(progress, 5)}%`,
-            height: '100%',
-            background: '#FFD700',
-            borderRadius: '6px',
-            transition: 'width 0.3s ease'
-          }} />
-        </div>
-      )}
+          transition: 'width 0.3s ease'
+        }} />
+      </div>
     </div>
   );
 };
