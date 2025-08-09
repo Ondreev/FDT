@@ -18,15 +18,18 @@ const DeliveryModeSelector = ({
 
   // ✅ Обработка клика по доставке
   const handleDeliveryClick = () => {
+    console.log('Delivery button clicked'); // Для отладки
     setDeliveryMode('delivery');
     // Если нет адреса, открываем ввод
     if (!savedAddress) {
+      console.log('No saved address, opening input'); // Для отладки
       openAddressInput();
     }
   };
 
   // ✅ Обработка клика по самовывозу
   const handlePickupClick = () => {
+    console.log('Pickup button clicked'); // Для отладки
     setDeliveryMode('pickup');
   };
 
@@ -93,7 +96,11 @@ const DeliveryModeSelector = ({
         {/* ✅ Переключатель режимов */}
         <div style={switcherStyle}>
           <button
-            onClick={handleDeliveryClick}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDeliveryClick();
+            }}
             style={getButtonStyle('delivery', deliveryMode === 'delivery')}
           >
             <span>🚗</span>
@@ -101,7 +108,11 @@ const DeliveryModeSelector = ({
           </button>
           
           <button
-            onClick={handlePickupClick}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handlePickupClick();
+            }}
             style={getButtonStyle('pickup', deliveryMode === 'pickup')}
           >
             <span>🏃‍♂️</span>
