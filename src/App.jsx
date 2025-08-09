@@ -18,9 +18,15 @@ import PopupsContainer from './components/PopupsContainer';
 import UpsellModal, { useUpsellFlow } from './components/UpsellModal';
 import ShopClosedModal from './components/ShopClosedModal';
 
+// ✅ КОМПОНЕНТЫ ДОСТАВКИ
+import DeliveryModeSelector from './components/DeliveryModeSelector';
+import DeliveryOverlay from './components/DeliveryOverlay';
+import AddressInput from './components/AddressInput';
+
 // ✅ ХУКИ
 import { useShopStatus } from './hooks/useShopStatus';
 import { useActiveProducts } from './hooks/useActiveProducts';
+import { useDeliveryMode } from './hooks/useDeliveryMode';
 
 import { API_URL, CONFIG } from './config';
 
@@ -34,6 +40,16 @@ const ShopPage = () => {
     canAddToCart, 
     closeModal 
   } = useShopStatus();
+
+  // ✅ ХУК УПРАВЛЕНИЯ ДОСТАВКОЙ
+  const {
+    deliveryMode,
+    savedAddress,
+    showOverlay,
+    needsAddressInput,
+    setDeliveryMode,
+    closeOverlay
+  } = useDeliveryMode();
 
   // Основные состояния
   const [settings, setSettings] = useState({});
@@ -51,11 +67,6 @@ const ShopPage = () => {
   // Состояния для рейтинга
   const [ratingPopup, setRatingPopup] = useState({ isOpen: false, product: null });
   const [userRatings, setUserRatings] = useState({});
-  
-  // Состояние для режима доставки
-  const [deliveryMode, setDeliveryMode] = useState(() => {
-    return localStorage.getItem('deliveryMode') || 'delivery';
-  });
   
   // ✅ ОБЩИЕ СОСТОЯНИЯ ДЛЯ ФЛЕШ-ПРЕДЛОЖЕНИЯ
   const [flashOfferDismissed, setFlashOfferDismissed] = useState(false);
@@ -335,10 +346,6 @@ const addToCart = async (product, skipUpsell = false) => {
   }, [activeCategory, categories]);
 
   useEffect(() => {
-    localStorage.setItem('deliveryMode', deliveryMode);
-  }, [deliveryMode]);
-
-  useEffect(() => {
     let flashTimer = null;
     if (showFlashPopup && flashTimeLeft > 0) {
       flashTimer = setInterval(() => {
@@ -571,6 +578,12 @@ const addToCart = async (product, skipUpsell = false) => {
           </div>
         </header>
 
+        {/* ✅ НОВЫЙ КОМПОНЕНТ ВЫБОРА ДОСТАВКИ */}
+        <DeliveryModeSelector 
+          settings={settings}
+          compact={false}
+        />
+
         {categories.length > 0 && (
           <div
             ref={categoriesRef}
@@ -678,6 +691,8 @@ const addToCart = async (product, skipUpsell = false) => {
           addToCart={addToCartWithoutUpsell}
           setCart={setCart}
           onOpenOrderForm={handleOpenOrderForm}
+          deliveryMode={deliveryMode}
+          setDeliveryMode={setDeliveryMode}
         />
 
         <OrderForm
@@ -743,6 +758,16 @@ const addToCart = async (product, skipUpsell = false) => {
         <ShopClosedModal
           isOpen={showClosedModal}
           onClose={closeModal}
+          settings={settings}
+        />
+
+        {/* ✅ ОВЕРЛЕЙ ВЫБОРА ДОСТАВКИ */}
+        <DeliveryOverlay settings={settings} />
+
+        {/* ✅ КОМПОНЕНТ ВВОДА АДРЕСА */}
+        <AddressInput 
+          isOpen={needsAddressInput}
+          onClose={closeOverlay}
           settings={settings}
         />
       </div>
