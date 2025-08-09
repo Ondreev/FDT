@@ -7,25 +7,18 @@ const AddressInput = ({
   onClose, 
   settings = {} 
 }) => {
-  const { setAddress, savedAddress, needsAddressInput } = useDeliveryMode();
+  const { setAddress, savedAddress } = useDeliveryMode();
   const [inputValue, setInputValue] = useState('');
   const [isValid, setIsValid] = useState(false);
 
   // ✅ Инициализация значения при открытии
   useEffect(() => {
     if (isOpen) {
+      console.log('AddressInput opened, savedAddress:', savedAddress);
       setInputValue(savedAddress || '');
       setIsValid(!!savedAddress && savedAddress.length >= 10);
     }
   }, [isOpen, savedAddress]);
-
-  // ✅ Автоматическое закрытие когда needsAddressInput становится false
-  useEffect(() => {
-    if (isOpen && !needsAddressInput) {
-      console.log('Auto-closing address input'); // Для отладки
-      onClose();
-    }
-  }, [needsAddressInput, isOpen, onClose]);
 
   // ✅ Валидация ввода
   useEffect(() => {
@@ -37,9 +30,10 @@ const AddressInput = ({
   const handleSave = () => {
     if (isValid) {
       const address = inputValue.trim();
-      console.log('Saving address:', address); // Для отладки
+      console.log('Saving address:', address);
       setAddress(address);
-      // НЕ вызываем onClose - хук сам закроет модальное окно
+      // Закрываем модальное окно сразу
+      onClose();
     }
   };
 
