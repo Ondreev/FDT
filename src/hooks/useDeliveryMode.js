@@ -89,17 +89,17 @@ export const useDeliveryMode = () => {
     setState(prev => ({
       ...prev,
       showOverlay: false,
-      needsAddressInput: false, // ✅ Закрываем и ввод адреса
-      // Если режим доставки и нет адреса, показываем предупреждение
-      // needsAddressInput: prev.mode === 'delivery' && !prev.savedAddress
+      needsAddressInput: false // ✅ Закрываем ввод адреса
     }));
   };
 
   // ✅ Функция открытия ввода адреса
   const openAddressInput = () => {
+    console.log('Opening address input'); // Для отладки
     setState(prev => ({
       ...prev,
-      needsAddressInput: true
+      needsAddressInput: true,
+      showOverlay: false
     }));
   };
 
