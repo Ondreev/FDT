@@ -2,55 +2,20 @@ import { useEffect, useState } from 'react';
 import DiscountProgressBar from './DiscountProgressBar';
 import FlashOfferPopup from './FlashOfferTimer';
 import { FreeDeliveryProgress, FreeDeliveryPopup, formatNumber } from './SimpleDeliveryManager';
+import { useDeliveryMode } from '../hooks/useDeliveryMode'; // ✅ Импортируем новый хук
+import DeliveryModeSelector from './DeliveryModeSelector'; // ✅ Импортируем новый компонент
 import { API_URL } from '../config';
 
-const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart, deliveryMode: propDeliveryMode, setDeliveryMode: propSetDeliveryMode }) => {
+const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart }) => {
   const [discounts, setDiscounts] = useState([]);
   const [products, setProducts] = useState([]);
   const [showViolationAlert, setShowViolationAlert] = useState(false);
   const [violatingItems, setViolatingItems] = useState([]);
   
-  // Локальное состояние как fallback если пропсы не переданы
-  const [localDeliveryMode, setLocalDeliveryMode] = useState(() => {
-    return localStorage.getItem('deliveryMode') || 'delivery';
-  });
-  
-  // Используем пропсы если они переданы, иначе локальное состояние
-  const deliveryMode = propDeliveryMode !== undefined ? propDeliveryMode : localDeliveryMode;
-  const setDeliveryMode = propSetDeliveryMode || setLocalDeliveryMode;
+  // ✅ ИСПОЛЬЗУЕМ НОВЫЙ ХУК ВМЕСТО ЛОКАЛЬНОГО СОСТОЯНИЯ
+  const { deliveryMode } = useDeliveryMode();
 
-  // Сохраняем режим доставки в localStorage и принудительно обновляем корзину
-  // Синхронизируем с localStorage
-  useEffect(() => {
-    localStorage.setItem('deliveryMode', deliveryMode);
-  }, [deliveryMode]);
-
-  useEffect(() => {
-    localStorage.setItem('deliveryMode', deliveryMode);
-    
-    // Принудительно обновляем корзину при переключении режима
-    // Добавляем/убираем один товар и сразу возвращаем обратно для триггера
-    if (cart.length > 0) {
-      const firstNonDeliveryItem = cart.find(item => !item.isDelivery);
-      if (firstNonDeliveryItem) {
-        // Микро-изменение для триггера SimpleDeliveryManager
-        setCart(prev => prev.map(item => 
-          item.id === firstNonDeliveryItem.id 
-            ? { ...item, quantity: item.quantity + 0.001 } // Добавляем микро-количество
-            : item
-        ));
-        
-        // Сразу возвращаем обратно
-        setTimeout(() => {
-          setCart(prev => prev.map(item => 
-            item.id === firstNonDeliveryItem.id 
-              ? { ...item, quantity: Math.round(item.quantity) } // Округляем обратно
-              : item
-          ));
-        }, 10);
-      }
-    }
-  }, [deliveryMode]);
+  // ✅ УБИРАЕМ СТАРЫЕ useEffect для deliveryMode - теперь управляется хуком
 
   useEffect(() => {
     if (isOpen) {
@@ -260,7 +225,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     height: '100vh',
     background: settings.backgroundColor || '#fdf0e2',
     zIndex: 1001,
-    overflowY: 'auto',         // ← ДОБАВИТЬ ЭТУ СТРОКУ
+    overflowY: 'auto',
     animation: 'slideInLeft 0.3s ease-out',
     boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
     boxSizing: 'border-box',
@@ -279,7 +244,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           `}
         </style>
 
-        {/* Заголовок корзины с переключателем */}
+        {/* Заголовок корзины */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -291,77 +256,29 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         }}>
           <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#2c1e0f', margin: 0 }}>Корзина</h2>
           
-          {/* Переключатель доставки - современный дизайн */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {/* Переключатель в стиле iOS */}
-            <div style={{
-              background: '#f0f0f0',
-              borderRadius: '25px',
-              padding: '4px',
-              display: 'flex',
-              position: 'relative',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <button
-                onClick={() => setDeliveryMode('delivery')}
-                style={{
-                  background: deliveryMode === 'delivery' ? settings.primaryColor || '#ff7f32' : 'transparent',
-                  color: deliveryMode === 'delivery' ? 'white' : '#666',
-                  border: 'none',
-                  padding: '0.4rem 0.8rem',
-                  borderRadius: '20px',
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  transition: 'all 0.3s ease',
-                  boxShadow: deliveryMode === 'delivery' ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
-                }}
-              >
-                <span>🚗</span>
-                <span style={{ fontSize: '0.8rem' }}>Доставка</span>
-              </button>
-              
-              <button
-                onClick={() => setDeliveryMode('pickup')}
-                style={{
-                  background: deliveryMode === 'pickup' ? settings.primaryColor || '#ff7f32' : 'transparent',
-                  color: deliveryMode === 'pickup' ? 'white' : '#666',
-                  border: 'none',
-                  padding: '0.4rem 0.8rem',
-                  borderRadius: '20px',
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  transition: 'all 0.3s ease',
-                  boxShadow: deliveryMode === 'pickup' ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
-                }}
-              >
-                <span>🏃‍♂️</span>
-                <span style={{ fontSize: '0.8rem' }}>Самовывоз</span>
-              </button>
-            </div>
-            
-            <button
-              onClick={onClose}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '0.5rem',
-                borderRadius: '8px',
-                color: '#666',
-                fontSize: '20px',
-              }}
-            >
-              ✕
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0.5rem',
+              borderRadius: '8px',
+              color: '#666',
+              fontSize: '20px',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* ✅ НОВЫЙ ПЕРЕКЛЮЧАТЕЛЬ ДОСТАВКИ В ОТДЕЛЬНОМ БЛОКЕ */}
+        <div style={{ padding: '0 1rem' }}>
+          <DeliveryModeSelector 
+            settings={settings}
+            inCart={true}
+            compact={true}
+          />
         </div>
 
         {/* Скроллируемая область с маркетингом и товарами */}
