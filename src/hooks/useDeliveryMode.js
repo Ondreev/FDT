@@ -74,6 +74,7 @@ export const useDeliveryMode = () => {
 
   // ✅ Функция установки адреса
   const setAddress = (address) => {
+    console.log('Setting address:', address); // Для отладки
     setState(prev => ({
       ...prev,
       savedAddress: address,
@@ -88,7 +89,9 @@ export const useDeliveryMode = () => {
     setState(prev => ({
       ...prev,
       showOverlay: false,
-      needsAddressInput: prev.mode === 'delivery' && !prev.savedAddress
+      needsAddressInput: false, // ✅ Закрываем и ввод адреса
+      // Если режим доставки и нет адреса, показываем предупреждение
+      // needsAddressInput: prev.mode === 'delivery' && !prev.savedAddress
     }));
   };
 
