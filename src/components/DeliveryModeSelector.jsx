@@ -109,14 +109,10 @@ const DeliveryModeSelector = ({
           </button>
         </div>
 
-        {/* ✅ КОМПАКТНОЕ отображение адреса доставки */}
+        {/* ✅ ПРОСТОЕ отображение адреса доставки */}
         {deliveryMode === 'delivery' && savedAddress && isAddressConfirmed && (
           <div style={{
-            background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)',
-            padding: compact ? '0.5rem 0.8rem' : '0.6rem',
-            borderRadius: '6px',
-            border: '1px solid #2196f3',
-            animation: 'addressSlide 0.3s ease-out',
+            padding: '0.3rem 0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -127,13 +123,13 @@ const DeliveryModeSelector = ({
               alignItems: 'center',
               gap: '0.4rem',
               flex: 1,
-              minWidth: 0 // Позволяет тексту сжиматься
+              minWidth: 0
             }}>
               <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>📍</span>
               <div style={{ 
-                fontSize: compact ? '0.8rem' : '0.85rem',
-                color: '#1976d2',
-                fontWeight: '500',
+                fontSize: '0.9rem',
+                color: '#2c1e0f',
+                fontWeight: 'bold',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -148,7 +144,7 @@ const DeliveryModeSelector = ({
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#1976d2',
+                  color: '#666',
                   fontSize: '0.7rem',
                   cursor: 'pointer',
                   padding: '0.2rem 0.4rem',
@@ -163,23 +159,19 @@ const DeliveryModeSelector = ({
           </div>
         )}
 
-        {/* ✅ КОМПАКТНОЕ отображение адреса самовывоза */}
+        {/* ✅ ПРОСТОЕ отображение адреса самовывоза */}
         {deliveryMode === 'pickup' && (
           <div style={{
-            background: 'linear-gradient(135deg, #e8f5e8, #c8e6c9)',
-            padding: compact ? '0.5rem 0.8rem' : '0.6rem',
-            borderRadius: '6px',
-            border: '1px solid #4caf50',
-            animation: 'addressSlide 0.3s ease-out',
+            padding: '0.3rem 0',
             display: 'flex',
             alignItems: 'center',
             gap: '0.4rem'
           }}>
             <span style={{ fontSize: '0.9rem' }}>🏪</span>
             <div style={{ 
-              fontSize: compact ? '0.8rem' : '0.85rem',
-              color: '#388e3c',
-              fontWeight: '500'
+              fontSize: '0.9rem',
+              color: '#2c1e0f',
+              fontWeight: 'bold'
             }}>
               Реутов, ул. Калинина, д. 8
             </div>
