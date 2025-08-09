@@ -307,15 +307,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               />
             )}
 
-            {/* Адрес самовывоза */}
-            {deliveryMode === 'pickup' && cart.length > 0 && (
-              <div style={{
-                background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)',
-                padding: '1rem',
-                borderRadius: '12px',
-                marginBottom: '1rem',
-                border: '2px solid #2196f3',
-              }}>
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'center',
