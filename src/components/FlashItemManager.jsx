@@ -1,9 +1,22 @@
 // components/FlashItemManager.jsx
 import { useEffect } from 'react';
 
+// ✅ ДОБАВЛЯЕМ ФУНКЦИЮ ПОЛУЧЕНИЯ ЗОНЫ
+const getZoneInfo = () => {
+  try {
+    const zoneInfo = localStorage.getItem('deliveryZoneInfo');
+    return zoneInfo ? JSON.parse(zoneInfo) : { freeFrom: 3000 };
+  } catch (e) {
+    return { freeFrom: 3000 };
+  }
+};
+
 // Компонент для управления flash-товарами в корзине
 const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
   useEffect(() => {
+    // ✅ ПОЛУЧАЕМ ДИНАМИЧЕСКИЙ ПОРОГ БЕСПЛАТНОЙ ДОСТАВКИ
+    const freeDeliveryThreshold = getZoneInfo().freeFrom;
+    
     // Находим товар с R2000 в ID (это будет "6R2000") 
     const specialProduct = products.find(p => String(p.id).includes('R2000'));
     if (!specialProduct) return;
@@ -17,7 +30,8 @@ const FlashItemManager = ({ cart, setCart, products, subtotal }) => {
       .filter(item => item.id !== flashItem.id && !item.isDelivery && !String(item.id).includes('S'))
       .reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    const conditionMet = otherItemsSubtotal >= 2000;
+    // ✅ ИСПОЛЬЗУЕМ ДИНАМИЧЕСКИЙ ПОРОГ ВМЕСТО ЗАХАРДКОЖЕННОГО 2000
+    const conditionMet = otherItemsSubtotal >= freeDeliveryThreshold;
     
     // Определяем правильную цену и состояние
     const discountedPrice = Math.round(specialProduct.price * 0.01);
