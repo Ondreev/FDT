@@ -1,39 +1,73 @@
-// components/DeliveryModeSelector.jsx
-import React from 'react';
-import { useDeliveryMode } from '../hooks/useDeliveryMode';
+// components/DeliveryModeSelector.jsx - ПРОСТАЯ ВЕРСИЯ
+import React, { useState, useEffect } from 'react';
+import AddressInput from './AddressInput';
 
 const DeliveryModeSelector = ({ 
   settings = {}, 
   inCart = false,
   compact = false 
 }) => {
-  const {
-    deliveryMode,
-    savedAddress,
-    setDeliveryMode,
-    openAddressInput,
-    shouldShowWarning,
-    isAddressConfirmed
-  } = useDeliveryMode();
+  // ✅ ПРОСТЫЕ ЛОКАЛЬНЫЕ СОСТОЯНИЯ
+  const [deliveryMode, setDeliveryMode] = useState(null);
+  const [savedAddress, setSavedAddress] = useState('');
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [showAddressInput, setShowAddressInput] = useState(false);
 
-  // ✅ Обработка клика по доставке
+  // ✅ Загрузка при старте
+  useEffect(() => {
+    const saved = localStorage.getItem('deliveryData');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        setDeliveryMode(data.mode || null);
+        setSavedAddress(data.address || '');
+      } catch (e) {}
+    }
+    
+    // ✅ ВСЕГДА показываем оверлей на главной странице при загрузке
+    if (!inCart) {
+      setShowOverlay(true);
+    }
+  }, [inCart]);
+
+  // ✅ Сохранение при изменении
+  useEffect(() => {
+    if (deliveryMode) {
+      localStorage.setItem('deliveryData', JSON.stringify({
+        mode: deliveryMode,
+        address: savedAddress,
+        timestamp: Date.now()
+      }));
+    }
+  }, [deliveryMode, savedAddress]);
+
+  // ✅ Обработка выбора доставки
   const handleDeliveryClick = () => {
-    console.log('Delivery button clicked'); // Для отладки
+    console.log('Delivery clicked');
     setDeliveryMode('delivery');
-    // Если нет адреса, открываем ввод
+    
     if (!savedAddress) {
-      console.log('No saved address, opening input'); // Для отладки
-      openAddressInput();
+      setShowAddressInput(true);
+    } else {
+      setShowOverlay(false); // Есть адрес - закрываем
     }
   };
 
-  // ✅ Обработка клика по самовывозу
+  // ✅ Обработка выбора самовывоза
   const handlePickupClick = () => {
-    console.log('Pickup button clicked'); // Для отладки
+    console.log('Pickup clicked');
     setDeliveryMode('pickup');
+    setShowOverlay(false); // Сразу закрываем
   };
 
-  // ✅ Стили для разных режимов отображения
+  // ✅ Сохранение адреса
+  const handleAddressSave = (address) => {
+    console.log('Address saved:', address);
+    setSavedAddress(address);
+    setShowAddressInput(false);
+    setShowOverlay(false); // Закрываем после ввода адреса
+  };
+
   const containerStyle = {
     display: 'flex',
     flexDirection: 'column',
@@ -41,7 +75,9 @@ const DeliveryModeSelector = ({
     padding: inCart ? '0' : (compact ? '0.5rem 1rem' : '1rem'),
     background: inCart ? 'transparent' : (settings.backgroundColor || '#fdf0e2'),
     borderRadius: inCart ? '0' : '12px',
-    marginBottom: inCart ? '0' : '1rem'
+    marginBottom: inCart ? '0' : '1rem',
+    position: 'relative',
+    zIndex: showOverlay && !inCart ? 1000 : 'auto'
   };
 
   const switcherStyle = {
@@ -50,11 +86,14 @@ const DeliveryModeSelector = ({
     padding: '4px',
     display: 'flex',
     position: 'relative',
-    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-    minHeight: '48px'
+    boxShadow: showOverlay && !inCart
+      ? '0 0 0 4px rgba(255, 127, 50, 0.3), 0 8px 32px rgba(0,0,0,0.3)' 
+      : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+    minHeight: '48px',
+    transition: 'all 0.3s ease'
   };
 
-  const buttonBaseStyle = {
+  const getButtonStyle = (mode, isActive) => ({
     border: 'none',
     borderRadius: '20px',
     fontSize: compact ? '0.8rem' : '0.9rem',
@@ -67,11 +106,7 @@ const DeliveryModeSelector = ({
     transition: 'all 0.3s ease',
     flex: 1,
     padding: compact ? '0.6rem' : '0.8rem',
-    whiteSpace: 'nowrap'
-  };
-
-  const getButtonStyle = (mode, isActive) => ({
-    ...buttonBaseStyle,
+    whiteSpace: 'nowrap',
     background: isActive ? (settings.primaryColor || '#ff7f32') : 'transparent',
     color: isActive ? 'white' : '#666',
     boxShadow: isActive ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
@@ -79,28 +114,41 @@ const DeliveryModeSelector = ({
 
   return (
     <>
-      {/* ✅ CSS для анимаций */}
-      <style jsx>{`
-        @keyframes warningBlink {
-          0%, 100% { opacity: 1; background: #ffebee; border-color: #f44336; }
-          50% { opacity: 0.7; background: #ffcdd2; border-color: #e53935; }
-        }
-        
-        @keyframes addressSlide {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      {/* ✅ ПРОСТОЕ затемнение */}
+      {showOverlay && !inCart && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 999,
+          pointerEvents: 'none'
+        }} />
+      )}
 
       <div style={containerStyle}>
-        {/* ✅ Переключатель режимов */}
+        {/* ✅ Подсказка при выборе */}
+        {showOverlay && !inCart && (
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '0.5rem',
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            color: settings.primaryColor || '#ff7f32'
+          }}>
+            {savedAddress 
+              ? `Вам на этот же адрес? ${savedAddress}` 
+              : 'Выберите способ получения заказа'
+            }
+          </div>
+        )}
+
+        {/* ✅ Простые кнопки */}
         <div style={switcherStyle}>
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDeliveryClick();
-            }}
+            onClick={handleDeliveryClick}
             style={getButtonStyle('delivery', deliveryMode === 'delivery')}
           >
             <span>🚗</span>
@@ -108,11 +156,7 @@ const DeliveryModeSelector = ({
           </button>
           
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handlePickupClick();
-            }}
+            onClick={handlePickupClick}
             style={getButtonStyle('pickup', deliveryMode === 'pickup')}
           >
             <span>🏃‍♂️</span>
@@ -120,47 +164,32 @@ const DeliveryModeSelector = ({
           </button>
         </div>
 
-        {/* ✅ ПРОСТОЕ отображение адреса доставки */}
-        {deliveryMode === 'delivery' && savedAddress && isAddressConfirmed && (
+        {/* ✅ Показ адреса доставки */}
+        {deliveryMode === 'delivery' && savedAddress && (
           <div style={{
             padding: '0.3rem 0',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.5rem'
+            gap: '0.4rem'
           }}>
+            <span style={{ fontSize: '0.9rem' }}>📍</span>
             <div style={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              gap: '0.4rem',
-              flex: 1,
-              minWidth: 0
+              fontSize: '0.9rem',
+              color: '#2c1e0f',
+              fontWeight: 'bold',
+              flex: 1
             }}>
-              <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>📍</span>
-              <div style={{ 
-                fontSize: '0.9rem',
-                color: '#2c1e0f',
-                fontWeight: 'bold',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                flex: 1
-              }}>
-                {savedAddress}
-              </div>
+              {savedAddress}
             </div>
             {!compact && (
               <button
-                onClick={openAddressInput}
+                onClick={() => setShowAddressInput(true)}
                 style={{
                   background: 'transparent',
                   border: 'none',
                   color: '#666',
                   fontSize: '0.7rem',
                   cursor: 'pointer',
-                  padding: '0.2rem 0.4rem',
-                  borderRadius: '3px',
-                  flexShrink: 0,
                   textDecoration: 'underline'
                 }}
               >
@@ -170,7 +199,7 @@ const DeliveryModeSelector = ({
           </div>
         )}
 
-        {/* ✅ ПРОСТОЕ отображение адреса самовывоза */}
+        {/* ✅ Показ адреса самовывоза */}
         {deliveryMode === 'pickup' && (
           <div style={{
             padding: '0.3rem 0',
@@ -189,40 +218,29 @@ const DeliveryModeSelector = ({
           </div>
         )}
 
-        {/* ✅ Простое мигающее предупреждение */}
-        {shouldShowWarning() && (
+        {/* ✅ Предупреждение если ничего не выбрано */}
+        {!deliveryMode && !showOverlay && (
           <div 
             style={{
               padding: '0.3rem 0',
               textAlign: 'center',
-              animation: 'warningBlink 1.5s infinite',
-              cursor: 'pointer'
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Warning clicked, deliveryMode:', deliveryMode); // Для отладки
-              
-              if (!deliveryMode) {
-                // Если режим не выбран, предлагаем выбрать доставку
-                console.log('No mode selected, setting delivery mode');
-                setDeliveryMode('delivery');
-              } else if (deliveryMode === 'delivery') {
-                console.log('Opening address input from warning'); // Для отладки
-                openAddressInput();
-              }
+              color: '#d32f2f',
+              fontWeight: 'bold',
+              fontSize: '0.9rem'
             }}
           >
-            <div style={{ 
-              fontWeight: 'bold', 
-              fontSize: '0.9rem',
-              color: '#d32f2f'
-            }}>
-              {deliveryMode === 'delivery' ? '📍 Введите адрес доставки' : '⚠️ Выберите способ получения'}
-            </div>
+            ⚠️ Выберите способ получения
           </div>
         )}
       </div>
+
+      {/* ✅ ПРОСТОЙ ввод адреса */}
+      <AddressInput
+        isOpen={showAddressInput}
+        onClose={() => setShowAddressInput(false)}
+        onSave={handleAddressSave}
+        settings={settings}
+      />
     </>
   );
 };
