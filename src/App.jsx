@@ -46,11 +46,10 @@ const ShopPage = () => {
   const {
     deliveryMode,
     savedAddress,
-    showOverlay,
+    needsSelection,
     needsAddressInput,
     setDeliveryMode,
-    closeOverlay,
-    openAddressInput
+    closeSelection
   } = deliveryState;
 
   // Основные состояния
@@ -763,15 +762,11 @@ const addToCart = async (product, skipUpsell = false) => {
           settings={settings}
         />
 
-        {/* ✅ ОВЕРЛЕЙ ВЫБОРА ДОСТАВКИ */}
-        <DeliveryOverlay settings={settings} />
-
         {/* ✅ КОМПОНЕНТ ВВОДА АДРЕСА */}
         <AddressInput 
           isOpen={needsAddressInput}
           onClose={() => {
-            // Просто закрываем ввод адреса
-            deliveryState.closeOverlay();
+            deliveryState.closeSelection();
           }}
           settings={settings}
         />
