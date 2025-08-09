@@ -75,7 +75,8 @@ export const useDeliveryMode = () => {
         } else {
           newState.needsAddressInput = true;
           newState.isAddressConfirmed = false;
-          newState.needsSelection = true; // ✅ Нет адреса, оставляем выбор открытым
+          // ✅ НЕ ЗАКРЫВАЕМ needsSelection пока адрес не введен!
+          // newState.needsSelection = true; - оставляем как есть
           console.log('Delivery selected without address - opening input, keeping selection');
         }
       }
