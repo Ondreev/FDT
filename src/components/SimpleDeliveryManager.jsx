@@ -30,6 +30,28 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
   // ✅ ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ ДЛЯ ПОЛУЧЕНИЯ РЕЖИМА
   const [currentMode, setCurrentMode] = useState(() => getCurrentDeliveryMode());
 
+  // ✅ ДОБАВЛЯЕМ СЛУШАТЕЛЬ ИЗМЕНЕНИЙ В localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newMode = getCurrentDeliveryMode();
+      console.log('Storage changed, new mode:', newMode);
+      if (newMode !== currentMode) {
+        setCurrentMode(newMode);
+      }
+    };
+
+    // Слушаем изменения в localStorage
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Также проверяем изменения каждые 100ms (для изменений в том же окне)
+    const interval = setInterval(handleStorageChange, 100);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [currentMode]);
+
   useEffect(() => {
     // ✅ ОТСЛЕЖИВАЕМ ИЗМЕНЕНИЯ С ПОМОЩЬЮ НОВОЙ ФУНКЦИИ
     const deliveryMode = getCurrentDeliveryMode();
