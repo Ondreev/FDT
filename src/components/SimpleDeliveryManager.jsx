@@ -5,23 +5,39 @@ const formatNumber = (num) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
 
+// ✅ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ АКТУАЛЬНОГО РЕЖИМА ДОСТАВКИ
+const getCurrentDeliveryMode = () => {
+  try {
+    const deliveryData = localStorage.getItem('deliveryData');
+    if (deliveryData) {
+      const data = JSON.parse(deliveryData);
+      return data.mode || 'delivery';
+    }
+  } catch (e) {
+    console.error('Error parsing deliveryData:', e);
+  }
+  
+  // Fallback к старому способу
+  return localStorage.getItem('deliveryMode') || 'delivery';
+};
+
 // Простой менеджер доставки с учетом режима
 const SimpleDeliveryManager = ({ cart, setCart }) => {
   const DELIVERY_COST = 250;
   const FREE_DELIVERY_THRESHOLD = 2000;
   const DELIVERY_ID = 'delivery_service';
   
-  // Добавляем state для отслеживания режима
-  const [currentMode, setCurrentMode] = useState(() => 
-    localStorage.getItem('deliveryMode') || 'delivery'
-  );
+  // ✅ ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ ДЛЯ ПОЛУЧЕНИЯ РЕЖИМА
+  const [currentMode, setCurrentMode] = useState(() => getCurrentDeliveryMode());
 
   useEffect(() => {
-    // Отслеживаем изменения в localStorage
-    const deliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+    // ✅ ОТСЛЕЖИВАЕМ ИЗМЕНЕНИЯ С ПОМОЩЬЮ НОВОЙ ФУНКЦИИ
+    const deliveryMode = getCurrentDeliveryMode();
+    console.log('SimpleDeliveryManager: Current delivery mode:', deliveryMode); // Для отладки
     
     if (deliveryMode !== currentMode) {
       setCurrentMode(deliveryMode);
+      console.log('SimpleDeliveryManager: Mode changed to:', deliveryMode); // Для отладки
     }
     
     // Находим товары (исключая доставку)
@@ -33,8 +49,9 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
     // Находим доставку в корзине
     const deliveryItem = cart.find(item => item.id === DELIVERY_ID);
     
-    // ГЛАВНАЯ ЛОГИКА: если самовывоз - убираем доставку
+    // ✅ ГЛАВНАЯ ЛОГИКА: если самовывоз - убираем доставку
     if (deliveryMode === 'pickup') {
+      console.log('SimpleDeliveryManager: Pickup mode - removing delivery'); // Для отладки
       if (deliveryItem) {
         setCart(prev => prev.filter(item => item.id !== DELIVERY_ID));
       }
@@ -42,9 +59,11 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
     }
     
     // ЛОГИКА ДЛЯ ДОСТАВКИ:
+    console.log('SimpleDeliveryManager: Delivery mode - managing delivery service'); // Для отладки
     
     // Логика 1: Добавляем доставку при первом товаре ИЛИ при переключении на доставку
     if (products.length > 0 && !deliveryItem) {
+      console.log('SimpleDeliveryManager: Adding delivery service'); // Для отладки
       const deliveryService = {
         id: DELIVERY_ID,
         name: 'Доставка',
@@ -62,6 +81,7 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
     
     // Логика 2: Убираем доставку если нет товаров
     if (products.length === 0 && deliveryItem) {
+      console.log('SimpleDeliveryManager: No products - removing delivery'); // Для отладки
       setCart(prev => prev.filter(item => item.id !== DELIVERY_ID));
       return;
     }
@@ -73,6 +93,7 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
       
       // Если сумма упала ниже порога - возвращаем платную доставку
       if (deliveryItem.isFreeDelivery && productsSubtotal < FREE_DELIVERY_THRESHOLD) {
+        console.log('SimpleDeliveryManager: Reverting to paid delivery'); // Для отладки
         setCart(prev => prev.map(item => 
           item.id === DELIVERY_ID 
             ? { 
@@ -86,6 +107,7 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
       }
       // Поддерживаем правильную цену
       else if (deliveryItem.price !== correctPrice) {
+        console.log('SimpleDeliveryManager: Updating delivery price'); // Для отладки
         setCart(prev => prev.map(item => 
           item.id === DELIVERY_ID 
             ? { ...item, price: correctPrice }
