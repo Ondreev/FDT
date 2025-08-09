@@ -38,6 +38,33 @@ const AddProductModal = ({
     return maxId + 1;
   };
 
+  // ✅ ФУНКЦИЯ проверки заполненности поля
+  const isFieldFilled = (field) => {
+    switch (field) {
+      case 'id':
+        return productData.id.trim() !== '';
+      case 'name':
+        return productData.name.trim() !== '';
+      case 'price':
+        return productData.price !== '' && parseFloat(productData.price) > 0;
+      case 'category':
+        return productData.category !== '';
+      case 'description':
+        return productData.description.trim() !== '';
+      case 'imageUrl':
+        return productData.imageUrl.trim() !== '';
+      case 'weight':
+        return productData.weight.trim() !== '';
+      default:
+        return false;
+    }
+  };
+
+  // ✅ ФУНКЦИЯ проверки обязательности поля
+  const isRequiredField = (field) => {
+    return ['id', 'name', 'price', 'category'].includes(field);
+  };
+
   // Устанавливаем рекомендуемый ID при открытии модального окна
   useEffect(() => {
     if (isOpen && products.length > 0) {
@@ -137,6 +164,56 @@ const AddProductModal = ({
     setProductData(prev => ({ ...prev, [field]: value }));
   };
 
+  // ✅ СТИЛИ для полей ввода
+  const getInputStyle = (field) => {
+    const isFilled = isFieldFilled(field);
+    const isRequired = isRequiredField(field);
+    
+    let backgroundColor = 'white';
+    if (isRequired && !isFilled) {
+      backgroundColor = '#fff3cd'; // Желтый фон для обязательных незаполненных полей
+    }
+
+    return {
+      width: '100%',
+      padding: '0.75rem',
+      paddingRight: isFilled ? '2.5rem' : '0.75rem', // Место для галочки
+      borderRadius: '8px',
+      border: '1px solid #ddd',
+      fontSize: '1rem',
+      boxSizing: 'border-box',
+      backgroundColor,
+      position: 'relative',
+      transition: 'all 0.3s ease'
+    };
+  };
+
+  // ✅ КОМПОНЕНТ галочки
+  const CheckIcon = ({ field }) => {
+    if (!isFieldFilled(field)) return null;
+    
+    return (
+      <div style={{
+        position: 'absolute',
+        right: '8px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        background: '#4caf50',
+        borderRadius: '50%',
+        width: '20px',
+        height: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontSize: '12px',
+        animation: 'checkBounce 0.3s ease-out'
+      }}>
+        ✓
+      </div>
+    );
+  };
+
   // Компонент уведомлений
   const NotificationToast = () => {
     if (!notification) return null;
@@ -161,14 +238,6 @@ const AddProductModal = ({
         animation: 'slideInFromRight 0.3s ease-out',
         maxWidth: '300px'
       }}>
-        <style>
-          {`
-            @keyframes slideInFromRight {
-              from { transform: translateX(100%); opacity: 0; }
-              to { transform: translateX(0); opacity: 1; }
-            }
-          `}
-        </style>
         {notification.message}
       </div>
     );
@@ -178,6 +247,20 @@ const AddProductModal = ({
 
   return (
     <>
+      {/* ✅ CSS для анимаций */}
+      <style jsx>{`
+        @keyframes slideInFromRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes checkBounce {
+          0% { transform: translateY(-50%) scale(0); }
+          50% { transform: translateY(-50%) scale(1.2); }
+          100% { transform: translateY(-50%) scale(1); }
+        }
+      `}</style>
+
       <div style={{
         position: 'fixed',
         top: 0,
@@ -208,26 +291,31 @@ const AddProductModal = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: '#f8f9fa'
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white'
           }}>
             <h3 style={{
               margin: 0,
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              color: '#2c1e0f'
+              fontSize: '1.3rem',
+              fontWeight: 'bold'
             }}>
               ➕ Добавить товар
             </h3>
             <button
               onClick={onClose}
               style={{
-                background: 'none',
+                background: 'rgba(255, 255, 255, 0.2)',
                 border: 'none',
                 fontSize: '1.5rem',
                 cursor: 'pointer',
-                color: '#666',
+                color: 'white',
                 padding: '0.5rem',
-                borderRadius: '50%'
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
               ✕
@@ -243,69 +331,60 @@ const AddProductModal = ({
               WebkitOverflowScrolling: 'touch'
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               {/* ID товара */}
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '0.7rem', 
                   fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
+                  fontSize: '1rem',
+                  color: '#2c3e50'
                 }}>
-                  ID товара *
+                  ID товара * {isRequiredField('id') && !isFieldFilled('id') && '🟡'}
                 </label>
                 <input
                   type="text"
                   value={productData.id}
                   onChange={(e) => handleInputChange('id', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
+                  style={getInputStyle('id')}
                   placeholder="132 (можно добавить буквы: 132S)"
                 />
+                <CheckIcon field="id" />
                 <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
                   Рекомендуется: {getNextRecommendedId(products)}. Можно добавить буквы для спец. товаров
                 </div>
               </div>
 
               {/* Название */}
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '0.7rem', 
                   fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
+                  fontSize: '1rem',
+                  color: '#2c3e50'
                 }}>
-                  Название * (будет в ВЕРХНЕМ РЕГИСТРЕ)
+                  Название * {isRequiredField('name') && !isFieldFilled('name') && '🟡'} (будет в ВЕРХНЕМ РЕГИСТРЕ)
                 </label>
                 <input
                   type="text"
                   value={productData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
+                  style={getInputStyle('name')}
                   placeholder="Введите название товара"
                 />
+                <CheckIcon field="name" />
               </div>
 
               {/* Описание */}
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '0.7rem', 
                   fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
+                  fontSize: '1rem',
+                  color: '#2c3e50'
                 }}>
                   Описание
                 </label>
@@ -313,52 +392,44 @@ const AddProductModal = ({
                   value={productData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
+                    ...getInputStyle('description'),
                     minHeight: '80px',
-                    resize: 'vertical',
-                    boxSizing: 'border-box'
+                    resize: 'vertical'
                   }}
                   placeholder="Описание товара"
                 />
+                <CheckIcon field="description" />
               </div>
 
               {/* Цена и Вес в одну строку */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
+                <div style={{ position: 'relative' }}>
                   <label style={{ 
                     display: 'block', 
-                    marginBottom: '0.5rem', 
+                    marginBottom: '0.7rem', 
                     fontWeight: 'bold', 
-                    fontSize: '0.9rem' 
+                    fontSize: '1rem',
+                    color: '#2c3e50'
                   }}>
-                    Цена * (₽)
+                    Цена * {isRequiredField('price') && !isFieldFilled('price') && '🟡'} (₽)
                   </label>
                   <input
                     type="number"
                     value={productData.price}
                     onChange={(e) => handleInputChange('price', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: '1px solid #ddd',
-                      fontSize: '1rem',
-                      boxSizing: 'border-box'
-                    }}
+                    style={getInputStyle('price')}
                     placeholder="350"
                     min="0"
                   />
+                  <CheckIcon field="price" />
                 </div>
-                <div>
+                <div style={{ position: 'relative' }}>
                   <label style={{ 
                     display: 'block', 
-                    marginBottom: '0.5rem', 
+                    marginBottom: '0.7rem', 
                     fontWeight: 'bold', 
-                    fontSize: '0.9rem' 
+                    fontSize: '1rem',
+                    color: '#2c3e50'
                   }}>
                     Вес
                   </label>
@@ -366,41 +437,28 @@ const AddProductModal = ({
                     type="text"
                     value={productData.weight}
                     onChange={(e) => handleInputChange('weight', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: '1px solid #ddd',
-                      fontSize: '1rem',
-                      boxSizing: 'border-box'
-                    }}
+                    style={getInputStyle('weight')}
                     placeholder="130 г"
                   />
+                  <CheckIcon field="weight" />
                 </div>
               </div>
 
               {/* Категория */}
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '0.7rem', 
                   fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
+                  fontSize: '1rem',
+                  color: '#2c3e50'
                 }}>
-                  Категория *
+                  Категория * {isRequiredField('category') && !isFieldFilled('category') && '🟡'}
                 </label>
                 <select
                   value={productData.category}
                   onChange={(e) => handleInputChange('category', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    backgroundColor: 'white',
-                    boxSizing: 'border-box'
-                  }}
+                  style={getInputStyle('category')}
                 >
                   <option value="">Выберите категорию</option>
                   {categories.map(cat => (
@@ -409,15 +467,17 @@ const AddProductModal = ({
                     </option>
                   ))}
                 </select>
+                <CheckIcon field="category" />
               </div>
 
               {/* URL изображения */}
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '0.7rem', 
                   fontWeight: 'bold', 
-                  fontSize: '0.9rem' 
+                  fontSize: '1rem',
+                  color: '#2c3e50'
                 }}>
                   URL изображения
                 </label>
@@ -425,16 +485,10 @@ const AddProductModal = ({
                   type="url"
                   value={productData.imageUrl}
                   onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
+                  style={getInputStyle('imageUrl')}
                   placeholder="https://..."
                 />
+                <CheckIcon field="imageUrl" />
                 <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
                   💡 Рекомендуется изображение до 150 КБ для быстрой загрузки
                 </div>
@@ -449,7 +503,8 @@ const AddProductModal = ({
                         height: '100px',
                         objectFit: 'cover',
                         borderRadius: '8px',
-                        border: '2px solid #e0e0e0'
+                        border: '2px solid #4caf50',
+                        boxShadow: '0 4px 8px rgba(76, 175, 80, 0.3)'
                       }}
                       onError={(e) => {
                         e.target.style.display = 'none';
@@ -464,9 +519,10 @@ const AddProductModal = ({
                 <div>
                   <label style={{ 
                     display: 'block', 
-                    marginBottom: '0.5rem', 
+                    marginBottom: '0.7rem', 
                     fontWeight: 'bold', 
-                    fontSize: '0.9rem' 
+                    fontSize: '1rem',
+                    color: '#2c3e50'
                   }}>
                     Рейтинг
                   </label>
@@ -494,9 +550,12 @@ const AddProductModal = ({
                     gap: '0.5rem',
                     cursor: 'pointer',
                     padding: '0.75rem',
-                    backgroundColor: '#f8f9fa',
+                    backgroundColor: productData.isPromo ? '#e8f5e8' : '#f8f9fa',
                     borderRadius: '8px',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    border: productData.isPromo ? '2px solid #4caf50' : '1px solid #ddd',
+                    transition: 'all 0.3s ease'
                   }}>
                     <input
                       type="checkbox"
@@ -513,9 +572,12 @@ const AddProductModal = ({
                     gap: '0.5rem',
                     cursor: 'pointer',
                     padding: '0.75rem',
-                    backgroundColor: '#f8f9fa',
+                    backgroundColor: productData.active ? '#e8f5e8' : '#f8f9fa',
                     borderRadius: '8px',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    border: productData.active ? '2px solid #4caf50' : '1px solid #ddd',
+                    transition: 'all 0.3s ease'
                   }}>
                     <input
                       type="checkbox"
@@ -542,13 +604,14 @@ const AddProductModal = ({
               style={{
                 flex: 1,
                 padding: '1rem',
-                background: '#666',
+                background: '#6c757d',
                 color: 'white',
                 border: 'none',
                 borderRadius: '10px',
                 fontSize: '1rem',
                 fontWeight: 'bold',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
               }}
             >
               Отмена
@@ -570,7 +633,8 @@ const AddProductModal = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                transition: 'all 0.3s ease'
               }}
             >
               {isCreating ? (
