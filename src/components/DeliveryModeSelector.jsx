@@ -178,38 +178,31 @@ const DeliveryModeSelector = ({
           </div>
         )}
 
-        {/* ✅ Мигающее предупреждение */}
+        {/* ✅ Простое мигающее предупреждение */}
         {shouldShowWarning() && (
           <div 
             style={{
-              padding: compact ? '0.5rem 0.8rem' : '0.6rem',
-              borderRadius: '6px',
+              padding: '0.3rem 0',
               textAlign: 'center',
               animation: 'warningBlink 1.5s infinite',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.3rem'
+              cursor: 'pointer'
             }}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Warning clicked, deliveryMode:', deliveryMode); // Для отладки
               if (deliveryMode === 'delivery') {
+                console.log('Opening address input from warning'); // Для отладки
                 openAddressInput();
-              } else if (!deliveryMode) {
-                // Если режим не выбран, можно предложить выбрать доставку
-                setDeliveryMode('delivery');
               }
             }}
           >
-            <span style={{ fontSize: compact ? '0.8rem' : '0.9rem' }}>
-              {deliveryMode === 'delivery' ? '📍' : '⚠️'}
-            </span>
             <div style={{ 
               fontWeight: 'bold', 
-              fontSize: compact ? '0.8rem' : '0.9rem',
+              fontSize: '0.9rem',
               color: '#d32f2f'
             }}>
-              {deliveryMode === 'delivery' ? 'Введите адрес доставки' : 'Выберите способ получения'}
+              {deliveryMode === 'delivery' ? '📍 Введите адрес доставки' : '⚠️ Выберите способ получения'}
             </div>
           </div>
         )}
