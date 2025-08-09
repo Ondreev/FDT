@@ -32,25 +32,35 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
   
   // ✅ ПОЛУЧАЕМ АДРЕС ДОСТАВКИ ИЗ КОРЗИНЫ
   const getDeliveryAddress = () => {
-    // Проверяем разные возможные поля где может храниться адрес
-    const deliveryItem = cart.find(item => item.isDelivery);
-    console.log('Delivery item found:', deliveryItem); // Для отладки
+    // Сначала проверяем localStorage - там скорее всего хранится реальный адрес
+    const savedAddress = localStorage.getItem('deliveryAddress');
+    console.log('Address from localStorage:', savedAddress);
     
-    if (!deliveryItem) {
-      // Если нет товара доставки, попробуем получить из localStorage
-      const savedAddress = localStorage.getItem('deliveryAddress');
-      console.log('Address from localStorage:', savedAddress);
-      return savedAddress || '';
+    if (savedAddress && savedAddress.trim() !== '' && savedAddress !== 'Доставка по городу') {
+      return savedAddress;
     }
     
-    // Проверяем разные возможные поля
-    const address = deliveryItem.address || 
-                   deliveryItem.deliveryAddress || 
-                   deliveryItem.description || 
-                   '';
+    // Проверяем корзину на случай если адрес там
+    const deliveryItem = cart.find(item => item.isDelivery);
+    console.log('Delivery item found:', deliveryItem);
     
-    console.log('Address from delivery item:', address);
-    return address;
+    if (deliveryItem) {
+      // Проверяем разные возможные поля
+      const address = deliveryItem.address || 
+                     deliveryItem.deliveryAddress || 
+                     deliveryItem.description || 
+                     '';
+      
+      console.log('Address from delivery item:', address);
+      
+      // Если это не дефолтное название услуги, возвращаем
+      if (address && address.trim() !== '' && address !== 'Доставка по городу') {
+        return address;
+      }
+    }
+    
+    // Если ничего не найдено, возвращаем пустую строку
+    return '';
   };
   
   // Ref для автоскролла
