@@ -20,7 +20,6 @@ import ShopClosedModal from './components/ShopClosedModal';
 
 // ✅ КОМПОНЕНТЫ ДОСТАВКИ
 import DeliveryModeSelector from './components/DeliveryModeSelector';
-import DeliveryOverlay from './components/DeliveryOverlay';
 import AddressInput from './components/AddressInput';
 
 // ✅ ХУКИ
