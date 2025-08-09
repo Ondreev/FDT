@@ -328,7 +328,8 @@ const AddProductModal = ({
               flex: 1,
               overflow: 'auto',
               padding: '1.5rem',
-              WebkitOverflowScrolling: 'touch'
+              WebkitOverflowScrolling: 'touch',
+              background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' // ✅ Голубой фон
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
@@ -365,7 +366,7 @@ const AddProductModal = ({
                   fontSize: '1rem',
                   color: '#2c3e50'
                 }}>
-                  Название * {isRequiredField('name') && !isFieldFilled('name') && '🟡'} (будет в ВЕРХНЕМ РЕГИСТРЕ)
+                  Название * {isRequiredField('name') && !isFieldFilled('name') && '🟡'}
                 </label>
                 <input
                   type="text"
@@ -375,6 +376,9 @@ const AddProductModal = ({
                   placeholder="Введите название товара"
                 />
                 <CheckIcon field="name" />
+                <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
+                  Будет отображаться в ВЕРХНЕМ РЕГИСТРЕ
+                </div>
               </div>
 
               {/* Описание */}
@@ -515,7 +519,12 @@ const AddProductModal = ({
               </div>
 
               {/* Рейтинг и чекбоксы */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '80px 1fr 1fr', // ✅ Узкий столбец для рейтинга
+                gap: '0.8rem', 
+                alignItems: 'end' 
+              }}>
                 <div>
                   <label style={{ 
                     display: 'block', 
@@ -532,11 +541,12 @@ const AddProductModal = ({
                     onChange={(e) => handleInputChange('rating', parseFloat(e.target.value) || 5)}
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
+                      padding: '0.75rem 0.5rem', // ✅ Меньше padding по горизонтали
                       borderRadius: '8px',
                       border: '1px solid #ddd',
                       fontSize: '1rem',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      backgroundColor: 'white'
                     }}
                     min="1"
                     max="5"
@@ -547,44 +557,52 @@ const AddProductModal = ({
                   <label style={{
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'center', // ✅ Центрирование
                     gap: '0.5rem',
                     cursor: 'pointer',
-                    padding: '0.75rem',
-                    backgroundColor: productData.isPromo ? '#e8f5e8' : '#f8f9fa',
+                    padding: '0.75rem 0.5rem', // ✅ Компактный padding
+                    backgroundColor: productData.isPromo ? '#e8f5e8' : 'white',
                     borderRadius: '8px',
                     fontSize: '0.9rem',
                     fontWeight: 'bold',
                     border: productData.isPromo ? '2px solid #4caf50' : '1px solid #ddd',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    minHeight: '48px', // ✅ Фиксированная высота
+                    whiteSpace: 'nowrap' // ✅ Запрет переноса
                   }}>
                     <input
                       type="checkbox"
                       checked={productData.isPromo}
                       onChange={(e) => handleInputChange('isPromo', e.target.checked)}
+                      style={{ flexShrink: 0 }} // ✅ Чекбокс не сжимается
                     />
-                    🎉 Акция
+                    Акция
                   </label>
                 </div>
                 <div>
                   <label style={{
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'center', // ✅ Центрирование
                     gap: '0.5rem',
                     cursor: 'pointer',
-                    padding: '0.75rem',
-                    backgroundColor: productData.active ? '#e8f5e8' : '#f8f9fa',
+                    padding: '0.75rem 0.5rem', // ✅ Компактный padding
+                    backgroundColor: productData.active ? '#e8f5e8' : 'white',
                     borderRadius: '8px',
                     fontSize: '0.9rem',
                     fontWeight: 'bold',
                     border: productData.active ? '2px solid #4caf50' : '1px solid #ddd',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    minHeight: '48px', // ✅ Фиксированная высота
+                    whiteSpace: 'nowrap' // ✅ Запрет переноса
                   }}>
                     <input
                       type="checkbox"
                       checked={productData.active}
                       onChange={(e) => handleInputChange('active', e.target.checked)}
+                      style={{ flexShrink: 0 }} // ✅ Чекбокс не сжимается
                     />
-                    ✅ Активен
+                    Активен
                   </label>
                 </div>
               </div>
