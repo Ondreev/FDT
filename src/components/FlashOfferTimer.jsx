@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
 
+// ✅ ДОБАВЛЯЕМ ИМПОРТ УТИЛИТЫ
+const getZoneInfo = () => {
+  try {
+    const zoneInfo = localStorage.getItem('deliveryZoneInfo');
+    return zoneInfo ? JSON.parse(zoneInfo) : { freeFrom: 3000 };
+  } catch (e) {
+    return { freeFrom: 3000 };
+  }
+};
+
 const FlashOfferPopup = ({ subtotal, products, settings, addToCart, cart }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
@@ -12,11 +22,13 @@ const FlashOfferPopup = ({ subtotal, products, settings, addToCart, cart }) => {
   const flashItem = cart.find(item => item.id === `${specialProduct?.id}_flash`);
   const isInCart = !!flashItem;
 
-  // Простая логика активации предложения
+  // ✅ ОБНОВЛЕННАЯ логика активации предложения с динамическим порогом
   useEffect(() => {
     if (!specialProduct) return;
 
-    const shouldShow = subtotal >= 2000 && !isInCart && !hasTriggered;
+    // ✅ ПОЛУЧАЕМ ДИНАМИЧЕСКИЙ ПОРОГ
+    const freeDeliveryThreshold = getZoneInfo().freeFrom;
+    const shouldShow = subtotal >= freeDeliveryThreshold && !isInCart && !hasTriggered;
     
     if (shouldShow) {
       setTimeLeft(120);
@@ -24,8 +36,8 @@ const FlashOfferPopup = ({ subtotal, products, settings, addToCart, cart }) => {
       setHasTriggered(true);
     }
     
-    // Скрываем если сумма упала или товар добавлен
-    if ((subtotal < 2000 || isInCart) && isActive) {
+    // ✅ ОБНОВЛЯЕМ УСЛОВИЕ СКРЫТИЯ
+    if ((subtotal < freeDeliveryThreshold || isInCart) && isActive) {
       setIsActive(false);
       setTimeLeft(0);
     }
