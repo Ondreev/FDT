@@ -16,6 +16,7 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [showAddressButtons, setShowAddressButtons] = useState(false); // ✅ Новое состояние для кнопок адреса
   
   // ✅ ИЗВЛЕКАЕМ ДАННЫЕ ИЗ discountData
   const { 
@@ -28,6 +29,12 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
   
   // Читаем deliveryMode прямо из localStorage
   const deliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+  
+  // ✅ ПОЛУЧАЕМ АДРЕС ДОСТАВКИ ИЗ КОРЗИНЫ
+  const getDeliveryAddress = () => {
+    const deliveryItem = cart.find(item => item.isDelivery);
+    return deliveryItem?.address || '';
+  };
   
   // Ref для автоскролла
   const messagesEndRef = useRef(null);
@@ -60,8 +67,8 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
       },
       {
         id: 'delivery',
-        type: 'delivery_info', // Адаптивный шаг
-        field: currentMode === 'pickup' ? 'phone' : 'address' // Для самовывоза сразу телефон, для доставки - адрес
+        type: 'address_confirmation', // ✅ Новый тип для подтверждения адреса
+        field: currentMode === 'pickup' ? 'phone' : 'address'
       },
       {
         id: 'phone',
@@ -89,16 +96,18 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
     if (isOpen) {
       // Читаем актуальный режим доставки
       const currentDeliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+      const deliveryAddress = getDeliveryAddress();
       
       setCurrentStep(0);
       setMessages([]);
       setInputValue('');
+      setShowAddressButtons(false);
       
       // Устанавливаем режим доставки из localStorage
       setFormData({
         customerName: '',
         deliveryType: currentDeliveryMode,
-        address: currentDeliveryMode === 'pickup' ? 'Самовывоз' : '',
+        address: currentDeliveryMode === 'pickup' ? 'Самовывоз' : deliveryAddress,
         phone: '',
         comment: ''
       });
@@ -129,7 +138,15 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
         if (currentMode === 'pickup') {
           return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ уже знаю, что ты выбрал самовывоз, заскочишь к нам в ресторан! 🏪\n\nТеперь напиши свой номер WhatsApp:`;
         } else {
-          return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ знаю, ты выбрал нашу скоростную доставку, напиши свой адрес, чтобы заказ не увезли другому чуваку! 😄📍`;
+          // ✅ НОВАЯ ЛОГИКА - ПОКАЗЫВАЕМ АДРЕС ИЗ КОРЗИНЫ
+          const deliveryAddress = getDeliveryAddress();
+          if (deliveryAddress) {
+            setShowAddressButtons(true); // Показываем кнопки подтверждения
+            return `Отлично, ${updatedFormData.customerName}! 🚀\n\nКак я вижу, тебе нужно привезти заказ сюда:\n"${deliveryAddress}"\n\nЭто правильный адрес? А то увезем твой заказ другому чуваку! 😄`;
+          } else {
+            // Если адреса нет, просим ввести
+            return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ знаю, ты выбрал нашу скоростную доставку, напиши свой адрес, чтобы заказ не увезли другому чуваку! 😄📍`;
+          }
         }
       
       case 'phone':
@@ -155,6 +172,50 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
       
       default:
         return step.botMessage || '';
+    }
+  };
+
+  // ✅ НОВАЯ ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ПОДТВЕРЖДЕНИЯ АДРЕСА
+  const handleAddressConfirmation = (confirmed) => {
+    setShowAddressButtons(false);
+    
+    if (confirmed) {
+      // Адрес подтвержден - используем адрес из корзины
+      const deliveryAddress = getDeliveryAddress();
+      const updatedFormData = { ...formData, address: deliveryAddress };
+      setFormData(updatedFormData);
+      
+      // Переходим к следующему шагу
+      setTimeout(() => {
+        const nextStepIndex = findNextStep(currentStep, updatedFormData);
+        if (nextStepIndex < getSteps().length) {
+          setIsTyping(true);
+          setTimeout(() => {
+            setIsTyping(false);
+            setCurrentStep(nextStepIndex);
+            
+            const botMessage = {
+              type: 'bot',
+              text: getBotMessage(nextStepIndex, updatedFormData),
+              timestamp: new Date()
+            };
+            
+            setMessages(prev => [...prev, botMessage]);
+          }, 1200);
+        }
+      }, 800);
+    } else {
+      // Нужно изменить адрес - предлагаем вернуться в корзину
+      setMessages(prev => [...prev, {
+        type: 'bot',
+        text: '📍 Понятно! Чтобы изменить адрес доставки, нужно вернуться в корзину и выбрать новый адрес.\n\nПосле этого можешь снова вернуться к оформлению заказа! 👍',
+        timestamp: new Date()
+      }]);
+      
+      // Закрываем форму через 3 секунды
+      setTimeout(() => {
+        onClose();
+      }, 3000);
     }
   };
 
@@ -312,6 +373,51 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
     if (currentStep >= getSteps().length || isTyping) return null;
     
     const step = getSteps()[currentStep];
+    
+    // ✅ НОВАЯ ЛОГИКА ДЛЯ ПОДТВЕРЖДЕНИЯ АДРЕСА
+    if (step.type === 'address_confirmation' && showAddressButtons) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+          marginTop: '1rem'
+        }}>
+          <button
+            onClick={() => handleAddressConfirmation(true)}
+            style={{
+              padding: '1rem 2rem',
+              background: 'linear-gradient(135deg, #25d366, #128c7e)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '25px',
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            ✅ Верно
+          </button>
+          <button
+            onClick={() => handleAddressConfirmation(false)}
+            style={{
+              padding: '0.8rem 1.5rem',
+              background: 'transparent',
+              color: '#ff6b47',
+              border: '2px solid #ff6b47',
+              borderRadius: '25px',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            📝 Изменить
+          </button>
+        </div>
+      );
+    }
     
     if (step.type === 'confirmation') {
       return (
