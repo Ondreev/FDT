@@ -6,7 +6,7 @@ export const useDeliveryMode = () => {
   const [state, setState] = useState({
     mode: null, // 'delivery' | 'pickup' | null
     savedAddress: '',
-    needsSelection: true, // ✅ Заменяем showOverlay на needsSelection
+    needsSelection: true, // ✅ По умолчанию нужен выбор
     needsAddressInput: false,
     isAddressConfirmed: false
   });
@@ -15,11 +15,6 @@ export const useDeliveryMode = () => {
   useEffect(() => {
     const saved = localStorage.getItem('deliveryData');
     console.log('Loading from localStorage:', saved);
-    
-    setState(prev => ({
-      ...prev,
-      needsSelection: true // ✅ ВСЕГДА показываем выбор при загрузке страницы
-    }));
 
     if (saved) {
       try {
@@ -31,11 +26,17 @@ export const useDeliveryMode = () => {
           mode: data.mode || null,
           savedAddress: data.address || '',
           isAddressConfirmed: data.mode === 'pickup' || (data.mode === 'delivery' && !!data.address)
+          // ✅ НЕ ТРОГАЕМ needsSelection - оставляем true для показа выбора
         }));
       } catch (error) {
         console.error('Error loading delivery data:', error);
       }
     }
+    
+    console.log('Initial state after loading:', {
+      needsSelection: true,
+      mode: saved ? JSON.parse(saved).mode : null
+    });
   }, []);
 
   // ✅ Сохранение в localStorage при изменениях
