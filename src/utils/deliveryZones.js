@@ -1,9 +1,7 @@
 // utils/deliveryZones.js - Система проверки зон доставки
 
-// ✅ ВАШ API КЛЮЧ ЯНДЕКС ГЕОКОДЕРА
 const YANDEX_API_KEY = '74b46206-b9f0-4591-a22c-5fabeb409e5b';
 
-// ✅ ГЕОДАННЫЕ ВАШИХ ЗОН (из GeoJSON)
 const DELIVERY_ZONES_GEOJSON = {
   "type": "FeatureCollection",
   "features": [
@@ -62,13 +60,9 @@ const DELIVERY_ZONES_GEOJSON = {
   ]
 };
 
-// ✅ ФУНКЦИЯ ГЕОКОДИРОВАНИЯ ЧЕРЕЗ ЯНДЕКС API
 const geocodeAddress = async (address) => {
   try {
-    console.log('🔍 Геокодирую адрес:', address);
-    
     const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(address)}&format=json&results=1`;
-    
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -76,11 +70,9 @@ const geocodeAddress = async (address) => {
     }
     
     const data = await response.json();
-    
     const geoObjects = data.response?.GeoObjectCollection?.featureMember;
     
     if (!geoObjects || geoObjects.length === 0) {
-      console.log('❌ Адрес не найден');
       return null;
     }
     
@@ -88,19 +80,16 @@ const geocodeAddress = async (address) => {
     const lon = parseFloat(coordinates[0]);
     const lat = parseFloat(coordinates[1]);
     
-    console.log('📍 Координаты:', lat, lon);
     return { lat, lon };
-    
   } catch (error) {
-    console.error('❌ Ошибка геокодирования:', error);
+    console.error('Ошибка геокодирования:', error);
     return null;
   }
 };
 
-// ✅ АЛГОРИТМ "ТОЧКА В ПОЛИГОНЕ" (Ray Casting)
 const pointInPolygon = (point, polygon) => {
   const [x, y] = [point.lon, point.lat];
-  const coords = polygon[0]; // Берем внешний контур
+  const coords = polygon[0];
   
   let inside = false;
   
@@ -116,12 +105,11 @@ const pointInPolygon = (point, polygon) => {
   return inside;
 };
 
-// ✅ ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЗОНЫ ДОСТАВКИ ПО КООРДИНАТАМ (ЭКСПОРТИРУЕМ!)
 export const getDeliveryZoneByCoords = (coordinates) => {
   for (const feature of DELIVERY_ZONES_GEOJSON.features) {
     if (pointInPolygon(coordinates, feature.geometry.coordinates)) {
       return {
-        zone: feature.properties.description.toLowerCase().replace(' зона', '').replace('ая', 'ая').replace('яя', 'яя'),
+        zone: feature.properties.description.toLowerCase().replace(' зона', ''),
         cost: feature.properties.cost,
         freeFrom: feature.properties.freeFrom,
         label: feature.properties.description,
@@ -129,16 +117,11 @@ export const getDeliveryZoneByCoords = (coordinates) => {
       };
     }
   }
-  
   return null;
 };
 
-// ✅ ГЛАВНАЯ ФУНКЦИЯ ПРОВЕРКИ АДРЕСА
 export const checkDeliveryZone = async (address) => {
   try {
-    console.log('\n🎯 Проверяем зону доставки для:', address);
-    
-    // 1. Геокодируем адрес
     const coordinates = await geocodeAddress(address);
     if (!coordinates) {
       return { 
@@ -147,14 +130,9 @@ export const checkDeliveryZone = async (address) => {
       };
     }
     
-    // 2. Проверяем попадание в зоны
     const zone = getDeliveryZoneByCoords(coordinates);
     
     if (zone) {
-      console.log('✅ Адрес в зоне:', zone.label);
-      console.log('💰 Стоимость доставки:', zone.cost + '₽');
-      console.log('🆓 Бесплатно от:', zone.freeFrom + '₽');
-      
       return {
         success: true,
         zone: zone.zone,
@@ -164,36 +142,16 @@ export const checkDeliveryZone = async (address) => {
         coordinates: coordinates
       };
     } else {
-      console.log('❌ Адрес за пределами зон доставки');
       return {
         success: false,
         error: 'Доставка по указанному адресу недоступна',
         coordinates: coordinates
       };
     }
-    
   } catch (error) {
-    console.error('💥 Ошибка проверки зоны:', error);
     return {
       success: false,
       error: 'Ошибка при проверке адреса: ' + error.message
     };
   }
-};
-
-// ✅ КЭШИРОВАНИЕ РЕЗУЛЬТАТОВ (чтобы не делать повторные запросы)
-const addressCache = new Map();
-
-export const checkDeliveryZoneCached = async (address) => {
-  const cacheKey = address.toLowerCase().trim();
-  
-  if (addressCache.has(cacheKey)) {
-    console.log('📦 Результат из кэша для:', address);
-    return addressCache.get(cacheKey);
-  }
-  
-  const result = await checkDeliveryZone(address);
-  addressCache.set(cacheKey, result);
-  
-  return result;
 };
