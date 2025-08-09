@@ -50,7 +50,12 @@ const AddressInput = ({
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('AddressInput is closed, isOpen:', isOpen);
+    return null;
+  }
+
+  console.log('AddressInput is rendering, isOpen:', isOpen);
 
   return (
     <>
