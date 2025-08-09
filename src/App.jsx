@@ -42,14 +42,16 @@ const ShopPage = () => {
   } = useShopStatus();
 
   // ✅ ХУК УПРАВЛЕНИЯ ДОСТАВКОЙ
+  const deliveryState = useDeliveryMode();
   const {
     deliveryMode,
     savedAddress,
     showOverlay,
     needsAddressInput,
     setDeliveryMode,
-    closeOverlay
-  } = useDeliveryMode();
+    closeOverlay,
+    openAddressInput
+  } = deliveryState;
 
   // Основные состояния
   const [settings, setSettings] = useState({});
@@ -767,7 +769,10 @@ const addToCart = async (product, skipUpsell = false) => {
         {/* ✅ КОМПОНЕНТ ВВОДА АДРЕСА */}
         <AddressInput 
           isOpen={needsAddressInput}
-          onClose={closeOverlay}
+          onClose={() => {
+            // Просто закрываем ввод адреса
+            deliveryState.closeOverlay();
+          }}
           settings={settings}
         />
       </div>
