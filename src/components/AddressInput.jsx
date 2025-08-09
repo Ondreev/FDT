@@ -810,6 +810,5 @@ export default AddressInput;
       </div>
     </div>
   );
-};
 
 export default AddressInput;
