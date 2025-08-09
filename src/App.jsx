@@ -477,6 +477,10 @@ const addToCart = async (product, skipUpsell = false) => {
     <>
       <style>
         {`
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          
           @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -599,7 +603,12 @@ const addToCart = async (product, skipUpsell = false) => {
               overflowX: 'auto',
               scrollBehavior: 'smooth',
               WebkitOverflowScrolling: 'touch',
+              // ✅ Скрываем полосу прокрутки
+              scrollbarWidth: 'none', // Firefox
+              msOverflowStyle: 'none', // IE
             }}
+            // ✅ Добавляем CSS для webkit браузеров
+            className="hide-scrollbar"
           >
             <button
               onClick={() => setActiveCategory(null)}
