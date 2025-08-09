@@ -48,7 +48,7 @@ const ShopPage = () => {
     needsSelection,
     needsAddressInput,
     setDeliveryMode,
-    closeSelection
+    closeAddressInput
   } = deliveryState;
 
   // Основные состояния
@@ -772,7 +772,7 @@ const addToCart = async (product, skipUpsell = false) => {
         <AddressInput 
           isOpen={needsAddressInput}
           onClose={() => {
-            deliveryState.closeSelection();
+            deliveryState.closeAddressInput();
           }}
           settings={settings}
         />
