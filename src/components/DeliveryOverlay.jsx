@@ -16,17 +16,22 @@ const DeliveryOverlay = ({ settings = {} }) => {
 
   // ✅ Обработка выбора доставки
   const handleDeliveryChoice = () => {
+    console.log('Delivery choice clicked, savedAddress:', savedAddress); // Для отладки
     if (savedAddress) {
       // Если есть сохраненный адрес, сразу устанавливаем режим
       setDeliveryMode('delivery');
     } else {
-      // Если нет адреса, открываем ввод
-      setShowAddressInput(true);
+      // Если нет адреса, сначала устанавливаем режим, потом открываем ввод
+      setDeliveryMode('delivery');
+      setTimeout(() => {
+        setShowAddressInput(true);
+      }, 100);
     }
   };
 
   // ✅ Обработка выбора самовывоза
   const handlePickupChoice = () => {
+    console.log('Pickup choice clicked'); // Для отладки
     setDeliveryMode('pickup');
   };
 
