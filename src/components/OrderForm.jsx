@@ -32,8 +32,25 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
   
   // ✅ ПОЛУЧАЕМ АДРЕС ДОСТАВКИ ИЗ КОРЗИНЫ
   const getDeliveryAddress = () => {
+    // Проверяем разные возможные поля где может храниться адрес
     const deliveryItem = cart.find(item => item.isDelivery);
-    return deliveryItem?.address || '';
+    console.log('Delivery item found:', deliveryItem); // Для отладки
+    
+    if (!deliveryItem) {
+      // Если нет товара доставки, попробуем получить из localStorage
+      const savedAddress = localStorage.getItem('deliveryAddress');
+      console.log('Address from localStorage:', savedAddress);
+      return savedAddress || '';
+    }
+    
+    // Проверяем разные возможные поля
+    const address = deliveryItem.address || 
+                   deliveryItem.deliveryAddress || 
+                   deliveryItem.description || 
+                   '';
+    
+    console.log('Address from delivery item:', address);
+    return address;
   };
   
   // Ref для автоскролла
@@ -140,11 +157,15 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
         } else {
           // ✅ НОВАЯ ЛОГИКА - ПОКАЗЫВАЕМ АДРЕС ИЗ КОРЗИНЫ
           const deliveryAddress = getDeliveryAddress();
-          if (deliveryAddress) {
+          console.log('Current cart:', cart); // Для отладки
+          console.log('Delivery address found:', deliveryAddress); // Для отладки
+          
+          if (deliveryAddress && deliveryAddress.trim() !== '') {
             setShowAddressButtons(true); // Показываем кнопки подтверждения
             return `Отлично, ${updatedFormData.customerName}! 🚀\n\nКак я вижу, тебе нужно привезти заказ сюда:\n"${deliveryAddress}"\n\nЭто правильный адрес? А то увезем твой заказ другому чуваку! 😄`;
           } else {
             // Если адреса нет, просим ввести
+            console.log('No delivery address found, asking for input');
             return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ знаю, ты выбрал нашу скоростную доставку, напиши свой адрес, чтобы заказ не увезли другому чуваку! 😄📍`;
           }
         }
