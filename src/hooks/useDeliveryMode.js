@@ -65,19 +65,27 @@ export const useDeliveryMode = () => {
         newState.needsAddressInput = false;
         newState.isAddressConfirmed = true;
         newState.needsSelection = false;
+        console.log('Pickup selected - closing selection');
       } else if (mode === 'delivery') {
         // Доставка - проверяем есть ли адрес
         if (prev.savedAddress) {
           newState.isAddressConfirmed = true;
           newState.needsSelection = false; // ✅ Есть адрес, выбор завершен
+          console.log('Delivery selected with existing address - closing selection');
         } else {
           newState.needsAddressInput = true;
           newState.isAddressConfirmed = false;
-          // needsSelection остается true пока не введут адрес
+          newState.needsSelection = true; // ✅ Нет адреса, оставляем выбор открытым
+          console.log('Delivery selected without address - opening input, keeping selection');
         }
       }
       
-      console.log('New state:', newState);
+      console.log('New state after setDeliveryMode:', {
+        mode: newState.mode,
+        needsSelection: newState.needsSelection,
+        needsAddressInput: newState.needsAddressInput,
+        isAddressConfirmed: newState.isAddressConfirmed
+      });
       return newState;
     });
   };
