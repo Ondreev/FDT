@@ -109,88 +109,77 @@ const DeliveryModeSelector = ({
           </button>
         </div>
 
-        {/* ✅ Отображение адреса доставки */}
+        {/* ✅ КОМПАКТНОЕ отображение адреса доставки */}
         {deliveryMode === 'delivery' && savedAddress && isAddressConfirmed && (
           <div style={{
             background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)',
-            padding: compact ? '0.6rem' : '0.8rem',
-            borderRadius: '8px',
-            border: '2px solid #2196f3',
-            animation: 'addressSlide 0.3s ease-out'
+            padding: compact ? '0.5rem 0.8rem' : '0.6rem',
+            borderRadius: '6px',
+            border: '1px solid #2196f3',
+            animation: 'addressSlide 0.3s ease-out',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.5rem'
           }}>
             <div style={{ 
               display: 'flex', 
               alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.3rem'
+              gap: '0.4rem',
+              flex: 1,
+              minWidth: 0 // Позволяет тексту сжиматься
             }}>
-              <span style={{ fontSize: compact ? '1rem' : '1.1rem' }}>📍</span>
-              <span style={{ 
-                fontWeight: 'bold', 
-                fontSize: compact ? '0.8rem' : '0.9rem',
-                color: '#1565c0'
-              }}>
-                Адрес доставки:
-              </span>
-            </div>
-            <div style={{ 
-              fontSize: compact ? '0.8rem' : '0.9rem',
-              color: '#1976d2',
-              fontWeight: '500',
-              lineHeight: '1.3',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              {savedAddress}
-            </div>
-            <button
-              onClick={openAddressInput}
-              style={{
-                background: 'transparent',
-                border: 'none',
+              <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>📍</span>
+              <div style={{ 
+                fontSize: compact ? '0.8rem' : '0.85rem',
                 color: '#1976d2',
-                fontSize: compact ? '0.7rem' : '0.8rem',
-                cursor: 'pointer',
-                marginTop: '0.3rem',
-                textDecoration: 'underline',
-                padding: '0'
-              }}
-            >
-              Изменить адрес
-            </button>
+                fontWeight: '500',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                flex: 1
+              }}>
+                {savedAddress}
+              </div>
+            </div>
+            {!compact && (
+              <button
+                onClick={openAddressInput}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#1976d2',
+                  fontSize: '0.7rem',
+                  cursor: 'pointer',
+                  padding: '0.2rem 0.4rem',
+                  borderRadius: '3px',
+                  flexShrink: 0,
+                  textDecoration: 'underline'
+                }}
+              >
+                изменить
+              </button>
+            )}
           </div>
         )}
 
-        {/* ✅ Адрес самовывоза */}
+        {/* ✅ КОМПАКТНОЕ отображение адреса самовывоза */}
         {deliveryMode === 'pickup' && (
           <div style={{
             background: 'linear-gradient(135deg, #e8f5e8, #c8e6c9)',
-            padding: compact ? '0.6rem' : '0.8rem',
-            borderRadius: '8px',
-            border: '2px solid #4caf50',
-            animation: 'addressSlide 0.3s ease-out'
+            padding: compact ? '0.5rem 0.8rem' : '0.6rem',
+            borderRadius: '6px',
+            border: '1px solid #4caf50',
+            animation: 'addressSlide 0.3s ease-out',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
           }}>
+            <span style={{ fontSize: '0.9rem' }}>🏪</span>
             <div style={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.3rem'
-            }}>
-              <span style={{ fontSize: compact ? '1rem' : '1.1rem' }}>🏪</span>
-              <span style={{ 
-                fontWeight: 'bold', 
-                fontSize: compact ? '0.8rem' : '0.9rem',
-                color: '#2e7d32'
-              }}>
-                Адрес самовывоза:
-              </span>
-            </div>
-            <div style={{ 
-              fontSize: compact ? '0.8rem' : '0.9rem',
+              fontSize: compact ? '0.8rem' : '0.85rem',
               color: '#388e3c',
-              fontWeight: '500',
-              lineHeight: '1.3'
+              fontWeight: '500'
             }}>
               Реутов, ул. Калинина, д. 8
             </div>
@@ -199,25 +188,36 @@ const DeliveryModeSelector = ({
 
         {/* ✅ Мигающее предупреждение */}
         {shouldShowWarning() && (
-          <div style={{
-            padding: compact ? '0.6rem' : '0.8rem',
-            borderRadius: '8px',
-            textAlign: 'center',
-            animation: 'warningBlink 1.5s infinite',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            if (deliveryMode === 'delivery') {
-              openAddressInput();
-            }
-          }}
+          <div 
+            style={{
+              padding: compact ? '0.5rem 0.8rem' : '0.6rem',
+              borderRadius: '6px',
+              textAlign: 'center',
+              animation: 'warningBlink 1.5s infinite',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.3rem'
+            }}
+            onClick={() => {
+              if (deliveryMode === 'delivery') {
+                openAddressInput();
+              } else if (!deliveryMode) {
+                // Если режим не выбран, можно предложить выбрать доставку
+                setDeliveryMode('delivery');
+              }
+            }}
           >
+            <span style={{ fontSize: compact ? '0.8rem' : '0.9rem' }}>
+              {deliveryMode === 'delivery' ? '📍' : '⚠️'}
+            </span>
             <div style={{ 
               fontWeight: 'bold', 
               fontSize: compact ? '0.8rem' : '0.9rem',
               color: '#d32f2f'
             }}>
-              {deliveryMode === 'delivery' ? '📍 Введите адрес доставки' : '⚠️ Выберите способ получения'}
+              {deliveryMode === 'delivery' ? 'Введите адрес доставки' : 'Выберите способ получения'}
             </div>
           </div>
         )}
