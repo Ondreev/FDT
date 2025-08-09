@@ -20,12 +20,17 @@ export const useDeliveryMode = () => {
       try {
         const data = JSON.parse(saved);
         console.log('Parsed data:', data);
+        
+        // ✅ ЛОГИКА: Если есть сохраненные данные, но это первый заход на сессию - показываем выбор
+        const hasCompleteDeliveryData = data.mode === 'delivery' && data.address;
+        const hasPickupData = data.mode === 'pickup';
+        
         setState(prev => ({
           ...prev,
           mode: data.mode || null,
           savedAddress: data.address || '',
-          needsSelection: !data.mode || (data.mode === 'delivery' && !data.address), // ✅ Нужен выбор если нет режима или нет адреса для доставки
-          isAddressConfirmed: data.mode === 'pickup' || (data.mode === 'delivery' && !!data.address)
+          needsSelection: true, // ✅ ВСЕГДА показываем выбор при загрузке (пока не выберут в этой сессии)
+          isAddressConfirmed: hasCompleteDeliveryData || hasPickupData
         }));
       } catch (error) {
         console.error('Error loading delivery data:', error);
