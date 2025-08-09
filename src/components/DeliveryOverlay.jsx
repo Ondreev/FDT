@@ -40,10 +40,11 @@ const DeliveryOverlay = ({ settings = {} }) => {
   // ✅ Закрытие ввода адреса
   const handleAddressInputClose = () => {
     setShowAddressInput(false);
-    if (!savedAddress) {
-      // Если адрес не введен, остаемся в оверлее
-      return;
-    }
+    // ✅ УБИРАЕМ ПРОВЕРКУ - позволяем закрыть ввод адреса
+    // if (!savedAddress) {
+    //   // Если адрес не введен, остаемся в оверлее
+    //   return;
+    // }
   };
 
   if (!showOverlay) return null;
