@@ -28,18 +28,31 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
   } = discountData || {};
   
   // Читаем deliveryMode прямо из localStorage
-  const deliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+  const deliveryMode = localStorage.getItem('deliveryMode') || 
+                       (localStorage.getItem('deliveryData') ? 
+                        JSON.parse(localStorage.getItem('deliveryData')).mode : 
+                        'delivery');
   
-  // ✅ ПОЛУЧАЕМ АДРЕС ДОСТАВКИ ИЗ ПРАВИЛЬНОГО МЕСТА
+  // ✅ ПОЛУЧАЕМ АДРЕС ДОСТАВКИ ТОЛЬКО ЕСЛИ ВЫБРАНА ДОСТАВКА
   const getDeliveryAddress = () => {
-    // ✅ Сначала проверяем deliveryData в localStorage (основное место хранения)
+    // ✅ СНАЧАЛА ПРОВЕРЯЕМ ТЕКУЩИЙ РЕЖИМ ДОСТАВКИ
+    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
+    
+    // ✅ Если выбран самовывоз - адрес не нужен
+    if (currentMode === 'pickup') {
+      console.log('Pickup mode selected, no address needed');
+      return '';
+    }
+    
+    // ✅ Только для доставки ищем адрес в deliveryData
     try {
       const deliveryData = localStorage.getItem('deliveryData');
       if (deliveryData) {
         const data = JSON.parse(deliveryData);
         console.log('Delivery data from localStorage:', data);
         
-        if (data.address && data.address.trim() !== '') {
+        // ✅ Проверяем что режим доставки и есть адрес
+        if (data.mode === 'delivery' && data.address && data.address.trim() !== '') {
           console.log('Found address in deliveryData:', data.address);
           return data.address;
         }
@@ -48,7 +61,7 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
       console.error('Error parsing deliveryData:', e);
     }
     
-    // ✅ Fallback - проверяем старый ключ deliveryAddress
+    // ✅ Fallback - проверяем старый ключ deliveryAddress (только для доставки)
     const savedAddress = localStorage.getItem('deliveryAddress');
     console.log('Address from deliveryAddress key:', savedAddress);
     
@@ -56,22 +69,8 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
       return savedAddress;
     }
     
-    // ✅ Последний fallback - проверяем корзину (но скорее всего там будет только "Доставка по городу")
-    const deliveryItem = cart.find(item => item.isDelivery);
-    console.log('Delivery item found:', deliveryItem);
-    
-    if (deliveryItem) {
-      const address = deliveryItem.address || deliveryItem.deliveryAddress || '';
-      console.log('Address from delivery item:', address);
-      
-      // Если это не дефолтное название услуги, возвращаем
-      if (address && address.trim() !== '' && address !== 'Доставка по городу') {
-        return address;
-      }
-    }
-    
-    // ✅ Если ничего не найдено
-    console.log('No delivery address found, asking for input');
+    // ✅ Если для доставки адрес не найден
+    console.log('Delivery mode but no address found, asking for input');
     return '';
   };
   
@@ -133,8 +132,19 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
 
   useEffect(() => {
     if (isOpen) {
-      // Читаем актуальный режим доставки
-      const currentDeliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+      // ✅ Читаем актуальный режим доставки из deliveryData
+      let currentDeliveryMode = 'delivery';
+      try {
+        const deliveryData = localStorage.getItem('deliveryData');
+        if (deliveryData) {
+          const data = JSON.parse(deliveryData);
+          currentDeliveryMode = data.mode || 'delivery';
+        }
+      } catch (e) {
+        // Fallback к старому способу
+        currentDeliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
+      }
+      
       const deliveryAddress = getDeliveryAddress();
       
       setCurrentStep(0);
