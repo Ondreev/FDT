@@ -27,16 +27,27 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
     productsSubtotal = 0
   } = discountData || {};
   
-  // Читаем deliveryMode прямо из localStorage
-  const deliveryMode = localStorage.getItem('deliveryMode') || 
-                       (localStorage.getItem('deliveryData') ? 
-                        JSON.parse(localStorage.getItem('deliveryData')).mode : 
-                        'delivery');
+  // ✅ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ АКТУАЛЬНОГО РЕЖИМА ДОСТАВКИ
+  const getCurrentDeliveryMode = () => {
+    try {
+      const deliveryData = localStorage.getItem('deliveryData');
+      if (deliveryData) {
+        const data = JSON.parse(deliveryData);
+        return data.mode || 'delivery';
+      }
+    } catch (e) {
+      console.error('Error parsing deliveryData:', e);
+    }
+    
+    // Fallback к старому способу
+    return localStorage.getItem('deliveryMode') || 'delivery';
+  };
   
   // ✅ ПОЛУЧАЕМ АДРЕС ДОСТАВКИ ТОЛЬКО ЕСЛИ ВЫБРАНА ДОСТАВКА
   const getDeliveryAddress = () => {
-    // ✅ СНАЧАЛА ПРОВЕРЯЕМ ТЕКУЩИЙ РЕЖИМ ДОСТАВКИ
-    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
+    // ✅ ПОЛУЧАЕМ АКТУАЛЬНЫЙ РЕЖИМ ДОСТАВКИ
+    const currentMode = getCurrentDeliveryMode();
+    console.log('Current delivery mode:', currentMode);
     
     // ✅ Если выбран самовывоз - адрес не нужен
     if (currentMode === 'pickup') {
@@ -92,8 +103,8 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
 
   // Функция для получения шагов в зависимости от режима доставки
   const getSteps = () => {
-    // Читаем актуальный режим каждый раз при вызове
-    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
+    // ✅ Читаем актуальный режим каждый раз при вызове
+    const currentMode = getCurrentDeliveryMode();
     
     return [
       {
@@ -132,20 +143,12 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
 
   useEffect(() => {
     if (isOpen) {
-      // ✅ Читаем актуальный режим доставки из deliveryData
-      let currentDeliveryMode = 'delivery';
-      try {
-        const deliveryData = localStorage.getItem('deliveryData');
-        if (deliveryData) {
-          const data = JSON.parse(deliveryData);
-          currentDeliveryMode = data.mode || 'delivery';
-        }
-      } catch (e) {
-        // Fallback к старому способу
-        currentDeliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
-      }
-      
+      // ✅ Читаем актуальный режим доставки
+      const currentDeliveryMode = getCurrentDeliveryMode();
       const deliveryAddress = getDeliveryAddress();
+      
+      console.log('OrderForm opened with mode:', currentDeliveryMode);
+      console.log('OrderForm opened with address:', deliveryAddress);
       
       setCurrentStep(0);
       setMessages([]);
@@ -178,12 +181,12 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
 
   const getBotMessage = (stepIndex, updatedFormData) => {
     const step = getSteps()[stepIndex];
-    // Читаем актуальный режим каждый раз
-    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
+    // ✅ Читаем актуальный режим каждый раз
+    const currentMode = getCurrentDeliveryMode();
     
     switch(step.id) {
       case 'delivery':
-        // Используем актуальный режим из localStorage
+        // ✅ Используем актуальный режим
         if (currentMode === 'pickup') {
           return `Отлично, ${updatedFormData.customerName}! 🚀\n\nЯ уже знаю, что ты выбрал самовывоз, заскочишь к нам в ресторан! 🏪\n\nТеперь напиши свой номер WhatsApp:`;
         } else {
@@ -319,7 +322,7 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
 
   const findNextStep = (currentIndex, formData) => {
     const steps = getSteps();
-    const currentMode = localStorage.getItem('deliveryMode') || 'delivery';
+    const currentMode = getCurrentDeliveryMode();
     
     for (let i = currentIndex + 1; i < steps.length; i++) {
       const step = steps[i];
