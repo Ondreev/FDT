@@ -17,26 +17,51 @@ const getCurrentDeliveryMode = () => {
     console.error('Error parsing deliveryData:', e);
   }
   
-  // Fallback к старому способу
   return localStorage.getItem('deliveryMode') || 'delivery';
 };
 
-// Простой менеджер доставки с учетом режима
+// ✅ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ИНФОРМАЦИИ О ЗОНЕ
+const getZoneInfo = () => {
+  try {
+    const zoneInfo = localStorage.getItem('deliveryZoneInfo');
+    if (zoneInfo) {
+      return JSON.parse(zoneInfo);
+    }
+  } catch (e) {
+    console.error('Error parsing deliveryZoneInfo:', e);
+  }
+  
+  // Fallback к стандартной зоне (если адрес не проверялся)
+  return {
+    cost: 300,
+    freeFrom: 3000,
+    label: 'Стандартная зона'
+  };
+};
+
+// Простой менеджер доставки с зональным ценообразованием
 const SimpleDeliveryManager = ({ cart, setCart }) => {
-  const DELIVERY_COST = 250;
-  const FREE_DELIVERY_THRESHOLD = 2000;
   const DELIVERY_ID = 'delivery_service';
   
   // ✅ ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ ДЛЯ ПОЛУЧЕНИЯ РЕЖИМА
   const [currentMode, setCurrentMode] = useState(() => getCurrentDeliveryMode());
+  const [currentZoneInfo, setCurrentZoneInfo] = useState(() => getZoneInfo());
 
   // ✅ ДОБАВЛЯЕМ СЛУШАТЕЛЬ ИЗМЕНЕНИЙ В localStorage
   useEffect(() => {
     const handleStorageChange = () => {
       const newMode = getCurrentDeliveryMode();
-      console.log('Storage changed, new mode:', newMode);
+      const newZoneInfo = getZoneInfo();
+      
       if (newMode !== currentMode) {
+        console.log('SimpleDeliveryManager: Mode changed to:', newMode);
         setCurrentMode(newMode);
+      }
+      
+      // Обновляем информацию о зоне если изменилась
+      if (JSON.stringify(newZoneInfo) !== JSON.stringify(currentZoneInfo)) {
+        console.log('SimpleDeliveryManager: Zone info changed:', newZoneInfo);
+        setCurrentZoneInfo(newZoneInfo);
       }
     };
 
@@ -50,16 +75,22 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
-  }, [currentMode]);
+  }, [currentMode, currentZoneInfo]);
 
   useEffect(() => {
     // ✅ ОТСЛЕЖИВАЕМ ИЗМЕНЕНИЯ С ПОМОЩЬЮ НОВОЙ ФУНКЦИИ
     const deliveryMode = getCurrentDeliveryMode();
-    console.log('SimpleDeliveryManager: Current delivery mode:', deliveryMode); // Для отладки
+    const zoneInfo = getZoneInfo();
+    
+    console.log('SimpleDeliveryManager: Current delivery mode:', deliveryMode);
+    console.log('SimpleDeliveryManager: Current zone info:', zoneInfo);
     
     if (deliveryMode !== currentMode) {
       setCurrentMode(deliveryMode);
-      console.log('SimpleDeliveryManager: Mode changed to:', deliveryMode); // Для отладки
+    }
+    
+    if (JSON.stringify(zoneInfo) !== JSON.stringify(currentZoneInfo)) {
+      setCurrentZoneInfo(zoneInfo);
     }
     
     // Находим товары (исключая доставку)
@@ -73,28 +104,35 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
     
     // ✅ ГЛАВНАЯ ЛОГИКА: если самовывоз - убираем доставку
     if (deliveryMode === 'pickup') {
-      console.log('SimpleDeliveryManager: Pickup mode - removing delivery'); // Для отладки
+      console.log('SimpleDeliveryManager: Pickup mode - removing delivery');
       if (deliveryItem) {
         setCart(prev => prev.filter(item => item.id !== DELIVERY_ID));
       }
       return;
     }
     
-    // ЛОГИКА ДЛЯ ДОСТАВКИ:
-    console.log('SimpleDeliveryManager: Delivery mode - managing delivery service'); // Для отладки
+    // ✅ ЛОГИКА ДЛЯ ДОСТАВКИ С ЗОНАЛЬНЫМИ ТАРИФАМИ:
+    console.log('SimpleDeliveryManager: Delivery mode - managing delivery service');
+    
+    // ✅ ИСПОЛЬЗУЕМ ЗОНАЛЬНУЮ СТОИМОСТЬ
+    const DELIVERY_COST = zoneInfo.cost || 300;
+    const FREE_DELIVERY_THRESHOLD = zoneInfo.freeFrom || 3000;
+    
+    console.log('SimpleDeliveryManager: Using zone tariffs - cost:', DELIVERY_COST, 'free from:', FREE_DELIVERY_THRESHOLD);
     
     // Логика 1: Добавляем доставку при первом товаре ИЛИ при переключении на доставку
     if (products.length > 0 && !deliveryItem) {
-      console.log('SimpleDeliveryManager: Adding delivery service'); // Для отладки
+      console.log('SimpleDeliveryManager: Adding delivery service with zone cost:', DELIVERY_COST);
       const deliveryService = {
         id: DELIVERY_ID,
-        name: 'Доставка',
+        name: `Доставка (${zoneInfo.label || 'Стандартная зона'})`,
         price: DELIVERY_COST,
         quantity: 1,
         imageUrl: '🛵',
         isDelivery: true,
-        description: 'Доставка по городу',
-        weight: ''
+        description: `Доставка: ${zoneInfo.label || 'Стандартная зона'}`,
+        weight: '',
+        zoneInfo: zoneInfo // Сохраняем информацию о зоне
       };
       
       setCart(prev => [...prev, deliveryService]);
@@ -103,49 +141,73 @@ const SimpleDeliveryManager = ({ cart, setCart }) => {
     
     // Логика 2: Убираем доставку если нет товаров
     if (products.length === 0 && deliveryItem) {
-      console.log('SimpleDeliveryManager: No products - removing delivery'); // Для отладки
+      console.log('SimpleDeliveryManager: No products - removing delivery');
       setCart(prev => prev.filter(item => item.id !== DELIVERY_ID));
       return;
     }
     
-    // Логика 3: Управляем ценой доставки
+    // Логика 3: Управляем ценой доставки с учетом зоны
     if (deliveryItem) {
       const shouldBeFree = deliveryItem.isFreeDelivery && productsSubtotal >= FREE_DELIVERY_THRESHOLD;
       const correctPrice = shouldBeFree ? 0 : DELIVERY_COST;
       
       // Если сумма упала ниже порога - возвращаем платную доставку
       if (deliveryItem.isFreeDelivery && productsSubtotal < FREE_DELIVERY_THRESHOLD) {
-        console.log('SimpleDeliveryManager: Reverting to paid delivery'); // Для отладки
+        console.log('SimpleDeliveryManager: Reverting to paid delivery with zone cost:', DELIVERY_COST);
         setCart(prev => prev.map(item => 
           item.id === DELIVERY_ID 
             ? { 
                 ...item, 
                 price: DELIVERY_COST,
-                name: 'Доставка',
-                isFreeDelivery: false
+                name: `Доставка (${zoneInfo.label || 'Стандартная зона'})`,
+                isFreeDelivery: false,
+                zoneInfo: zoneInfo
               }
             : item
         ));
       }
       // Поддерживаем правильную цену
       else if (deliveryItem.price !== correctPrice) {
-        console.log('SimpleDeliveryManager: Updating delivery price'); // Для отладки
+        console.log('SimpleDeliveryManager: Updating delivery price to:', correctPrice);
         setCart(prev => prev.map(item => 
           item.id === DELIVERY_ID 
-            ? { ...item, price: correctPrice }
+            ? { 
+                ...item, 
+                price: correctPrice,
+                name: correctPrice === 0 
+                  ? `Доставка 🎉 (${zoneInfo.label || 'Стандартная зона'})` 
+                  : `Доставка (${zoneInfo.label || 'Стандартная зона'})`,
+                zoneInfo: zoneInfo
+              }
+            : item
+        ));
+      }
+      // Обновляем информацию о зоне в существующем товаре
+      else if (!deliveryItem.zoneInfo || JSON.stringify(deliveryItem.zoneInfo) !== JSON.stringify(zoneInfo)) {
+        console.log('SimpleDeliveryManager: Updating zone info for delivery item');
+        setCart(prev => prev.map(item => 
+          item.id === DELIVERY_ID 
+            ? { 
+                ...item, 
+                name: item.isFreeDelivery 
+                  ? `Доставка 🎉 (${zoneInfo.label || 'Стандартная зона'})` 
+                  : `Доставка (${zoneInfo.label || 'Стандартная зона'})`,
+                zoneInfo: zoneInfo
+              }
             : item
         ));
       }
     }
     
-  }, [cart, setCart, currentMode]);
+  }, [cart, setCart, currentMode, currentZoneInfo]);
 
   return null;
 };
 
-// Простой прогрессбар к бесплатной доставке (остается вверху)
+// ✅ ОБНОВЛЕННЫЙ прогрессбар к бесплатной доставке (учитывает зональные тарифы)
 const FreeDeliveryProgress = ({ cart, settings }) => {
-  const FREE_DELIVERY_THRESHOLD = 2000;
+  const zoneInfo = getZoneInfo();
+  const FREE_DELIVERY_THRESHOLD = zoneInfo.freeFrom || 3000;
   
   // Считаем сумму без доставки
   const productsSubtotal = cart
@@ -222,25 +284,30 @@ const FreeDeliveryProgress = ({ cart, settings }) => {
         textAlign: 'center',
         fontWeight: '500'
       }}>
-        Добавь ещё товаров и получи бесплатную доставку! 🎉
+        {zoneInfo.label ? 
+          `Добавь ещё товаров и получи бесплатную доставку в ${zoneInfo.label.toLowerCase()}! 🎉` :
+          'Добавь ещё товаров и получи бесплатную доставку! 🎉'
+        }
       </div>
     </div>
   );
 };
 
-// Попап бесплатной доставки (теперь как модальное окно)
+// ✅ ОБНОВЛЕННЫЙ попап бесплатной доставки (учитывает зональные тарифы)
 const FreeDeliveryPopup = ({ cart, setCart, settings }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasShown, setHasShown] = useState(false);
-  const FREE_DELIVERY_THRESHOLD = 2000;
   const DELIVERY_ID = 'delivery_service';
+  
+  const zoneInfo = getZoneInfo();
+  const FREE_DELIVERY_THRESHOLD = zoneInfo.freeFrom || 3000;
   
   // Считаем сумму без доставки
   const productsSubtotal = cart
     .filter(item => !item.isDelivery)
     .reduce((sum, item) => sum + (item.price * item.quantity), 0);
   
-  const deliveryItem = cart.find(item => item.isDelivery);
+  const deliveryItem = cart.find(item => item.id === DELIVERY_ID);
   const shouldShow = productsSubtotal >= FREE_DELIVERY_THRESHOLD && 
                    deliveryItem && 
                    !deliveryItem.isFreeDelivery && 
@@ -258,9 +325,10 @@ const FreeDeliveryPopup = ({ cart, setCart, settings }) => {
       item.id === DELIVERY_ID 
         ? {
             ...item,
-            name: 'Доставка 🎉',
+            name: `Доставка 🎉 (${zoneInfo.label || 'Стандартная зона'})`,
             price: 0,
-            isFreeDelivery: true
+            isFreeDelivery: true,
+            zoneInfo: zoneInfo
           }
         : item
     ));
@@ -368,7 +436,8 @@ const FreeDeliveryPopup = ({ cart, setCart, settings }) => {
           lineHeight: '1.4'
         }}>
           Вы получили<br/>
-          <strong>бесплатную доставку!</strong>
+          <strong>бесплатную доставку</strong><br/>
+          {zoneInfo.label && <span style={{fontSize: '0.9rem'}}>в {zoneInfo.label.toLowerCase()}!</span>}
         </div>
 
         <div style={{
