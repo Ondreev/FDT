@@ -31,7 +31,7 @@ const AddressInput = ({
       const address = inputValue.trim();
       console.log('Saving address:', address); // Для отладки
       setAddress(address);
-      // onClose будет вызван автоматически через хук когда адрес установится
+      // НЕ вызываем onClose - хук сам закроет модальное окно
     }
   };
 
