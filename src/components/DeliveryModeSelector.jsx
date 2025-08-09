@@ -139,7 +139,7 @@ const DeliveryModeSelector = ({
             color: settings.primaryColor || '#ff7f32'
           }}>
             {savedAddress 
-              ? `Вам на этот же адрес? ${savedAddress}` 
+              ? `ПРОВЕРЬ СВОЙ АДРЕС?` 
               : 'Выберите способ получения заказа'
             }
           </div>
