@@ -7,7 +7,7 @@ const AddressInput = ({
   onClose, 
   settings = {} 
 }) => {
-  const { setAddress, savedAddress } = useDeliveryMode();
+  const { setAddress, savedAddress, needsAddressInput } = useDeliveryMode();
   const [inputValue, setInputValue] = useState('');
   const [isValid, setIsValid] = useState(false);
 
@@ -18,6 +18,14 @@ const AddressInput = ({
       setIsValid(!!savedAddress && savedAddress.length >= 10);
     }
   }, [isOpen, savedAddress]);
+
+  // ✅ Автоматическое закрытие когда needsAddressInput становится false
+  useEffect(() => {
+    if (isOpen && !needsAddressInput) {
+      console.log('Auto-closing address input'); // Для отладки
+      onClose();
+    }
+  }, [needsAddressInput, isOpen, onClose]);
 
   // ✅ Валидация ввода
   useEffect(() => {
