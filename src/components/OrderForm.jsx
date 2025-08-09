@@ -30,27 +30,38 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
   // Читаем deliveryMode прямо из localStorage
   const deliveryMode = localStorage.getItem('deliveryMode') || 'delivery';
   
-  // ✅ ПОЛУЧАЕМ АДРЕС ДОСТАВКИ ИЗ КОРЗИНЫ
+  // ✅ ПОЛУЧАЕМ АДРЕС ДОСТАВКИ ИЗ ПРАВИЛЬНОГО МЕСТА
   const getDeliveryAddress = () => {
-    // Сначала проверяем localStorage - там скорее всего хранится реальный адрес
-    const savedAddress = localStorage.getItem('deliveryAddress');
-    console.log('Address from localStorage:', savedAddress);
+    // ✅ Сначала проверяем deliveryData в localStorage (основное место хранения)
+    try {
+      const deliveryData = localStorage.getItem('deliveryData');
+      if (deliveryData) {
+        const data = JSON.parse(deliveryData);
+        console.log('Delivery data from localStorage:', data);
+        
+        if (data.address && data.address.trim() !== '') {
+          console.log('Found address in deliveryData:', data.address);
+          return data.address;
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing deliveryData:', e);
+    }
     
-    if (savedAddress && savedAddress.trim() !== '' && savedAddress !== 'Доставка по городу') {
+    // ✅ Fallback - проверяем старый ключ deliveryAddress
+    const savedAddress = localStorage.getItem('deliveryAddress');
+    console.log('Address from deliveryAddress key:', savedAddress);
+    
+    if (savedAddress && savedAddress.trim() !== '') {
       return savedAddress;
     }
     
-    // Проверяем корзину на случай если адрес там
+    // ✅ Последний fallback - проверяем корзину (но скорее всего там будет только "Доставка по городу")
     const deliveryItem = cart.find(item => item.isDelivery);
     console.log('Delivery item found:', deliveryItem);
     
     if (deliveryItem) {
-      // Проверяем разные возможные поля
-      const address = deliveryItem.address || 
-                     deliveryItem.deliveryAddress || 
-                     deliveryItem.description || 
-                     '';
-      
+      const address = deliveryItem.address || deliveryItem.deliveryAddress || '';
       console.log('Address from delivery item:', address);
       
       // Если это не дефолтное название услуги, возвращаем
@@ -59,7 +70,8 @@ const OrderForm = ({ isOpen, onClose, discountData, settings, onOrderSuccess }) 
       }
     }
     
-    // Если ничего не найдено, возвращаем пустую строку
+    // ✅ Если ничего не найдено
+    console.log('No delivery address found, asking for input');
     return '';
   };
   
