@@ -6,8 +6,7 @@ export const useDeliveryMode = () => {
   const [state, setState] = useState({
     mode: null, // 'delivery' | 'pickup' | null
     savedAddress: '',
-    isFirstVisit: true,
-    showOverlay: false,
+    needsSelection: true, // ✅ Заменяем showOverlay на needsSelection
     needsAddressInput: false,
     isAddressConfirmed: false
   });
@@ -15,26 +14,25 @@ export const useDeliveryMode = () => {
   // ✅ Загрузка из localStorage при инициализации
   useEffect(() => {
     const saved = localStorage.getItem('deliveryData');
-    console.log('Loading from localStorage:', saved); // Для отладки
+    console.log('Loading from localStorage:', saved);
     
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        console.log('Parsed data:', data); // Для отладки
+        console.log('Parsed data:', data);
         setState(prev => ({
           ...prev,
           mode: data.mode || null,
           savedAddress: data.address || '',
-          isFirstVisit: false,
-          isAddressConfirmed: data.mode === 'pickup' || (data.mode === 'delivery' && !!data.address),
-          showOverlay: false // Не показываем оверлей если данные есть
+          needsSelection: !data.mode || (data.mode === 'delivery' && !data.address), // ✅ Нужен выбор если нет режима или нет адреса для доставки
+          isAddressConfirmed: data.mode === 'pickup' || (data.mode === 'delivery' && !!data.address)
         }));
       } catch (error) {
         console.error('Error loading delivery data:', error);
       }
     } else {
-      // Если нет сохраненных данных, показываем оверлей
-      setState(prev => ({ ...prev, showOverlay: true }));
+      // Если нет сохраненных данных, нужен выбор
+      setState(prev => ({ ...prev, needsSelection: true }));
     }
   }, []);
 
@@ -47,92 +45,90 @@ export const useDeliveryMode = () => {
         timestamp: Date.now()
       };
       localStorage.setItem('deliveryData', JSON.stringify(dataToSave));
+      console.log('Saved to localStorage:', dataToSave);
     }
   }, [state.mode, state.savedAddress]);
 
   // ✅ Функция установки режима доставки
   const setDeliveryMode = (mode) => {
+    console.log('Setting delivery mode:', mode);
     setState(prev => {
       const newState = { ...prev, mode };
       
       if (mode === 'pickup') {
-        // Самовывоз - адрес не нужен
+        // Самовывоз - адрес не нужен, выбор завершен
         newState.needsAddressInput = false;
         newState.isAddressConfirmed = true;
-        newState.showOverlay = false;
+        newState.needsSelection = false;
       } else if (mode === 'delivery') {
         // Доставка - проверяем есть ли адрес
-        if (!prev.savedAddress) {
+        if (prev.savedAddress) {
+          newState.isAddressConfirmed = true;
+          newState.needsSelection = false; // ✅ Есть адрес, выбор завершен
+        } else {
           newState.needsAddressInput = true;
           newState.isAddressConfirmed = false;
-        } else {
-          newState.isAddressConfirmed = true;
-          newState.showOverlay = false;
+          // needsSelection остается true пока не введут адрес
         }
       }
       
+      console.log('New state:', newState);
       return newState;
     });
   };
 
   // ✅ Функция установки адреса
   const setAddress = (address) => {
-    console.log('Setting address:', address); // Для отладки
+    console.log('Setting address:', address);
     setState(prev => {
       const newState = {
         ...prev,
         savedAddress: address,
-        needsAddressInput: false, // ✅ Закрываем ввод адреса
+        needsAddressInput: false,
         isAddressConfirmed: true,
-        showOverlay: false
+        needsSelection: false // ✅ Адрес установлен, выбор завершен
       };
-      console.log('New state after setAddress:', newState); // Для отладки
+      console.log('New state after setAddress:', newState);
       return newState;
     });
   };
 
-  // ✅ Функция закрытия оверлея (отказ от ввода)
-  const closeOverlay = () => {
+  // ✅ Функция закрытия выбора (клик вне области)
+  const closeSelection = () => {
     setState(prev => ({
       ...prev,
-      showOverlay: false,
-      needsAddressInput: false // ✅ Закрываем ввод адреса
+      needsSelection: false,
+      needsAddressInput: false
     }));
   };
 
   // ✅ Функция открытия ввода адреса
   const openAddressInput = () => {
-    console.log('Opening address input'); // Для отладки
+    console.log('Opening address input');
     setState(prev => ({
       ...prev,
-      needsAddressInput: true,
-      showOverlay: false
+      needsAddressInput: true
     }));
   };
 
   // ✅ Проверка нужно ли показывать мигание
   const shouldShowWarning = () => {
-    // Показываем предупреждение если:
-    // 1. Режим не выбран вообще
-    // 2. Выбрана доставка, но нет адреса
     const result = (!state.mode) || (state.mode === 'delivery' && !state.savedAddress);
-    console.log('shouldShowWarning:', result, 'mode:', state.mode, 'address:', state.savedAddress); // Для отладки
-    return result;
+    return result && !state.needsSelection; // Не показываем предупреждение во время выбора
   };
 
   return {
     // Состояние
     deliveryMode: state.mode,
     savedAddress: state.savedAddress,
-    showOverlay: state.showOverlay,
+    needsSelection: state.needsSelection, // ✅ Новое свойство
     needsAddressInput: state.needsAddressInput,
     isAddressConfirmed: state.isAddressConfirmed,
-    isFirstVisit: state.isFirstVisit,
     
     // Функции
     setDeliveryMode,
     setAddress,
-    closeOverlay,
+    closeSelection, // ✅ Новая функция
     openAddressInput,
     shouldShowWarning,
     
