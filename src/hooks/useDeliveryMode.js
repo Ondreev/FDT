@@ -61,19 +61,19 @@ export const useDeliveryMode = () => {
         // Самовывоз - адрес не нужен, выбор завершен
         newState.needsAddressInput = false;
         newState.isAddressConfirmed = true;
-        newState.needsSelection = false;
+        newState.needsSelection = false; // ✅ Закрываем выбор только для самовывоза
         console.log('Pickup selected - closing selection');
       } else if (mode === 'delivery') {
         // Доставка - проверяем есть ли адрес
         if (prev.savedAddress) {
           newState.isAddressConfirmed = true;
           newState.needsSelection = false; // ✅ Есть адрес, выбор завершен
+          newState.needsAddressInput = false;
           console.log('Delivery selected with existing address - closing selection');
         } else {
           newState.needsAddressInput = true;
           newState.isAddressConfirmed = false;
-          // ✅ НЕ ЗАКРЫВАЕМ needsSelection пока адрес не введен!
-          // newState.needsSelection = true; - оставляем как есть
+          // ✅ НЕ ЗАКРЫВАЕМ needsSelection - оставляем затемнение пока адрес не введут!
           console.log('Delivery selected without address - opening input, keeping selection');
         }
       }
