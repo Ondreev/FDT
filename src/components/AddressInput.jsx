@@ -15,7 +15,7 @@ const AddressInput = ({
   useEffect(() => {
     if (isOpen) {
       setInputValue(savedAddress || '');
-      setIsValid(!!savedAddress);
+      setIsValid(!!savedAddress && savedAddress.length >= 10);
     }
   }, [isOpen, savedAddress]);
 
@@ -25,11 +25,13 @@ const AddressInput = ({
     setIsValid(trimmed.length >= 10); // Минимум 10 символов для адреса
   }, [inputValue]);
 
-  // ✅ Обработка сохранения
+  // ✅ ИСПРАВЛЕННАЯ обработка сохранения
   const handleSave = () => {
     if (isValid) {
-      setAddress(inputValue.trim());
-      onClose();
+      const address = inputValue.trim();
+      console.log('Saving address:', address); // Для отладки
+      setAddress(address);
+      // onClose будет вызван автоматически через хук когда адрес установится
     }
   };
 
@@ -38,6 +40,12 @@ const AddressInput = ({
     if (e.key === 'Enter' && isValid) {
       handleSave();
     }
+  };
+
+  // ✅ ИСПРАВЛЕННАЯ обработка закрытия
+  const handleClose = () => {
+    console.log('Closing address input'); // Для отладки
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -94,7 +102,7 @@ const AddressInput = ({
               Адрес доставки
             </h3>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               style={{
                 background: 'none',
                 border: 'none',
@@ -166,7 +174,7 @@ const AddressInput = ({
             marginTop: '1.5rem'
           }}>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               style={{
                 flex: 1,
                 padding: '0.8rem',
