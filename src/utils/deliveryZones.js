@@ -1,4 +1,4 @@
-// deliveryZones.js - Система проверки зон доставки через геокодирование
+// utils/deliveryZones.js - Система проверки зон доставки
 
 // ✅ ВАШ API КЛЮЧ ЯНДЕКС ГЕОКОДЕРА
 const YANDEX_API_KEY = '74b46206-b9f0-4591-a22c-5fabeb409e5b';
@@ -116,8 +116,8 @@ const pointInPolygon = (point, polygon) => {
   return inside;
 };
 
-// ✅ ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЗОНЫ ДОСТАВКИ
-const getDeliveryZoneByCoords = (coordinates) => {
+// ✅ ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЗОНЫ ДОСТАВКИ ПО КООРДИНАТАМ (ЭКСПОРТИРУЕМ!)
+export const getDeliveryZoneByCoords = (coordinates) => {
   for (const feature of DELIVERY_ZONES_GEOJSON.features) {
     if (pointInPolygon(coordinates, feature.geometry.coordinates)) {
       return {
@@ -181,41 +181,6 @@ export const checkDeliveryZone = async (address) => {
   }
 };
 
-// ✅ ФУНКЦИЯ ДЛЯ ТЕСТИРОВАНИЯ
-export const testDeliveryZones = async () => {
-  console.log('🧪 ТЕСТИРОВАНИЕ СИСТЕМЫ ДОСТАВКИ');
-  console.log('='.repeat(50));
-  
-  const testAddresses = [
-    "Реутов, ул. Калинина, 8",
-    "Москва, Новокосино, ул. Суворова, 15",
-    "Балашиха, ул. Ленина, 1", 
-    "Москва, ул. Авиамоторная, 50",
-    "Москва, ул. Тверская, 1", // Должно быть вне зон
-    "Реутов, ул. Победы, 10"
-  ];
-  
-  for (const address of testAddresses) {
-    const result = await checkDeliveryZone(address);
-    console.log('\n' + '-'.repeat(40));
-    
-    if (result.success) {
-      console.log('✅ ' + address);
-      console.log('   🏷️  ' + result.label);
-      console.log('   💰 ' + result.cost + '₽ (бесплатно от ' + result.freeFrom + '₽)');
-    } else {
-      console.log('❌ ' + address);
-      console.log('   ⚠️  ' + result.error);
-    }
-    
-    // Пауза между запросами
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-  
-  console.log('\n' + '='.repeat(50));
-  console.log('🎯 Тестирование завершено!');
-};
-
 // ✅ КЭШИРОВАНИЕ РЕЗУЛЬТАТОВ (чтобы не делать повторные запросы)
 const addressCache = new Map();
 
@@ -232,21 +197,3 @@ export const checkDeliveryZoneCached = async (address) => {
   
   return result;
 };
-
-// ✅ ИНФОРМАЦИЯ О ЗОНАХ
-export const getZonesInfo = () => {
-  console.log('📊 ИНФОРМАЦИЯ О ЗОНАХ ДОСТАВКИ');
-  console.log('='.repeat(50));
-  
-  DELIVERY_ZONES_GEOJSON.features.forEach(feature => {
-    const props = feature.properties;
-    console.log('\n🎨 ' + props.description);
-    console.log('   💰 Стоимость: ' + props.cost + '₽');
-    console.log('   🆓 Бесплатно от: ' + props.freeFrom + '₽');
-  });
-};
-
-console.log('✅ Система проверки зон доставки загружена!');
-console.log('🧪 Для тестирования: testDeliveryZones()');
-console.log('📊 Для информации: getZonesInfo()');
-console.log('🔍 Проверить адрес: checkDeliveryZone("ваш адрес")');
