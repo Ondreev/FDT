@@ -75,13 +75,17 @@ export const useDeliveryMode = () => {
   // ✅ Функция установки адреса
   const setAddress = (address) => {
     console.log('Setting address:', address); // Для отладки
-    setState(prev => ({
-      ...prev,
-      savedAddress: address,
-      needsAddressInput: false,
-      isAddressConfirmed: true,
-      showOverlay: false
-    }));
+    setState(prev => {
+      const newState = {
+        ...prev,
+        savedAddress: address,
+        needsAddressInput: false, // ✅ Закрываем ввод адреса
+        isAddressConfirmed: true,
+        showOverlay: false
+      };
+      console.log('New state after setAddress:', newState); // Для отладки
+      return newState;
+    });
   };
 
   // ✅ Функция закрытия оверлея (отказ от ввода)
@@ -105,7 +109,12 @@ export const useDeliveryMode = () => {
 
   // ✅ Проверка нужно ли показывать мигание
   const shouldShowWarning = () => {
-    return !state.isAddressConfirmed && !state.showOverlay;
+    // Показываем предупреждение если:
+    // 1. Режим не выбран вообще
+    // 2. Выбрана доставка, но нет адреса
+    const result = (!state.mode) || (state.mode === 'delivery' && !state.savedAddress);
+    console.log('shouldShowWarning:', result, 'mode:', state.mode, 'address:', state.savedAddress); // Для отладки
+    return result;
   };
 
   return {
