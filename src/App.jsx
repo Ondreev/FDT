@@ -10,6 +10,7 @@ import ProductGrid from './components/ProductGrid';
 import { MainPageFlashOffer, MainPageDeliveryOffer } from './components/MainPageOffers';
 import FloatingButtons from './components/FloatingButtons';
 import PeekingPopup from './components/PeekingPopup';
+import { getFreeDeliveryThreshold } from './utils/deliveryHelper';
 
 // ✅ НОВЫЕ КОМПОНЕНТЫ
 import RatingPopup from './components/RatingPopup';
@@ -409,8 +410,6 @@ const addToCart = async (product, skipUpsell = false) => {
         .reduce((sum, item) => sum + item.price * item.quantity, 0);
       
       const deliveryItem = cart.find(item => item.id === 'delivery_service');
-      // ✅ Новое
-import { getFreeDeliveryThreshold } from './utils/deliveryHelper';
 // ... в начале функции useEffect
 const freeDeliveryThreshold = getFreeDeliveryThreshold();
 const conditionMet = productsSubtotal >= freeDeliveryThreshold;
