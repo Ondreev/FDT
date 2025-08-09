@@ -409,7 +409,11 @@ const addToCart = async (product, skipUpsell = false) => {
         .reduce((sum, item) => sum + item.price * item.quantity, 0);
       
       const deliveryItem = cart.find(item => item.id === 'delivery_service');
-      const conditionMet = productsSubtotal >= 2000;
+      // ✅ Новое
+import { getFreeDeliveryThreshold } from './utils/deliveryHelper';
+// ... в начале функции useEffect
+const freeDeliveryThreshold = getFreeDeliveryThreshold();
+const conditionMet = productsSubtotal >= freeDeliveryThreshold;
       
       if (conditionMet && deliveryItem && !deliveryItem.isFreeDelivery && !showDeliveryPopup) {
         setDeliveryTimeLeft(180);
