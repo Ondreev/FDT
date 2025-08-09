@@ -1,7 +1,6 @@
 // components/DeliveryModeSelector.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { useDeliveryMode } from '../hooks/useDeliveryMode';
-import AddressInput from './AddressInput';
 
 const DeliveryModeSelector = ({ 
   settings = {}, 
@@ -11,29 +10,26 @@ const DeliveryModeSelector = ({
   const {
     deliveryMode,
     savedAddress,
-    needsSelection,
     setDeliveryMode,
     openAddressInput,
     shouldShowWarning,
     isAddressConfirmed
   } = useDeliveryMode();
 
-  const [showAddressInput, setShowAddressInput] = useState(false);
-
   // ✅ Обработка клика по доставке
   const handleDeliveryClick = () => {
-    console.log('Delivery clicked');
+    console.log('Delivery button clicked'); // Для отладки
     setDeliveryMode('delivery');
-    
     // Если нет адреса, открываем ввод
     if (!savedAddress) {
-      setShowAddressInput(true);
+      console.log('No saved address, opening input'); // Для отладки
+      openAddressInput();
     }
   };
 
   // ✅ Обработка клика по самовывозу
   const handlePickupClick = () => {
-    console.log('Pickup clicked');
+    console.log('Pickup button clicked'); // Для отладки
     setDeliveryMode('pickup');
   };
 
@@ -45,9 +41,7 @@ const DeliveryModeSelector = ({
     padding: inCart ? '0' : (compact ? '0.5rem 1rem' : '1rem'),
     background: inCart ? 'transparent' : (settings.backgroundColor || '#fdf0e2'),
     borderRadius: inCart ? '0' : '12px',
-    marginBottom: inCart ? '0' : '1rem',
-    position: 'relative',
-    zIndex: needsSelection ? 1000 : 'auto'
+    marginBottom: inCart ? '0' : '1rem'
   };
 
   const switcherStyle = {
@@ -56,11 +50,8 @@ const DeliveryModeSelector = ({
     padding: '4px',
     display: 'flex',
     position: 'relative',
-    boxShadow: needsSelection 
-      ? '0 0 0 4px rgba(255, 127, 50, 0.3), 0 8px 32px rgba(0,0,0,0.3)' 
-      : 'inset 0 2px 4px rgba(0,0,0,0.1)',
-    minHeight: '48px',
-    transition: 'all 0.3s ease'
+    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+    minHeight: '48px'
   };
 
   const buttonBaseStyle = {
@@ -88,20 +79,6 @@ const DeliveryModeSelector = ({
 
   return (
     <>
-      {/* ✅ Затемнение при выборе режима */}
-      {needsSelection && !inCart && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          zIndex: 999,
-          pointerEvents: 'none' // Позволяет кликать через затемнение
-        }} />
-      )}
-
       {/* ✅ CSS для анимаций */}
       <style jsx>{`
         @keyframes warningBlink {
@@ -116,26 +93,14 @@ const DeliveryModeSelector = ({
       `}</style>
 
       <div style={containerStyle}>
-        {/* ✅ Подсказка при выборе режима */}
-        {needsSelection && !inCart && (
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '0.5rem',
-            fontSize: '1.1rem',
-            fontWeight: 'bold',
-            color: settings.primaryColor || '#ff7f32'
-          }}>
-            {savedAddress 
-              ? `Вам на этот же адрес? ${savedAddress}` 
-              : 'Выберите способ получения заказа'
-            }
-          </div>
-        )}
-
         {/* ✅ Переключатель режимов */}
         <div style={switcherStyle}>
           <button
-            onClick={handleDeliveryClick}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDeliveryClick();
+            }}
             style={getButtonStyle('delivery', deliveryMode === 'delivery')}
           >
             <span>🚗</span>
@@ -143,7 +108,11 @@ const DeliveryModeSelector = ({
           </button>
           
           <button
-            onClick={handlePickupClick}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handlePickupClick();
+            }}
             style={getButtonStyle('pickup', deliveryMode === 'pickup')}
           >
             <span>🏃‍♂️</span>
@@ -151,7 +120,7 @@ const DeliveryModeSelector = ({
           </button>
         </div>
 
-        {/* ✅ Простое отображение адреса доставки */}
+        {/* ✅ ПРОСТОЕ отображение адреса доставки */}
         {deliveryMode === 'delivery' && savedAddress && isAddressConfirmed && (
           <div style={{
             padding: '0.3rem 0',
@@ -182,7 +151,7 @@ const DeliveryModeSelector = ({
             </div>
             {!compact && (
               <button
-                onClick={() => setShowAddressInput(true)}
+                onClick={openAddressInput}
                 style={{
                   background: 'transparent',
                   border: 'none',
@@ -201,7 +170,7 @@ const DeliveryModeSelector = ({
           </div>
         )}
 
-        {/* ✅ Простое отображение адреса самовывоза */}
+        {/* ✅ ПРОСТОЕ отображение адреса самовывоза */}
         {deliveryMode === 'pickup' && (
           <div style={{
             padding: '0.3rem 0',
@@ -220,27 +189,8 @@ const DeliveryModeSelector = ({
           </div>
         )}
 
-        {/* ✅ Кнопка изменить адрес если выбрана доставка но нет адреса */}
-        {needsSelection && deliveryMode === 'delivery' && savedAddress && (
-          <button
-            onClick={() => setShowAddressInput(true)}
-            style={{
-              background: 'transparent',
-              border: '2px solid #ff7f32',
-              color: '#ff7f32',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              fontSize: '0.9rem',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            📝 Изменить адрес
-          </button>
-        )}
-
         {/* ✅ Простое мигающее предупреждение */}
-        {shouldShowWarning() && !needsSelection && (
+        {shouldShowWarning() && (
           <div 
             style={{
               padding: '0.3rem 0',
@@ -248,9 +198,18 @@ const DeliveryModeSelector = ({
               animation: 'warningBlink 1.5s infinite',
               cursor: 'pointer'
             }}
-            onClick={() => {
-              if (deliveryMode === 'delivery') {
-                setShowAddressInput(true);
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Warning clicked, deliveryMode:', deliveryMode); // Для отладки
+              
+              if (!deliveryMode) {
+                // Если режим не выбран, предлагаем выбрать доставку
+                console.log('No mode selected, setting delivery mode');
+                setDeliveryMode('delivery');
+              } else if (deliveryMode === 'delivery') {
+                console.log('Opening address input from warning'); // Для отладки
+                openAddressInput();
               }
             }}
           >
@@ -264,13 +223,6 @@ const DeliveryModeSelector = ({
           </div>
         )}
       </div>
-
-      {/* ✅ Компонент ввода адреса */}
-      <AddressInput
-        isOpen={showAddressInput}
-        onClose={() => setShowAddressInput(false)}
-        settings={settings}
-      />
     </>
   );
 };
