@@ -16,28 +16,25 @@ export const useDeliveryMode = () => {
     const saved = localStorage.getItem('deliveryData');
     console.log('Loading from localStorage:', saved);
     
+    setState(prev => ({
+      ...prev,
+      needsSelection: true // ✅ ВСЕГДА показываем выбор при загрузке страницы
+    }));
+
     if (saved) {
       try {
         const data = JSON.parse(saved);
         console.log('Parsed data:', data);
         
-        // ✅ ЛОГИКА: Если есть сохраненные данные, но это первый заход на сессию - показываем выбор
-        const hasCompleteDeliveryData = data.mode === 'delivery' && data.address;
-        const hasPickupData = data.mode === 'pickup';
-        
         setState(prev => ({
           ...prev,
           mode: data.mode || null,
           savedAddress: data.address || '',
-          needsSelection: true, // ✅ ВСЕГДА показываем выбор при загрузке (пока не выберут в этой сессии)
-          isAddressConfirmed: hasCompleteDeliveryData || hasPickupData
+          isAddressConfirmed: data.mode === 'pickup' || (data.mode === 'delivery' && !!data.address)
         }));
       } catch (error) {
         console.error('Error loading delivery data:', error);
       }
-    } else {
-      // Если нет сохраненных данных, нужен выбор
-      setState(prev => ({ ...prev, needsSelection: true }));
     }
   }, []);
 
@@ -107,11 +104,10 @@ export const useDeliveryMode = () => {
     });
   };
 
-  // ✅ Функция закрытия выбора (клик вне области)
-  const closeSelection = () => {
+  // ✅ Функция закрытия ввода адреса
+  const closeAddressInput = () => {
     setState(prev => ({
       ...prev,
-      needsSelection: false,
       needsAddressInput: false
     }));
   };
@@ -142,7 +138,7 @@ export const useDeliveryMode = () => {
     // Функции
     setDeliveryMode,
     setAddress,
-    closeSelection, // ✅ Новая функция
+    closeAddressInput, // ✅ Новая функция
     openAddressInput,
     shouldShowWarning,
     
