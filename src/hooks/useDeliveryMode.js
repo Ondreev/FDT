@@ -15,24 +15,27 @@ export const useDeliveryMode = () => {
   // ✅ Загрузка из localStorage при инициализации
   useEffect(() => {
     const saved = localStorage.getItem('deliveryData');
+    console.log('Loading from localStorage:', saved); // Для отладки
+    
     if (saved) {
       try {
         const data = JSON.parse(saved);
+        console.log('Parsed data:', data); // Для отладки
         setState(prev => ({
           ...prev,
           mode: data.mode || null,
           savedAddress: data.address || '',
           isFirstVisit: false,
-          isAddressConfirmed: data.mode === 'pickup' || !!data.address
+          isAddressConfirmed: data.mode === 'pickup' || (data.mode === 'delivery' && !!data.address),
+          showOverlay: false // Не показываем оверлей если данные есть
         }));
       } catch (error) {
         console.error('Error loading delivery data:', error);
       }
+    } else {
+      // Если нет сохраненных данных, показываем оверлей
+      setState(prev => ({ ...prev, showOverlay: true }));
     }
-
-    // ✅ Показываем оверлей если это первый визит или нет сохраненных данных
-    const shouldShowOverlay = !saved || !JSON.parse(saved || '{}').mode;
-    setState(prev => ({ ...prev, showOverlay: shouldShowOverlay }));
   }, []);
 
   // ✅ Сохранение в localStorage при изменениях
