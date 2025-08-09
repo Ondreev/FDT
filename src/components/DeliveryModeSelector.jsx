@@ -191,7 +191,12 @@ const DeliveryModeSelector = ({
               e.preventDefault();
               e.stopPropagation();
               console.log('Warning clicked, deliveryMode:', deliveryMode); // Для отладки
-              if (deliveryMode === 'delivery') {
+              
+              if (!deliveryMode) {
+                // Если режим не выбран, предлагаем выбрать доставку
+                console.log('No mode selected, setting delivery mode');
+                setDeliveryMode('delivery');
+              } else if (deliveryMode === 'delivery') {
                 console.log('Opening address input from warning'); // Для отладки
                 openAddressInput();
               }
