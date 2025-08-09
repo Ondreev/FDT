@@ -2,9 +2,28 @@ import { useEffect, useState } from 'react';
 import DiscountProgressBar from './DiscountProgressBar';
 import FlashOfferPopup from './FlashOfferTimer';
 import { FreeDeliveryProgress, FreeDeliveryPopup, formatNumber } from './SimpleDeliveryManager';
-import { useDeliveryMode } from '../hooks/useDeliveryMode'; // ✅ Импортируем новый хук
-import DeliveryModeSelector from './DeliveryModeSelector'; // ✅ Импортируем новый компонент
+import { useDeliveryMode } from '../hooks/useDeliveryMode';
+import DeliveryModeSelector from './DeliveryModeSelector';
 import { API_URL } from '../config';
+
+// ✅ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ИНФОРМАЦИИ О ЗОНЕ
+const getZoneInfo = () => {
+  try {
+    const zoneInfo = localStorage.getItem('deliveryZoneInfo');
+    if (zoneInfo) {
+      return JSON.parse(zoneInfo);
+    }
+  } catch (e) {
+    console.error('Error parsing deliveryZoneInfo:', e);
+  }
+  
+  // Fallback к стандартной зоне
+  return {
+    cost: 300,
+    freeFrom: 3000,
+    label: 'Стандартная зона'
+  };
+};
 
 const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings, addToCart, onOpenOrderForm, setCart }) => {
   const [discounts, setDiscounts] = useState([]);
@@ -12,14 +31,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
   const [showViolationAlert, setShowViolationAlert] = useState(false);
   const [violatingItems, setViolatingItems] = useState([]);
   
-  // ✅ ИСПОЛЬЗУЕМ НОВЫЙ ХУК ВМЕСТО ЛОКАЛЬНОГО СОСТОЯНИЯ
   const { deliveryMode } = useDeliveryMode();
-
-  // ✅ УБИРАЕМ СТАРЫЕ useEffect для deliveryMode - теперь управляется хуком
 
   useEffect(() => {
     if (isOpen) {
-      // Загружаем скидки
       fetch(`${API_URL}?action=getDiscounts`)
         .then(res => res.json())
         .then(data => {
@@ -31,7 +46,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         })
         .catch(err => console.error('Error fetching discounts:', err));
 
-      // Загружаем товары для flash-предложения
       fetch(`${API_URL}?action=getProducts`)
         .then(res => res.json())
         .then(data => setProducts(data))
@@ -43,21 +57,17 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     addToCart(product);
   };
 
-  // Обертка для updateQuantity с защитой flash-товаров
   const safeUpdateQuantity = (id, newQuantity) => {
-    // Найдем товар в корзине
     const item = cart.find(cartItem => cartItem.id === id);
     
-    // Запрещаем изменение количества для flash-товаров
     if (item && item.isFlashOffer && newQuantity !== 1) {
-      return; // Просто выходим, не изменяя количество
+      return;
     }
     
-    // Для обычных товаров вызываем оригинальную функцию
     updateQuantity(id, newQuantity);
   };
 
-  // Функция проверки flash-товаров так
+  // ✅ ОБНОВЛЕННАЯ ФУНКЦИЯ ПРОВЕРКИ FLASH-ТОВАРОВ С УЧЕТОМ ЗОН
   const checkFlashViolations = () => {
     const violations = [];
     
@@ -66,17 +76,20 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         const originalProduct = products.find(p => String(p.id).includes('R2000'));
         if (!originalProduct) return;
         
-        // Считаем сумму остальных товаров (исключая доставку и этот flash товар)
+        // ✅ ИСПОЛЬЗУЕМ ЗОНАЛЬНЫЙ ПОРОГ ВМЕСТО ФИКСИРОВАННОГО 2000
+        const zoneInfo = getZoneInfo();
+        const FLASH_THRESHOLD = zoneInfo.freeFrom || 3000; // Используем порог бесплатной доставки
+        
         const otherItemsTotal = cart
           .filter(cartItem => cartItem.id !== item.id && !cartItem.isDelivery)
           .reduce((sum, cartItem) => sum + (cartItem.price * cartItem.quantity), 0);
         
-        if (otherItemsTotal < 2000) {
+        if (otherItemsTotal < FLASH_THRESHOLD) {
           violations.push({
             ...item,
-            requiredAmount: 2000,
+            requiredAmount: FLASH_THRESHOLD,
             currentAmount: otherItemsTotal,
-            missing: 2000 - otherItemsTotal
+            missing: FLASH_THRESHOLD - otherItemsTotal
           });
         }
       }
@@ -85,12 +98,10 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     return violations;
   };
 
-  // ✅ РАССЧИТЫВАЕМ ВСЕ СУММЫ
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
-  // Рассчитываем скидку (только на товары, не на доставку)
   const productsSubtotal = cart
-  .filter(item => !item.isDelivery && !String(item.id).includes('S'))  // ← ИСКЛЮЧАЕМ СЕТЫ ИЗ СКИДОК
+  .filter(item => !item.isDelivery && !String(item.id).includes('S'))
   .reduce((sum, item) => sum + item.price * item.quantity, 0);
   
   const currentDiscount = discounts
@@ -98,9 +109,8 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
     .sort((a, b) => b.minTotal - a.minTotal)[0];
   
   const discountAmount = currentDiscount ? Math.round(productsSubtotal * currentDiscount.discountPercent / 100) : 0;
-  const total = subtotal - discountAmount; // ← ИТОГОВАЯ СУММА СО СКИДКАМИ
+  const total = subtotal - discountAmount;
 
-  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ОФОРМЛЕНИЯ ЗАКАЗА
   const handleOrderSubmit = () => {
     const violations = checkFlashViolations();
     
@@ -110,7 +120,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
       return;
     }
     
-    // ✅ ПЕРЕДАЕМ СУММУ И ДАННЫЕ О СКИДКЕ
     const discountData = {
       total,
       discountPercent: currentDiscount?.discountPercent || 0,
@@ -127,7 +136,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
 
   return (
     <>
-      {/* Попап с предупреждением о нарушении условий */}
       {showViolationAlert && (
         <div style={{
           position: 'fixed',
@@ -195,7 +203,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         </div>
       )}
 
-      {/* Попап бесплатной доставки - только при доставке */}
       {deliveryMode === 'delivery' && (
         <FreeDeliveryPopup 
           cart={cart}
@@ -204,7 +211,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         />
       )}
 
-      {/* Попап flash-предложения товара - работает всегда */}
       {cart.length > 0 && (
         <FlashOfferPopup 
           subtotal={productsSubtotal}
@@ -215,22 +221,20 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
         />
       )}
 
-      <div
-  style={{
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    maxWidth: '400px',
-    height: '100vh',
-    background: settings.backgroundColor || '#fdf0e2',
-    zIndex: 1001,
-    overflowY: 'auto',
-    animation: 'slideInLeft 0.3s ease-out',
-    boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
-    boxSizing: 'border-box',
-  }}
->
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        maxWidth: '400px',
+        height: '100vh',
+        background: settings.backgroundColor || '#fdf0e2',
+        zIndex: 1001,
+        overflowY: 'auto',
+        animation: 'slideInLeft 0.3s ease-out',
+        boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
+        boxSizing: 'border-box',
+      }}>
         <style>
           {`
             @keyframes slideInLeft {
@@ -244,7 +248,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           `}
         </style>
 
-        {/* Заголовок корзины */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -272,7 +275,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           </button>
         </div>
 
-        {/* ✅ НОВЫЙ ПЕРЕКЛЮЧАТЕЛЬ ДОСТАВКИ В ОТДЕЛЬНОМ БЛОКЕ */}
         <div style={{ padding: '0 1rem' }}>
           <DeliveryModeSelector 
             settings={settings}
@@ -281,16 +283,13 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           />
         </div>
 
-        {/* Скроллируемая область с маркетингом и товарами */}
         <div style={{ 
           flex: 1, 
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column'
         }}>
-          {/* МАРКЕТИНГОВЫЕ ФИШКИ ВВЕРХУ */}
           <div style={{ padding: '1rem 1rem 0' }}>
-            {/* Прогрессбар скидки на товары */}
             {cart.length > 0 && (
               <DiscountProgressBar 
                 subtotal={productsSubtotal}
@@ -299,18 +298,14 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               />
             )}
 
-            {/* Прогрессбар бесплатной доставки - только при доставке */}
             {deliveryMode === 'delivery' && (
               <FreeDeliveryProgress 
                 cart={cart}
                 settings={settings}
               />
             )}
-
-            {/* ✅ УБИРАЕМ ДУБЛИРУЮЩИЙСЯ БЛОК АДРЕСА САМОВЫВОЗА - он уже есть в DeliveryModeSelector */}
           </div>
 
-          {/* СПИСОК ТОВАРОВ */}
           <div style={{ 
             padding: '0 1rem',
             flex: 1
@@ -341,7 +336,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                       border: item.isFlashOffer ? '2px solid #ff0844' : 'none',
                     }}
                   >
-                    {/* Изображение товара */}
                     <div style={{ 
                       width: '70px', 
                       height: '70px', 
@@ -418,9 +412,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                           {!item.isDelivery ? (
-                            // Проверяем, является ли товар flash-предложением
                             item.isFlashOffer ? (
-                              // Для flash-товаров показываем компактный блок
                               <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -452,7 +444,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                                 </span>
                               </div>
                             ) : (
-                              // Обычные товары - показываем кнопки +/-
                               <>
                                 <button
                                   onClick={() => safeUpdateQuantity(item.id, item.quantity - 1)}
@@ -489,7 +480,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                               </>
                             )
                           ) : (
-                            // Доставка - авто
                             <div style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -533,14 +523,13 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
           </div>
         </div>
 
-        {/* БЛОК СУММЫ ВНИЗУ - НЕ ЗАКРЕПЛЕННЫЙ */}
-{cart.length > 0 && (
-  <div style={{ 
-    backgroundColor: 'white',
-    padding: '1rem',
-    borderTop: '1px solid #e0e0e0',
-    marginTop: '1rem'
-  }}>
+        {cart.length > 0 && (
+          <div style={{ 
+            backgroundColor: 'white',
+            padding: '1rem',
+            borderTop: '1px solid #e0e0e0',
+            marginTop: '1rem'
+          }}>
             <div style={{ marginBottom: '0.75rem' }}>
               <div style={{ 
                 display: 'flex',
@@ -553,7 +542,6 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
                 <span>{formatNumber(productsSubtotal)} {settings.currency || '₽'}</span>
               </div>
               
-              {/* Показываем доставку отдельно */}
               {cart.filter(item => item.isDelivery).map(delivery => (
                 <div key={delivery.id} style={{ 
                   display: 'flex',
