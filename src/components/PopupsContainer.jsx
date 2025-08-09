@@ -294,7 +294,7 @@ const PopupsContainer = ({
         </div>
       )}
 
-      {/* ✅ Delivery Popup - оставляем без изменений */}
+      {/* ✅ Компактный Delivery Popup с мерцанием */}
       {showDeliveryPopup && (
         <div style={{
           position: 'fixed',
@@ -302,90 +302,112 @@ const PopupsContainer = ({
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 10000,
-          padding: '1rem'
+          padding: '10px' // ✅ Уменьшены отступы для мобильных
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #4CAF50, #66BB6A)',
-            borderRadius: '20px',
-            padding: '24px',
-            maxWidth: '400px',
-            width: '100%',
+            borderRadius: '16px',
+            padding: '16px', // ✅ Уменьшен padding
+            maxWidth: '340px', // ✅ Уменьшена максимальная ширина
+            width: 'calc(100% - 20px)', // ✅ Учитываем отступы
             color: 'white',
             position: 'relative',
-            animation: 'popupBounce 0.5s ease-out',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
+            animation: 'popupBounce 0.5s ease-out, flashPulse 2s infinite', // ✅ Добавлено мерцание
+            boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)'
           }}>
+            {/* ✅ Компактный крестик */}
             <button
               onClick={() => setShowDeliveryPopup(false)}
               style={{
                 position: 'absolute',
-                top: '10px',
-                right: '15px',
+                top: '8px',
+                right: '10px',
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: 'none',
                 borderRadius: '50%',
-                width: '30px',
-                height: '30px',
+                width: '24px',
+                height: '24px',
                 color: 'white',
                 cursor: 'pointer',
-                fontSize: '16px',
+                fontSize: '14px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                zIndex: 1
               }}
             >
               ✕
             </button>
 
+            {/* ✅ Компактный заголовок */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              marginBottom: '20px'
+              justifyContent: 'center',
+              gap: '8px',
+              marginBottom: '12px',
+              paddingTop: '4px'
             }}>
-              <span style={{ fontSize: '24px' }}>🎉</span>
-              <div>
-                <div style={{ fontWeight: 'bold', fontSize: '18px' }}>
-                  ПОЗДРАВЛЯЕМ!
-                </div>
-                <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                  Бесплатная доставка
-                </div>
+              <span style={{ fontSize: '20px' }}>🎉</span>
+              <div style={{ 
+                fontWeight: 'bold', 
+                fontSize: '14px',
+                textAlign: 'center',
+                lineHeight: '1.2'
+              }}>
+                ПОЗДРАВЛЯЕМ!<br/>Бесплатная доставка
               </div>
               <div style={{
-                marginLeft: 'auto',
                 background: 'rgba(255, 255, 255, 0.2)',
-                padding: '8px 12px',
-                borderRadius: '10px',
+                padding: '4px 8px',
+                borderRadius: '8px',
                 fontWeight: 'bold',
-                fontSize: '18px'
+                fontSize: '14px',
+                animation: 'timerBlink 1s infinite' // ✅ Мигающий таймер
               }}>
                 {formatTime(deliveryTimeLeft)}
               </div>
             </div>
 
+            {/* ✅ Компактная карточка доставки */}
             <div style={{
               background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '15px',
-              padding: '20px',
-              marginBottom: '20px',
-              textAlign: 'center',
-              border: '2px solid #FFD700'
+              borderRadius: '12px',
+              padding: '12px',
+              marginBottom: '12px',
+              border: '2px solid #FFD700',
+              textAlign: 'center'
             }}>
-              <div style={{ fontSize: '48px', marginBottom: '10px' }}>🚚</div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>
+              <div style={{ fontSize: '36px', marginBottom: '8px' }}>🚚</div>
+              <div style={{ 
+                fontSize: '14px', 
+                fontWeight: 'bold', 
+                marginBottom: '4px',
+                lineHeight: '1.2'
+              }}>
                 Ваш заказ превысил 2000₽!
               </div>
-              <div style={{ fontSize: '16px', opacity: 0.9 }}>
-                Доставка теперь совершенно бесплатная
+              <div style={{ fontSize: '12px', opacity: 0.9 }}>
+                Доставка теперь бесплатная
               </div>
             </div>
 
+            {/* ✅ Компактное описание экономии */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '12px',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}>
+              Экономия 299₽! 🎉
+            </div>
+
+            {/* ✅ Компактная основная кнопка в стиле флеш-предложения */}
             <button
               onClick={handleActivateFreeDelivery}
               style={{
@@ -393,17 +415,25 @@ const PopupsContainer = ({
                 background: '#FFD700',
                 color: '#4CAF50',
                 border: 'none',
-                borderRadius: '15px',
-                padding: '15px',
-                fontSize: '18px',
+                borderRadius: '12px',
+                padding: '12px',
+                fontSize: '16px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
-                marginBottom: '10px'
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)'
               }}
             >
-              🎉 Активировать бесплатную доставку
+              <span>🎉</span>
+              СХВАТИТЬ!
+              <span>🎉</span>
             </button>
 
+            {/* ✅ Компактная кнопка "Позже" */}
             <button
               onClick={() => setShowDeliveryPopup(false)}
               style={{
@@ -411,9 +441,9 @@ const PopupsContainer = ({
                 background: 'transparent',
                 color: 'rgba(255, 255, 255, 0.8)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: '15px',
-                padding: '12px',
-                fontSize: '14px',
+                borderRadius: '10px',
+                padding: '8px',
+                fontSize: '12px',
                 cursor: 'pointer'
               }}
             >
