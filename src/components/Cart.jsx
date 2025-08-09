@@ -307,28 +307,7 @@ const Cart = ({ isOpen, onClose, cart, updateQuantity, removeFromCart, settings,
               />
             )}
 
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '0.5rem',
-                  color: '#1565c0'
-                }}>
-                  <span style={{ fontSize: '1.2rem' }}>🏪</span>
-                  <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>
-                    Адрес самовывоза
-                  </div>
-                </div>
-                <div style={{ 
-                  fontSize: '1rem', 
-                  color: '#1976d2',
-                  fontWeight: '500',
-                  lineHeight: '1.4'
-                }}>
-                  Реутов, ул. Калинина, д. 8
-                </div>
-              </div>
-            )}
+            {/* ✅ УБИРАЕМ ДУБЛИРУЮЩИЙСЯ БЛОК АДРЕСА САМОВЫВОЗА - он уже есть в DeliveryModeSelector */}
           </div>
 
           {/* СПИСОК ТОВАРОВ */}
