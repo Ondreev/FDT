@@ -700,8 +700,6 @@ const addToCart = async (product, skipUpsell = false) => {
           addToCart={addToCartWithoutUpsell}
           setCart={setCart}
           onOpenOrderForm={handleOpenOrderForm}
-          deliveryMode={deliveryMode}
-          setDeliveryMode={setDeliveryMode}
         />
 
         <OrderForm
